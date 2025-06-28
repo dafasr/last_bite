@@ -8,23 +8,21 @@ import {
   Image,
 } from "react-native";
 import Toast from "../components/Toast";
+import { useToast, useAuth } from "../hooks";
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+  const { toast, showToast, hideToast } = useToast();
+  const { isLoading, loginUser } = useAuth();
 
-  const showToast = (message, type = 'success') => {
-    setToast({ visible: true, message, type });
-  };
-
-  const handleLogin = () => {
-    if (!email || !password) {
-      showToast("Email dan password harus diisi.", "error");
-      return;
+  const handleLogin = async () => {
+    const result = await loginUser({ email, password });
+    if (!result.success) {
+      showToast(result.message, "error");
     }
     // On successful login (for now, direct navigation)
-    navigation.navigate('RegisterMerchant');
+    navigation.navigate("RegisterMerchant");
   };
 
   const handleForgotPassword = () => {
@@ -32,17 +30,13 @@ export default function LoginScreen({ navigation }) {
   };
 
   const handleRegister = () => {
-    navigation.navigate('Register');
+    navigation.navigate("Register");
   };
 
   return (
     <View style={styles.container}>
       {toast.visible && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onHide={() => setToast({ ...toast, visible: false })}
-        />
+        <Toast message={toast.message} type={toast.type} onHide={hideToast} />
       )}
       {/* Ganti `require` dengan path logo Anda. Buat folder `assets` di root proyek Anda */}
       {/* <Image source={require("../../assets/logo.png")} style={styles.logo} /> */}
@@ -74,8 +68,14 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.forgotPasswordText}>Lupa Password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Login</Text>
+        <TouchableOpacity
+          style={styles.loginButton}
+          onPress={handleLogin}
+          disabled={isLoading}
+        >
+          <Text style={styles.loginButtonText}>
+            {isLoading ? "Logging in..." : "Login"}
+          </Text>
         </TouchableOpacity>
       </View>
 

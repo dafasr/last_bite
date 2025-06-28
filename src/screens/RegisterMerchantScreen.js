@@ -1,35 +1,54 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
+import { useMerchant, useToast } from "../hooks";
+import Toast from "../components/Toast";
 
 const RegisterMerchantScreen = ({ navigation }) => {
-  const [storeName, setStoreName] = useState('');
-  const [description, setDescription] = useState('');
-  const [address, setAddress] = useState('');
+  const [storeName, setStoreName] = useState("");
+  const [description, setDescription] = useState("");
+  const [address, setAddress] = useState("");
+  const { isLoading, registerMerchant } = useMerchant();
+  const { toast, showToast, hideToast } = useToast();
 
-  const handleRegister = () => {
-    if (!storeName || !description || !address) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
+  const handleRegister = async () => {
+    const result = await registerMerchant({ storeName, description, address });
+    if (result.success) {
+      showToast(result.message, "success");
+      // Navigasi setelah jeda singkat agar pengguna dapat melihat toast
+      setTimeout(() => {
+        navigation.navigate("MerchantHome");
+      }, 1500);
+    } else {
+      showToast(result.message, "error");
     }
-    // Handle registration logic here
-    Alert.alert('Success', 'Store has been registered successfully');
-    navigation.navigate('MerchantHome');
   };
 
   const handleUploadPhoto = () => {
     // Placeholder for photo upload logic
-    Alert.alert('Upload Photo', 'This feature is under development.');
+    showToast("Fitur ini sedang dalam pengembangan.", "error");
   };
 
   const handlePinpointLocation = () => {
     // Placeholder for map integration
-    Alert.alert('Pinpoint Location', 'This feature is under development.');
+    showToast("Fitur ini sedang dalam pengembangan.", "error");
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {toast.visible && (
+        <Toast message={toast.message} type={toast.type} onHide={hideToast} />
+      )}
       <Text style={styles.title}>Register Your Store</Text>
-      <Text style={styles.subtitle}>Fill in the details below to get started</Text>
+      <Text style={styles.subtitle}>
+        Fill in the details below to get started
+      </Text>
 
       <View style={styles.formContainer}>
         <TextInput
@@ -52,16 +71,30 @@ const RegisterMerchantScreen = ({ navigation }) => {
           onChangeText={setAddress}
         />
 
-        <TouchableOpacity style={styles.outlineButton} onPress={handleUploadPhoto}>
+        <TouchableOpacity
+          style={styles.outlineButton}
+          onPress={handleUploadPhoto}
+        >
           <Text style={styles.outlineButtonText}>Upload Store Picture</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.outlineButton} onPress={handlePinpointLocation}>
-          <Text style={styles.outlineButtonText}>Pinpoint Location on Google Maps</Text>
+        <TouchableOpacity
+          style={styles.outlineButton}
+          onPress={handlePinpointLocation}
+        >
+          <Text style={styles.outlineButtonText}>
+            Pinpoint Location on Google Maps
+          </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
-          <Text style={styles.buttonText}>Register Store</Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleRegister}
+          disabled={isLoading}
+        >
+          <Text style={styles.buttonText}>
+            {isLoading ? "Registering..." : "Register Store"}
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -71,30 +104,30 @@ const RegisterMerchantScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#f5f5f5',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#f5f5f5",
+    alignItems: "center",
+    justifyContent: "center",
     padding: 20,
   },
   title: {
     fontSize: 26,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
-    color: '#7F8C8D',
+    color: "#7F8C8D",
     marginBottom: 30,
-    textAlign: 'center',
+    textAlign: "center",
   },
   formContainer: {
-    width: '100%',
-    backgroundColor: '#fff',
+    width: "100%",
+    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -104,48 +137,48 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   input: {
-    width: '100%',
+    width: "100%",
     height: 50,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: "#f7f7f7",
     borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
   },
   textArea: {
     height: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
     paddingTop: 15,
   },
   outlineButton: {
-    width: '100%',
+    width: "100%",
     height: 50,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: '#2ECC71',
+    borderColor: "#2ECC71",
     marginBottom: 15,
   },
   outlineButtonText: {
-    color: '#2ECC71',
+    color: "#2ECC71",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   button: {
-    width: '100%',
+    width: "100%",
     height: 50,
-    backgroundColor: '#2ECC71',
+    backgroundColor: "#2ECC71",
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 
