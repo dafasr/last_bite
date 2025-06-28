@@ -6,25 +6,29 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  Alert,
 } from "react-native";
+import Toast from "../components/Toast";
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ visible: true, message, type });
+  };
 
   const handleLogin = () => {
-    // Untuk saat ini, kita hanya akan menampilkan alert
-    // Logika login sebenarnya (misalnya, memanggil API) akan ditambahkan di sini
     if (!email || !password) {
-      Alert.alert("Error", "Email dan password harus diisi.");
+      showToast("Email dan password harus diisi.", "error");
       return;
     }
-    Alert.alert("Login Berhasil", `Selamat datang, ${email}!`);
+    // On successful login (for now, direct navigation)
+    navigation.navigate('RegisterMerchant');
   };
 
   const handleForgotPassword = () => {
-    Alert.alert("Lupa Password", "Fitur ini sedang dalam pengembangan.");
+    showToast("Fitur ini sedang dalam pengembangan.", "error");
   };
 
   const handleRegister = () => {
@@ -33,6 +37,13 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {toast.visible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onHide={() => setToast({ ...toast, visible: false })}
+        />
+      )}
       {/* Ganti `require` dengan path logo Anda. Buat folder `assets` di root proyek Anda */}
       {/* <Image source={require("../../assets/logo.png")} style={styles.logo} /> */}
       <Text style={styles.title}>Selamat Datang!</Text>

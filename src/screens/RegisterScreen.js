@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import Toast from '../components/Toast';
 
 const RegisterScreen = ({ navigation }) => {
   const [fullName, setFullName] = useState('');
@@ -8,27 +9,38 @@ const RegisterScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [retypePassword, setRetypePassword] = useState('');
   const [agree, setAgree] = useState(false);
+  const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ visible: true, message, type });
+  };
 
   const handleRegister = () => {
     if (!fullName || !email || !phone || !password || !retypePassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showToast('Please fill in all fields', 'error');
       return;
     }
     if (password !== retypePassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      showToast('Passwords do not match', 'error');
       return;
     }
     if (!agree) {
-      Alert.alert('Error', 'Please agree to the terms and conditions');
+      showToast('Please agree to the terms and conditions', 'error');
       return;
     }
-    // Handle registration logic here
-    Alert.alert('Success', 'You have been registered successfully');
-    navigation.navigate('Login');
+    // For now, just navigate to OTP screen
+    navigation.navigate('OTP');
   };
 
   return (
     <View style={styles.container}>
+      {toast.visible && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onHide={() => setToast({ ...toast, visible: false })}
+        />
+      )}
       <Text style={styles.title}>Buat Akun Baru</Text>
       <Text style={styles.subtitle}>Isi detail di bawah untuk mendaftar</Text>
 
