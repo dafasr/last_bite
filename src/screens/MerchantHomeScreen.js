@@ -1,46 +1,14 @@
 import React from "react";
-import { View, Text, StyleSheet, FlatList, SafeAreaView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  SafeAreaView,
+  TouchableOpacity,
+} from "react-native";
 
-// Mock data for incoming orders
-const mockOrders = [
-  {
-    id: "1",
-    customerName: "John Doe",
-    items: "Surprise Bag x1",
-    price: "50,000",
-    status: "New",
-  },
-  {
-    id: "2",
-    customerName: "Jane Smith",
-    items: "Pastry Box x2",
-    price: "80,000",
-    status: "New",
-  },
-  {
-    id: "3",
-    customerName: "Alex Johnson",
-    items: "Surprise Bag x1",
-    price: "50,000",
-    status: "Preparing",
-  },
-  {
-    id: "4",
-    customerName: "Emily White",
-    items: "Meal Box x1",
-    price: "65,000",
-    status: "Ready for Pickup",
-  },
-  {
-    id: "5",
-    customerName: "Chris Brown",
-    items: "Surprise Bag x3",
-    price: "150,000",
-    status: "New",
-  },
-];
-
-const MerchantHomeScreen = ({ navigation }) => {
+const MerchantHomeScreen = ({ incomingOrders, onAccept, onReject }) => {
   const renderOrderItem = ({ item }) => (
     <View style={styles.orderItem}>
       <View style={styles.orderItemHeader}>
@@ -50,6 +18,20 @@ const MerchantHomeScreen = ({ navigation }) => {
       <Text style={styles.orderItems}>{item.items}</Text>
       <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
         <Text style={styles.statusText}>{item.status}</Text>
+      </View>
+      <View style={styles.actionContainer}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.rejectButton]}
+          onPress={() => onReject(item.id)}
+        >
+          <Text style={styles.actionButtonText}>Reject</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.acceptButton]}
+          onPress={() => onAccept(item.id)}
+        >
+          <Text style={styles.actionButtonText}>Accept</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -82,11 +64,14 @@ const MerchantHomeScreen = ({ navigation }) => {
         <Text style={styles.sectionTitle}>Incoming Orders</Text>
 
         <FlatList
-          data={mockOrders}
+          data={incomingOrders}
           renderItem={renderOrderItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>No new orders.</Text>
+          }
         />
       </View>
     </SafeAreaView>
@@ -187,6 +172,34 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "bold",
+  },
+  actionContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 15,
+  },
+  actionButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginLeft: 10,
+  },
+  rejectButton: {
+    backgroundColor: "#E74C3C", // Red
+  },
+  acceptButton: {
+    backgroundColor: "#2ECC71", // Green
+  },
+  actionButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 50,
+    fontSize: 16,
+    color: "#7F8C8D",
   },
 });
 
