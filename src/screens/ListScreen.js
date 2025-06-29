@@ -35,6 +35,16 @@ const ListScreen = ({ acceptedOrders, onUpdateStatus }) => {
           </TouchableOpacity>
         </View>
       )}
+      {item.status === "Ready for Pickup" && (
+        <View style={styles.actionContainer}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.completeButton]}
+            onPress={() => onUpdateStatus(item.id, "Completed")}
+          >
+            <Text style={styles.actionButtonText}>Selesaikan Pesanan</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 
@@ -164,6 +174,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderRadius: 20,
+  },
+  completeButton: {
+    backgroundColor: "#2ECC71", // Hijau
   },
   actionButtonText: {
     color: "#FFFFFF",

@@ -17,7 +17,8 @@ const merchantProfile = {
   reviews: 125,
   description:
     "Kami menyajikan berbagai macam roti, kue, dan jajanan pasar yang dibuat setiap hari dengan bahan-bahan berkualitas. Cicipi kelezatan produk kami yang akan memanjakan lidah Anda.",
-  profileImage: "https://via.placeholder.com/150", // Placeholder image
+  profileImage:
+    "https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=200&h=200&fit=crop", // Placeholder image
 };
 
 const ProfileScreen = ({ navigation }) => {
@@ -81,7 +82,7 @@ const ProfileScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>About Us</Text>
+          <Text style={styles.cardTitle}>Store Description</Text>
           <Text style={styles.description}>{merchantProfile.description}</Text>
         </View>
 
