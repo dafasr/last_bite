@@ -2,8 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import MerchantHomeScreen from "./MerchantHomeScreen";
 import ListScreen from "./ListScreen";
-// import MenuScreen from './MenuScreen'; // Placeholder
-// import ProfileScreen from './ProfileScreen'; // Placeholder
+import MenuScreen from "./MenuScreen";
 import { Text } from "react-native";
 import { useOrders } from "../hooks";
 
@@ -50,7 +49,7 @@ const MerchantTabNavigator = () => {
           />
         )}
       </Tab.Screen>
-      <Tab.Screen name="Menu" component={PlaceholderScreen} />
+      <Tab.Screen name="Menu" component={MenuScreen} />
       <Tab.Screen name="Profile" component={PlaceholderScreen} />
     </Tab.Navigator>
   );

@@ -6,9 +6,15 @@ import {
   FlatList,
   SafeAreaView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 
 const MerchantHomeScreen = ({ incomingOrders, onAccept, onReject }) => {
+  const handleWithdraw = () => {
+    // Placeholder for withdraw logic
+    Alert.alert("Coming Soon", "Withdraw feature is under development.");
+  };
+
   const renderOrderItem = ({ item }) => (
     <View style={styles.orderItem}>
       <View style={styles.orderItemHeader}>
@@ -59,6 +65,12 @@ const MerchantHomeScreen = ({ incomingOrders, onAccept, onReject }) => {
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Your Balance</Text>
           <Text style={styles.balanceAmount}>Rp 1,250,000</Text>
+          <TouchableOpacity
+            style={styles.withdrawButton}
+            onPress={handleWithdraw}
+          >
+            <Text style={styles.withdrawButtonText}>Withdraw</Text>
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.sectionTitle}>Incoming Orders</Text>
@@ -120,6 +132,18 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#FFFFFF",
     marginTop: 5,
+  },
+  withdrawButton: {
+    marginTop: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+  },
+  withdrawButtonText: {
+    color: "#2ECC71",
+    fontWeight: "bold",
+    fontSize: 16,
   },
   sectionTitle: {
     fontSize: 20,
