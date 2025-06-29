@@ -22,6 +22,12 @@ const MerchantHomeScreen = ({ incomingOrders, onAccept, onReject }) => {
         <Text style={styles.orderPrice}>Rp {item.price}</Text>
       </View>
       <Text style={styles.orderItems}>{item.items}</Text>
+      {item.note && (
+        <View style={styles.noteContainer}>
+          <Text style={styles.noteLabel}>Catatan Pembeli:</Text>
+          <Text style={styles.noteText}>{item.note}</Text>
+        </View>
+      )}
       <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
         <Text style={styles.statusText}>{item.status}</Text>
       </View>
@@ -185,6 +191,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#7F8C8D",
     marginBottom: 10,
+  },
+  noteContainer: {
+    marginTop: 5,
+    marginBottom: 15,
+    padding: 10,
+    backgroundColor: "#f0f8ff", // AliceBlue for a subtle highlight
+    borderRadius: 5,
+    borderLeftWidth: 3,
+    borderLeftColor: "#3498DB",
+  },
+  noteLabel: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 3,
+  },
+  noteText: {
+    fontSize: 14,
+    color: "#555",
   },
   statusBadge: {
     alignSelf: "flex-start",
