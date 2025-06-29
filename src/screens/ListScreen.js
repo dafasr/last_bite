@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,10 @@ import {
   TouchableOpacity,
 } from "react-native";
 
-const ListScreen = ({ acceptedOrders, onUpdateStatus }) => {
+const ListScreen = ({ orders, onUpdateStatus }) => {
+  const [selectedCategory, setSelectedCategory] = useState("Semua");
+  const categories = ["Semua", "Disiapkan", "Siap Diambil", "Selesai"];
+
   const renderOrderItem = ({ item }) => (
     <View style={styles.orderItem}>
       <View style={styles.orderItemHeader}>
@@ -48,12 +51,47 @@ const ListScreen = ({ acceptedOrders, onUpdateStatus }) => {
     </View>
   );
 
+  const filteredOrders = useMemo(() => {
+    switch (selectedCategory) {
+      case "Disiapkan":
+        return orders.filter((o) => o.status === "Preparing");
+      case "Siap Diambil":
+        return orders.filter((o) => o.status === "Ready for Pickup");
+      case "Selesai":
+        return orders.filter((o) => o.status === "Completed");
+      case "Semua":
+      default:
+        return orders;
+    }
+  }, [orders, selectedCategory]);
+
+  const renderCategoryTab = ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles.categoryTab,
+        selectedCategory === item && styles.activeCategoryTab,
+      ]}
+      onPress={() => setSelectedCategory(item)}
+    >
+      <Text
+        style={[
+          styles.categoryTabText,
+          selectedCategory === item && styles.activeCategoryTabText,
+        ]}
+      >
+        {item}
+      </Text>
+    </TouchableOpacity>
+  );
+
   const getStatusStyle = (status) => {
     switch (status) {
       case "Preparing":
         return { backgroundColor: "#7F8C8D" }; // Abu-abu
       case "Ready for Pickup":
         return { backgroundColor: "#2ECC71" }; // Hijau
+      case "Completed":
+        return { backgroundColor: "#3498DB" }; // Biru
       default:
         return { backgroundColor: "#7F8C8D" };
     }
@@ -63,16 +101,28 @@ const ListScreen = ({ acceptedOrders, onUpdateStatus }) => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Accepted Orders</Text>
+          <Text style={styles.headerTitle}>Daftar Pesanan</Text>
+        </View>
+        <View>
+          <FlatList
+            data={categories}
+            renderItem={renderCategoryTab}
+            keyExtractor={(item) => item}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryListContainer}
+          />
         </View>
         <FlatList
-          data={acceptedOrders}
+          data={filteredOrders}
           renderItem={renderOrderItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No accepted orders yet.</Text>
+            <Text style={styles.emptyText}>
+              Tidak ada pesanan di kategori ini.
+            </Text>
           }
         />
       </View>
@@ -102,7 +152,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 10,
   },
   orderItem: {
     backgroundColor: "#FFFFFF",
@@ -188,6 +238,30 @@ const styles = StyleSheet.create({
     marginTop: 50,
     fontSize: 16,
     color: "#7F8C8D",
+  },
+  categoryListContainer: {
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  categoryTab: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#e9ecef",
+    marginHorizontal: 5,
+  },
+  activeCategoryTab: {
+    backgroundColor: "#2ECC71",
+  },
+  categoryTabText: {
+    color: "#495057",
+    fontWeight: "600",
+  },
+  activeCategoryTabText: {
+    color: "#FFFFFF",
   },
 });
 

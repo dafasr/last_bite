@@ -76,8 +76,11 @@ const MerchantTabNavigator = () => {
         {(props) => (
           <ListScreen
             {...props}
-            acceptedOrders={ordersWithNotes.filter(
-              (o) => o.status === "Preparing" || o.status === "Ready for Pickup"
+            orders={ordersWithNotes.filter(
+              (o) =>
+                o.status === "Preparing" ||
+                o.status === "Ready for Pickup" ||
+                o.status === "Completed"
             )}
             onUpdateStatus={handleUpdateOrderStatus}
           />
