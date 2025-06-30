@@ -23,7 +23,12 @@ const MerchantHomeScreen = ({
   const renderOrderItem = ({ item }) => (
     <View style={styles.orderItem}>
       <View style={styles.orderItemHeader}>
-        <Text style={styles.customerName}>{item.customerName}</Text>
+        <View style={styles.customerInfoContainer}>
+          <Text style={styles.customerName}>{item.customerName}</Text>
+          <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
+            <Text style={styles.statusText}>{item.status}</Text>
+          </View>
+        </View>
         <Text style={styles.orderPrice}>Rp {item.price}</Text>
       </View>
       <Text style={styles.orderItems}>{item.items}</Text>
@@ -33,9 +38,6 @@ const MerchantHomeScreen = ({
           <Text style={styles.noteText}>{item.note}</Text>
         </View>
       )}
-      <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
-        <Text style={styles.statusText}>{item.status}</Text>
-      </View>
       <View style={styles.actionContainer}>
         <TouchableOpacity
           style={[styles.actionButton, styles.rejectButton]}
@@ -220,11 +222,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 10,
+    alignItems: "center",
+  },
+  customerInfoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    marginRight: 10,
   },
   customerName: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
+    marginRight: 8,
+    flexShrink: 1,
   },
   orderPrice: {
     fontSize: 16,
@@ -256,7 +267,6 @@ const styles = StyleSheet.create({
     color: "#555",
   },
   statusBadge: {
-    alignSelf: "flex-start",
     paddingVertical: 5,
     paddingHorizontal: 12,
     borderRadius: 20,

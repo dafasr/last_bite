@@ -54,6 +54,10 @@ export const MenuProvider = ({ children }) => {
     );
   };
 
+  const deleteBag = (id) => {
+    setSurpriseBags((prevBags) => prevBags.filter((bag) => bag.id !== id));
+  };
+
   const toggleAvailability = (id) => {
     setSurpriseBags(
       surpriseBags.map((bag) =>
@@ -62,7 +66,13 @@ export const MenuProvider = ({ children }) => {
     );
   };
 
-  const value = { surpriseBags, addBag, updateBag, toggleAvailability };
+  const value = {
+    surpriseBags,
+    addBag,
+    updateBag,
+    toggleAvailability,
+    deleteBag,
+  };
 
   return <MenuContext.Provider value={value}>{children}</MenuContext.Provider>;
 };

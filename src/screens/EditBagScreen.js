@@ -8,12 +8,14 @@ import {
   ScrollView,
   SafeAreaView,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useMenu } from "../context/MenuContext";
 
 const EditBagScreen = ({ navigation, route }) => {
   const { bag } = route.params; // Mengambil data bag yang dikirim dari MenuScreen
-  const { updateBag } = useMenu();
+  const { updateBag, deleteBag } = useMenu();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -53,6 +55,27 @@ const EditBagScreen = ({ navigation, route }) => {
     ]);
   };
 
+  const handleDelete = () => {
+    Alert.alert(
+      "Hapus Surprise Bag",
+      `Apakah Anda yakin ingin menghapus "${bag.name}"? Tindakan ini tidak dapat dibatalkan.`,
+      [
+        {
+          text: "Batal",
+          style: "cancel",
+        },
+        {
+          text: "Hapus",
+          onPress: () => {
+            deleteBag(bag.id);
+            navigation.goBack();
+          },
+          style: "destructive",
+        },
+      ]
+    );
+  };
+
   const handleUploadImage = () => {
     Alert.alert(
       "Segera Hadir",
@@ -62,74 +85,85 @@ const EditBagScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Edit Surprise Bag</Text>
-        </View>
-
-        <View style={styles.formContainer}>
-          <Text style={styles.label}>Nama Bag</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="cth: Paket Roti Spesial"
-            value={name}
-            onChangeText={setName}
-          />
-
-          <Text style={styles.label}>Deskripsi (Kemungkinan Isi)</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="cth: Roti Coklat, Roti Keju, Donat"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-
-          <Text style={styles.label}>Gambar</Text>
-          <TouchableOpacity
-            style={styles.outlineButton}
-            onPress={handleUploadImage}
-          >
-            <Text style={styles.outlineButtonText}>Unggah Gambar</Text>
-          </TouchableOpacity>
-
-          <View style={styles.priceRow}>
-            <View style={styles.priceInputContainer}>
-              <Text style={styles.label}>Harga Asli (Rp)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="50000"
-                value={originalPrice}
-                onChangeText={setOriginalPrice}
-                keyboardType="numeric"
-              />
-            </View>
-            <View style={styles.priceInputContainer}>
-              <Text style={styles.label}>Harga Diskon (Rp)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="25000"
-                value={discountedPrice}
-                onChangeText={setDiscountedPrice}
-                keyboardType="numeric"
-              />
-            </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
+      >
+        <ScrollView>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Edit Surprise Bag</Text>
           </View>
 
-          <Text style={styles.label}>Kuantitas</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="10"
-            value={quantity}
-            onChangeText={setQuantity}
-            keyboardType="numeric"
-          />
+          <View style={styles.formContainer}>
+            <Text style={styles.label}>Nama Bag</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="cth: Paket Roti Spesial"
+              value={name}
+              onChangeText={setName}
+            />
 
-          <TouchableOpacity style={styles.button} onPress={handleSave}>
-            <Text style={styles.buttonText}>Simpan Perubahan</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+            <Text style={styles.label}>Deskripsi (Kemungkinan Isi)</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="cth: Roti Coklat, Roti Keju, Donat"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+            />
+
+            <Text style={styles.label}>Gambar</Text>
+            <TouchableOpacity
+              style={styles.outlineButton}
+              onPress={handleUploadImage}
+            >
+              <Text style={styles.outlineButtonText}>Unggah Gambar</Text>
+            </TouchableOpacity>
+
+            <View style={styles.priceRow}>
+              <View style={styles.priceInputContainer}>
+                <Text style={styles.label}>Harga Asli (Rp)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="50000"
+                  value={originalPrice}
+                  onChangeText={setOriginalPrice}
+                  keyboardType="numeric"
+                />
+              </View>
+              <View style={styles.priceInputContainer}>
+                <Text style={styles.label}>Harga Diskon (Rp)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="25000"
+                  value={discountedPrice}
+                  onChangeText={setDiscountedPrice}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+
+            <Text style={styles.label}>Kuantitas</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="10"
+              value={quantity}
+              onChangeText={setQuantity}
+              keyboardType="numeric"
+            />
+
+            <TouchableOpacity style={styles.button} onPress={handleSave}>
+              <Text style={styles.buttonText}>Simpan Perubahan</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.deleteButton]}
+              onPress={handleDelete}
+            >
+              <Text style={styles.buttonText}>Hapus Surprise Bag</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -138,6 +172,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#f5f5f5",
+  },
+  container: {
+    flex: 1,
   },
   header: {
     paddingVertical: 30,
@@ -218,6 +255,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 10,
+  },
+  deleteButton: {
+    backgroundColor: "#E74C3C", // Red
+    marginTop: 15,
   },
   buttonText: {
     color: "#FFFFFF",

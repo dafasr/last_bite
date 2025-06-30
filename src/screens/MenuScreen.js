@@ -12,7 +12,7 @@ import {
 import { useMenu } from "../context/MenuContext";
 
 const MenuScreen = ({ navigation }) => {
-  const { surpriseBags, toggleAvailability } = useMenu();
+  const { surpriseBags, toggleAvailability, deleteBag } = useMenu();
 
   // Placeholder untuk fungsi edit
   // Mengarahkan ke layar EditBag dan mengirimkan data 'bag' yang dipilih
@@ -20,6 +20,24 @@ const MenuScreen = ({ navigation }) => {
 
   // Placeholder untuk fungsi tambah
   const handleAddBag = () => navigation.navigate("AddBag");
+
+  const handleDelete = (bagId, bagName) => {
+    Alert.alert(
+      "Hapus Surprise Bag",
+      `Apakah Anda yakin ingin menghapus "${bagName}"? Tindakan ini tidak dapat dibatalkan.`,
+      [
+        {
+          text: "Batal",
+          style: "cancel",
+        },
+        {
+          text: "Hapus",
+          onPress: () => deleteBag(bagId),
+          style: "destructive",
+        },
+      ]
+    );
+  };
 
   const renderItem = ({ item }) => (
     <View style={styles.bagItem}>
@@ -47,12 +65,20 @@ const MenuScreen = ({ navigation }) => {
         />
       </View>
 
-      <TouchableOpacity
-        style={styles.editButton}
-        onPress={() => handleEdit(item)}
-      >
-        <Text style={styles.editButtonText}>Edit Surprise Bag</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.editButton]}
+          onPress={() => handleEdit(item)}
+        >
+          <Text style={styles.actionButtonText}>Edit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.deleteButton]}
+          onPress={() => handleDelete(item.id, item.name)}
+        >
+          <Text style={styles.actionButtonText}>Hapus</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -144,7 +170,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 15,
     borderTopWidth: 1,
     borderTopColor: "#eee",
     paddingTop: 15,
@@ -154,8 +180,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#333",
   },
-  editButton: {
-    backgroundColor: "#3498DB",
+  buttonContainer: {
+    flexDirection: "row",
+    marginTop: 10,
+  },
+  actionButton: {
+    flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
@@ -168,10 +198,17 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  editButtonText: {
+  actionButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  editButton: {
+    backgroundColor: "#3498DB",
+    marginRight: 10,
+  },
+  deleteButton: {
+    backgroundColor: "#E74C3C", // Red
   },
   addButton: {
     backgroundColor: "#2ECC71",
