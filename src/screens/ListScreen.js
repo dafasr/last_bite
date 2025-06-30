@@ -8,9 +8,33 @@ import {
   TouchableOpacity,
 } from "react-native";
 
+// Konfigurasi terpusat untuk semua status pesanan
+const STATUS_CONFIG = {
+  Preparing: { displayName: "Disiapkan", color: "#7F8C8D" }, // Abu-abu
+  "Ready for Pickup": { displayName: "Siap Diambil", color: "#2ECC71" }, // Hijau
+  Completed: { displayName: "Selesai", color: "#3498DB" }, // Biru
+  Rejected: { displayName: "Ditolak", color: "#E74C3C" }, // Merah
+};
+
+// Membuat daftar kategori secara dinamis dari konfigurasi
+const categories = [
+  "Semua",
+  ...Object.values(STATUS_CONFIG).map((config) => config.displayName),
+];
+
 const ListScreen = ({ orders, onUpdateStatus }) => {
   const [selectedCategory, setSelectedCategory] = useState("Semua");
-  const categories = ["Semua", "Disiapkan", "Siap Diambil", "Selesai"];
+
+  // DEBUG: Untuk melihat data 'orders' yang diterima oleh komponen ini.
+  // Periksa output di terminal Metro Bundler setelah mereject pesanan.
+  console.log(
+    "Data diterima di ListScreen:",
+    JSON.stringify(
+      orders.map((o) => ({ id: o.id, status: o.status })),
+      null,
+      2
+    )
+  );
 
   const renderOrderItem = ({ item }) => (
     <View style={styles.orderItem}>
@@ -26,7 +50,9 @@ const ListScreen = ({ orders, onUpdateStatus }) => {
         </View>
       )}
       <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
-        <Text style={styles.statusText}>{item.status}</Text>
+        <Text style={styles.statusText}>
+          {STATUS_CONFIG[item.status]?.displayName || item.status}
+        </Text>
       </View>
       {item.status === "Preparing" && (
         <View style={styles.actionContainer}>
@@ -52,17 +78,14 @@ const ListScreen = ({ orders, onUpdateStatus }) => {
   );
 
   const filteredOrders = useMemo(() => {
-    switch (selectedCategory) {
-      case "Disiapkan":
-        return orders.filter((o) => o.status === "Preparing");
-      case "Siap Diambil":
-        return orders.filter((o) => o.status === "Ready for Pickup");
-      case "Selesai":
-        return orders.filter((o) => o.status === "Completed");
-      case "Semua":
-      default:
-        return orders;
+    if (selectedCategory === "Semua") {
+      return orders;
     }
+    // Mencari status internal (misal: "Preparing") berdasarkan nama tampilan yang dipilih (misal: "Disiapkan")
+    const internalStatus = Object.keys(STATUS_CONFIG).find(
+      (key) => STATUS_CONFIG[key].displayName === selectedCategory
+    );
+    return orders.filter((o) => o.status === internalStatus);
   }, [orders, selectedCategory]);
 
   const renderCategoryTab = ({ item }) => (
@@ -85,16 +108,8 @@ const ListScreen = ({ orders, onUpdateStatus }) => {
   );
 
   const getStatusStyle = (status) => {
-    switch (status) {
-      case "Preparing":
-        return { backgroundColor: "#7F8C8D" }; // Abu-abu
-      case "Ready for Pickup":
-        return { backgroundColor: "#2ECC71" }; // Hijau
-      case "Completed":
-        return { backgroundColor: "#3498DB" }; // Biru
-      default:
-        return { backgroundColor: "#7F8C8D" };
-    }
+    // Mengambil warna dari konfigurasi, dengan warna default jika status tidak ditemukan
+    return { backgroundColor: STATUS_CONFIG[status]?.color || "#7F8C8D" };
   };
 
   return (

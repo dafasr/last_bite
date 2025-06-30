@@ -14,15 +14,20 @@ export const useOrders = () => {
 
   const handleRejectOrder = (orderId) => {
     setOrders((currentOrders) =>
-      currentOrders.filter((order) => order.id !== orderId)
+      currentOrders.map((order) =>
+        order.id === orderId ? { ...order, status: "Rejected" } : order
+      )
     );
   };
 
   const handleUpdateOrderStatus = (orderId, newStatus) => {
     setOrders((currentOrders) =>
-      currentOrders.map((order) =>
-        order.id === orderId ? { ...order, status: newStatus } : order
-      )
+      currentOrders.map((order) => {
+        if (order.id === orderId) {
+          return { ...order, status: newStatus };
+        }
+        return order;
+      })
     );
   };
 
