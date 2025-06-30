@@ -11,14 +11,14 @@ import {
 } from "react-native";
 
 const EditStoreScreen = ({ navigation, route }) => {
-  const { storeName: initialStoreName, description: initialDescription } =
+  const { storeName: initialStoreName, description: initialDescription, onSave } =
     route.params;
 
   const [storeName, setStoreName] = useState(initialStoreName);
   const [description, setDescription] = useState(initialDescription);
 
   const handleSave = () => {
-    // In a real app, you would save the updated information to your backend
+    onSave({ storeName, description });
     Alert.alert("Save", "Store information updated successfully!", [
       { text: "OK", onPress: () => navigation.goBack() },
     ]);

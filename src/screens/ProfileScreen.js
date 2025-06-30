@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,22 +10,30 @@ import {
   Alert,
 } from "react-native";
 
-// Dummy data for the merchant profile
-const merchantProfile = {
-  storeName: "Toko Roti Enak",
-  rating: 4.8,
-  reviews: 125,
-  description:
-    "Kami menyajikan berbagai macam roti, kue, dan jajanan pasar yang dibuat setiap hari dengan bahan-bahan berkualitas. Cicipi kelezatan produk kami yang akan memanjakan lidah Anda.",
-  profileImage:
-    "https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=200&h=200&fit=crop", // Placeholder image
-};
-
 const ProfileScreen = ({ navigation }) => {
+  const [merchantProfile, setMerchantProfile] = useState({
+    storeName: "Toko Roti Enak",
+    rating: 4.8,
+    reviews: 125,
+    description:
+      "Kami menyajikan berbagai macam roti, kue, dan jajanan pasar yang dibuat setiap hari dengan bahan-bahan berkualitas. Cicipi kelezatan produk kami yang akan memanjakan lidah Anda.",
+    profileImage:
+      "https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=200&h=200&fit=crop", // Placeholder image
+  });
+
+  const handleUpdateStore = (updatedData) => {
+    setMerchantProfile((prevProfile) => ({
+      ...prevProfile,
+      storeName: updatedData.storeName,
+      description: updatedData.description,
+    }));
+  };
+
   const handleEditStore = () => {
     navigation.navigate("EditStore", {
       storeName: merchantProfile.storeName,
       description: merchantProfile.description,
+      onSave: handleUpdateStore,
     });
   };
 
