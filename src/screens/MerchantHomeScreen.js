@@ -9,7 +9,12 @@ import {
   Alert,
 } from "react-native";
 
-const MerchantHomeScreen = ({ incomingOrders, onAccept, onReject }) => {
+const MerchantHomeScreen = ({
+  incomingOrders,
+  onAccept,
+  onReject,
+  soldBagsCount,
+}) => {
   const handleWithdraw = () => {
     // Placeholder for withdraw logic
     Alert.alert("Coming Soon", "Withdraw feature is under development.");
@@ -68,15 +73,21 @@ const MerchantHomeScreen = ({ incomingOrders, onAccept, onReject }) => {
           <Text style={styles.headerTitle}>Dashboard</Text>
         </View>
 
-        <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Your Balance</Text>
-          <Text style={styles.balanceAmount}>Rp 1,250,000</Text>
-          <TouchableOpacity
-            style={styles.withdrawButton}
-            onPress={handleWithdraw}
-          >
-            <Text style={styles.withdrawButtonText}>Withdraw</Text>
-          </TouchableOpacity>
+        <View style={styles.summaryRow}>
+          <View style={styles.balanceCard}>
+            <Text style={styles.balanceLabel}>Your Balance</Text>
+            <Text style={styles.balanceAmount}>Rp 1,250,000</Text>
+            <TouchableOpacity
+              style={styles.withdrawButton}
+              onPress={handleWithdraw}
+            >
+              <Text style={styles.withdrawButtonText}>Withdraw</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.soldCard}>
+            <Text style={styles.soldLabel}>Bags Sold</Text>
+            <Text style={styles.soldAmount}>{soldBagsCount || 0}</Text>
+          </View>
         </View>
 
         <Text style={styles.sectionTitle}>Incoming Orders</Text>
@@ -105,10 +116,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 20,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
+    justifyContent: "center",
   },
   headerTitle: {
     fontSize: 24,
@@ -116,40 +129,71 @@ const styles = StyleSheet.create({
     color: "#333",
     textAlign: "center",
   },
+  summaryRow: {
+    flexDirection: "row",
+    marginHorizontal: 20,
+    marginVertical: 20,
+  },
   balanceCard: {
+    flex: 1.5,
     backgroundColor: "#2ECC71",
-    margin: 20,
-    padding: 25,
+    padding: 20,
     borderRadius: 15,
-    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 8,
+    marginRight: 10,
   },
   balanceLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#FFFFFF",
     opacity: 0.9,
   },
   balanceAmount: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#FFFFFF",
     marginTop: 5,
+    marginBottom: 15,
   },
   withdrawButton: {
-    marginTop: 20,
     backgroundColor: "rgba(255, 255, 255, 0.9)",
-    paddingVertical: 10,
-    paddingHorizontal: 30,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
     borderRadius: 25,
+    alignSelf: "flex-start",
   },
   withdrawButtonText: {
     color: "#2ECC71",
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 14,
+  },
+  soldCard: {
+    flex: 1,
+    backgroundColor: "#3498DB",
+    padding: 20,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+    marginLeft: 10,
+  },
+  soldLabel: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    opacity: 0.9,
+  },
+  soldAmount: {
+    fontSize: 36,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginTop: 5,
   },
   sectionTitle: {
     fontSize: 20,
@@ -228,10 +272,18 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   actionButton: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 8,
     marginLeft: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   rejectButton: {
     backgroundColor: "#E74C3C", // Red

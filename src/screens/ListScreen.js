@@ -39,7 +39,14 @@ const ListScreen = ({ orders, onUpdateStatus }) => {
   const renderOrderItem = ({ item }) => (
     <View style={styles.orderItem}>
       <View style={styles.orderItemHeader}>
-        <Text style={styles.customerName}>{item.customerName}</Text>
+        <View style={styles.customerInfoContainer}>
+          <Text style={styles.customerName}>{item.customerName}</Text>
+          <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
+            <Text style={styles.statusText}>
+              {STATUS_CONFIG[item.status]?.displayName || item.status}
+            </Text>
+          </View>
+        </View>
         <Text style={styles.orderPrice}>Rp {item.price}</Text>
       </View>
       <Text style={styles.orderItems}>{item.items}</Text>
@@ -49,11 +56,6 @@ const ListScreen = ({ orders, onUpdateStatus }) => {
           <Text style={styles.noteText}>{item.note}</Text>
         </View>
       )}
-      <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
-        <Text style={styles.statusText}>
-          {STATUS_CONFIG[item.status]?.displayName || item.status}
-        </Text>
-      </View>
       {item.status === "Preparing" && (
         <View style={styles.actionContainer}>
           <TouchableOpacity
@@ -154,10 +156,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 20,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
+    justifyContent: "center",
   },
   headerTitle: {
     fontSize: 24,
@@ -183,12 +187,21 @@ const styles = StyleSheet.create({
   orderItemHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 10,
+  },
+  customerInfoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    marginRight: 10,
   },
   customerName: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
+    marginRight: 8,
+    flexShrink: 1,
   },
   orderPrice: {
     fontSize: 16,
@@ -220,7 +233,6 @@ const styles = StyleSheet.create({
     color: "#555",
   },
   statusBadge: {
-    alignSelf: "flex-start",
     paddingVertical: 5,
     paddingHorizontal: 12,
     borderRadius: 20,
@@ -236,9 +248,17 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     backgroundColor: "#3498DB", // Biru
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 20,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   completeButton: {
     backgroundColor: "#2ECC71", // Hijau

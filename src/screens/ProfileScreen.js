@@ -130,10 +130,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   header: {
-    padding: 20,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
+    justifyContent: "center",
   },
   headerTitle: {
     fontSize: 24,
@@ -240,6 +242,14 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   logoutButton: {
     backgroundColor: "#E74C3C", // Red

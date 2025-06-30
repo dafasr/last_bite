@@ -1,14 +1,29 @@
 import React, { useMemo } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createStackNavigator } from "@react-navigation/stack";
 import MerchantHomeScreen from "./MerchantHomeScreen";
 import ListScreen from "./ListScreen";
 import MenuScreen from "./MenuScreen";
+import AddBagScreen from "./AddBagScreen";
 import ProfileScreen from "./ProfileScreen";
 import { useOrders, useToast } from "../hooks";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Toast from "../components/Toast";
 
 const Tab = createBottomTabNavigator();
+const MenuStack = createStackNavigator();
+
+// Buat stack navigator untuk Tab Menu
+const MenuStackScreen = () => {
+  return (
+    <MenuStack.Navigator screenOptions={{ headerShown: false }}>
+      {/* Layar utama di dalam stack ini adalah daftar menu */}
+      <MenuStack.Screen name="MenuList" component={MenuScreen} />
+      {/* Layar untuk menambah bag baru */}
+      <MenuStack.Screen name="AddBag" component={AddBagScreen} />
+    </MenuStack.Navigator>
+  );
+};
 
 const MerchantTabNavigator = () => {
   const {
@@ -37,6 +52,11 @@ const MerchantTabNavigator = () => {
         }
         return order;
       }),
+    [orders]
+  );
+
+  const soldBagsCount = useMemo(
+    () => orders.filter((o) => o.status === "Completed").length,
     [orders]
   );
 
@@ -77,6 +97,7 @@ const MerchantTabNavigator = () => {
               incomingOrders={ordersWithNotes.filter((o) => o.status === "New")}
               onAccept={handleAcceptOrder}
               onReject={handleRejectWithToast}
+              soldBagsCount={soldBagsCount}
             />
           )}
         </Tab.Screen>
@@ -96,7 +117,7 @@ const MerchantTabNavigator = () => {
             />
           )}
         </Tab.Screen>
-        <Tab.Screen name="Menu" component={MenuScreen} />
+        <Tab.Screen name="Menu" component={MenuStackScreen} />
         <Tab.Screen name="Profile" component={ProfileScreen} />
       </Tab.Navigator>
       {toast.visible && (

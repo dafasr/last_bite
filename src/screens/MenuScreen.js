@@ -59,12 +59,7 @@ const MenuScreen = ({ navigation }) => {
   };
 
   // Placeholder untuk fungsi tambah
-  const handleAddBag = () => {
-    Alert.alert(
-      "Add Surprise Bag",
-      "Fitur untuk menambah Surprise Bag baru sedang dalam pengembangan."
-    );
-  };
+  const handleAddBag = () => navigation.navigate("AddBag");
 
   const renderItem = ({ item }) => (
     <View style={styles.bagItem}>
@@ -126,10 +121,12 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#f5f5f5" },
   container: { flex: 1 },
   header: {
-    padding: 20,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
+    justifyContent: "center",
   },
   headerTitle: {
     fontSize: 24,
@@ -202,6 +199,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   editButtonText: {
     color: "#FFFFFF",
@@ -213,7 +218,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginVertical: 10,
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
