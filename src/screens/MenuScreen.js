@@ -15,12 +15,8 @@ const MenuScreen = ({ navigation }) => {
   const { surpriseBags, toggleAvailability } = useMenu();
 
   // Placeholder untuk fungsi edit
-  const handleEdit = (bag) => {
-    Alert.alert(
-      "Edit Surprise Bag",
-      `Fitur untuk mengedit "${bag.name}" sedang dalam pengembangan.`
-    );
-  };
+  // Mengarahkan ke layar EditBag dan mengirimkan data 'bag' yang dipilih
+  const handleEdit = (bag) => navigation.navigate("EditBag", { bag });
 
   // Placeholder untuk fungsi tambah
   const handleAddBag = () => navigation.navigate("AddBag");

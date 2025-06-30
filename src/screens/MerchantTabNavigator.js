@@ -5,6 +5,7 @@ import MerchantHomeScreen from "./MerchantHomeScreen";
 import ListScreen from "./ListScreen";
 import MenuScreen from "./MenuScreen";
 import AddBagScreen from "./AddBagScreen";
+import EditBagScreen from "./EditBagScreen";
 import ProfileScreen from "./ProfileScreen";
 import { MenuProvider } from "../context/MenuContext";
 import { useOrders, useToast } from "../hooks";
@@ -13,18 +14,6 @@ import Toast from "../components/Toast";
 
 const Tab = createBottomTabNavigator();
 const MenuStack = createStackNavigator();
-
-// Buat stack navigator untuk Tab Menu
-const MenuStackScreen = () => {
-  return (
-    <MenuStack.Navigator screenOptions={{ headerShown: false }}>
-      {/* Layar utama di dalam stack ini adalah daftar menu */}
-      <MenuStack.Screen name="MenuList" component={MenuScreen} />
-      {/* Layar untuk menambah bag baru */}
-      <MenuStack.Screen name="AddBag" component={AddBagScreen} />
-    </MenuStack.Navigator>
-  );
-};
 
 const MerchantTabNavigator = () => {
   const {
@@ -118,7 +107,15 @@ const MerchantTabNavigator = () => {
             />
           )}
         </Tab.Screen>
-        <Tab.Screen name="Menu" component={MenuStackScreen} />
+        <Tab.Screen name="Menu">
+          {() => (
+            <MenuStack.Navigator screenOptions={{ headerShown: false }}>
+              <MenuStack.Screen name="MenuList" component={MenuScreen} />
+              <MenuStack.Screen name="AddBag" component={AddBagScreen} />
+              <MenuStack.Screen name="EditBag" component={EditBagScreen} />
+            </MenuStack.Navigator>
+          )}
+        </Tab.Screen>
         <Tab.Screen name="Profile" component={ProfileScreen} />
       </Tab.Navigator>
       {toast.visible && (

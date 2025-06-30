@@ -45,6 +45,15 @@ export const MenuProvider = ({ children }) => {
     setSurpriseBags((prevBags) => [bagWithId, ...prevBags]);
   };
 
+  const updateBag = (id, updatedData) => {
+    setSurpriseBags(
+      surpriseBags.map((bag) =>
+        // Cari bag dengan id yang cocok, lalu gabungkan data lama dengan data baru
+        bag.id === id ? { ...bag, ...updatedData } : bag
+      )
+    );
+  };
+
   const toggleAvailability = (id) => {
     setSurpriseBags(
       surpriseBags.map((bag) =>
@@ -53,7 +62,7 @@ export const MenuProvider = ({ children }) => {
     );
   };
 
-  const value = { surpriseBags, addBag, toggleAvailability };
+  const value = { surpriseBags, addBag, updateBag, toggleAvailability };
 
   return <MenuContext.Provider value={value}>{children}</MenuContext.Provider>;
 };
