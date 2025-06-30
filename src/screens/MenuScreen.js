@@ -9,46 +9,10 @@ import {
   Switch,
   Alert,
 } from "react-native";
-
-// Data dummy untuk contoh, nantinya bisa diganti dengan data dari API
-const dummySurpriseBags = [
-  {
-    id: "1",
-    name: "Paket Roti Manis",
-    possibleItems: "Roti Coklat, Roti Keju, Donat Gula",
-    originalPrice: 50000,
-    discountedPrice: 25000,
-    isAvailable: true,
-  },
-  {
-    id: "2",
-    name: "Paket Kue Kering",
-    possibleItems: "Nastar, Kastengel, Putri Salju",
-    originalPrice: 75000,
-    discountedPrice: 40000,
-    isAvailable: false,
-  },
-  {
-    id: "3",
-    name: "Paket Jajanan Pasar",
-    possibleItems: "Lemper, Risoles, Kue Lumpur",
-    originalPrice: 40000,
-    discountedPrice: 20000,
-    isAvailable: true,
-  },
-];
+import { useMenu } from "../context/MenuContext";
 
 const MenuScreen = ({ navigation }) => {
-  const [surpriseBags, setSurpriseBags] = useState(dummySurpriseBags);
-
-  // Fungsi untuk mengubah status ketersediaan (ready/tidak)
-  const toggleAvailability = (id) => {
-    setSurpriseBags(
-      surpriseBags.map((bag) =>
-        bag.id === id ? { ...bag, isAvailable: !bag.isAvailable } : bag
-      )
-    );
-  };
+  const { surpriseBags, toggleAvailability } = useMenu();
 
   // Placeholder untuk fungsi edit
   const handleEdit = (bag) => {
@@ -66,7 +30,7 @@ const MenuScreen = ({ navigation }) => {
       <Text style={styles.bagName}>{item.name}</Text>
 
       <Text style={styles.bagItemsLabel}>Kemungkinan isi:</Text>
-      <Text style={styles.bagItems}>{item.possibleItems}</Text>
+      <Text style={styles.bagItems}>{item.description}</Text>
 
       <View style={styles.priceContainer}>
         <Text style={styles.originalPrice}>

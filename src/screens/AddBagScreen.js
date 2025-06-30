@@ -9,8 +9,10 @@ import {
   SafeAreaView,
   Alert,
 } from "react-native";
+import { useMenu } from "../context/MenuContext";
 
 const AddBagScreen = ({ navigation }) => {
+  const { addBag } = useMenu();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
@@ -23,7 +25,16 @@ const AddBagScreen = ({ navigation }) => {
       Alert.alert("Error", "Harap isi semua field yang wajib diisi.");
       return;
     }
-    // Di aplikasi nyata, Anda akan menangani logika untuk menyimpan bag baru
+
+    // Panggil fungsi addBag dari context
+    addBag({
+      name,
+      description,
+      originalPrice: parseFloat(originalPrice),
+      discountedPrice: parseFloat(discountedPrice),
+      quantity: parseInt(quantity, 10),
+    });
+
     Alert.alert("Sukses", "Surprise Bag berhasil ditambahkan!", [
       { text: "OK", onPress: () => navigation.goBack() },
     ]);

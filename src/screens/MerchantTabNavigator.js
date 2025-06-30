@@ -6,6 +6,7 @@ import ListScreen from "./ListScreen";
 import MenuScreen from "./MenuScreen";
 import AddBagScreen from "./AddBagScreen";
 import ProfileScreen from "./ProfileScreen";
+import { MenuProvider } from "../context/MenuContext";
 import { useOrders, useToast } from "../hooks";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Toast from "../components/Toast";
@@ -66,7 +67,7 @@ const MerchantTabNavigator = () => {
   };
 
   return (
-    <>
+    <MenuProvider>
       <Tab.Navigator
         screenOptions={({ route }) => ({
           tabBarIcon: ({ focused, color, size }) => {
@@ -123,7 +124,7 @@ const MerchantTabNavigator = () => {
       {toast.visible && (
         <Toast message={toast.message} type={toast.type} onHide={hideToast} />
       )}
-    </>
+    </MenuProvider>
   );
 };
 
