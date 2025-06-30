@@ -43,6 +43,10 @@ const ProfileScreen = ({ navigation }) => {
     );
   };
 
+  const handleOfficialWebsite = () => {
+    Alert.alert("About Us", "Link ke website resmi kami akan segera tersedia.");
+  };
+
   const handleLogout = () => {
     // In a real app, you would clear user session and navigate to the login screen
     Alert.alert("Logout", "Apakah Anda yakin ingin keluar?", [
@@ -103,6 +107,13 @@ const ProfileScreen = ({ navigation }) => {
             onPress={handleHelpAndFeedback}
           >
             <Text style={styles.menuItemText}>Help & Feedback</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={handleOfficialWebsite}
+          >
+            <Text style={styles.menuItemText}>About Us</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
         </View>
