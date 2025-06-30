@@ -23,10 +23,10 @@ const merchantProfile = {
 
 const ProfileScreen = ({ navigation }) => {
   const handleEditStore = () => {
-    Alert.alert(
-      "Edit Store",
-      "Fitur untuk mengedit informasi toko sedang dalam pengembangan."
-    );
+    navigation.navigate("EditStore", {
+      storeName: merchantProfile.storeName,
+      description: merchantProfile.description,
+    });
   };
 
   const handleChangePassword = () => {

@@ -38,10 +38,8 @@ export default function LoginScreen({ navigation }) {
       {toast.visible && (
         <Toast message={toast.message} type={toast.type} onHide={hideToast} />
       )}
-      {/* Ganti `require` dengan path logo Anda. Buat folder `assets` di root proyek Anda */}
-      {/* <Image source={require("../../assets/logo.png")} style={styles.logo} /> */}
-      <Text style={styles.title}>Selamat Datang!</Text>
-      <Text style={styles.subtitle}>Silakan masuk untuk melanjutkan</Text>
+      {/* Logo Aplikasi */}
+      <Image source={require("../../assets/logo.png")} style={styles.logo} />
 
       {/* Box untuk Form */}
       <View style={styles.formContainer}>
@@ -97,10 +95,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
+    marginTop: -70,
   },
-  logo: { width: 120, height: 120, resizeMode: "contain", marginBottom: 30 },
-  title: { fontSize: 26, fontWeight: "bold", color: "#333", marginBottom: 10 },
-  subtitle: { fontSize: 16, color: "#7F8C8D", marginBottom: 30 }, // Abu-abu
+  logo: { width: 300, height: 300, resizeMode: "contain", marginBottom: -50 },
   formContainer: {
     width: "100%",
     backgroundColor: "#fff",
@@ -145,7 +142,7 @@ const styles = StyleSheet.create({
   loginButtonText: { color: "#FFFFFF", fontSize: 18, fontWeight: "bold" }, // Putih
   registerContainer: {
     flexDirection: "row",
-    marginTop: 30,
+    marginTop: 20,
     justifyContent: "center",
   },
   registerText: {

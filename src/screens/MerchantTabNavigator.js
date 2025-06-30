@@ -6,6 +6,7 @@ import ListScreen from "./ListScreen";
 import MenuScreen from "./MenuScreen";
 import AddBagScreen from "./AddBagScreen";
 import EditBagScreen from "./EditBagScreen";
+import EditStoreScreen from "./EditStoreScreen";
 import ProfileScreen from "./ProfileScreen";
 import { MenuProvider } from "../context/MenuContext";
 import { useOrders, useToast } from "../hooks";
@@ -14,6 +15,7 @@ import Toast from "../components/Toast";
 
 const Tab = createBottomTabNavigator();
 const MenuStack = createStackNavigator();
+const ProfileStack = createStackNavigator();
 
 const MerchantTabNavigator = () => {
   const {
@@ -116,7 +118,14 @@ const MerchantTabNavigator = () => {
             </MenuStack.Navigator>
           )}
         </Tab.Screen>
-        <Tab.Screen name="Profile" component={ProfileScreen} />
+        <Tab.Screen name="Profile">
+          {() => (
+            <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
+              <ProfileStack.Screen name="ProfileScreen" component={ProfileScreen} />
+              <ProfileStack.Screen name="EditStore" component={EditStoreScreen} />
+            </ProfileStack.Navigator>
+          )}
+        </Tab.Screen>
       </Tab.Navigator>
       {toast.visible && (
         <Toast message={toast.message} type={toast.type} onHide={hideToast} />
