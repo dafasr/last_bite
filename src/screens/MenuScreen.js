@@ -85,6 +85,11 @@ const MenuScreen = ({ navigation }) => {
           </Text>
         </View>
 
+        <View style={styles.quantityContainer}>
+          <Text style={styles.quantityLabel}>Kuantitas:</Text>
+          <Text style={styles.quantityText}>{item.quantity}</Text>
+        </View>
+
         <View style={styles.statusContainer}>
           <Text style={styles.statusLabel}>Ready</Text>
           <Switch
@@ -250,6 +255,25 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   availabilityTime: {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  quantityContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
+    backgroundColor: "#f9f9f9",
+    padding: 10,
+    borderRadius: 5,
+  },
+  quantityLabel: {
+    fontSize: 14,
+    color: "#7F8C8D",
+    fontWeight: "600",
+    marginRight: 8,
+  },
+  quantityText: {
     fontSize: 15,
     fontWeight: "bold",
     color: "#333",
