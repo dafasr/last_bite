@@ -6,6 +6,7 @@ import {
   FlatList,
   SafeAreaView,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 
 // Konfigurasi terpusat untuk semua status pesanan
@@ -90,25 +91,6 @@ const ListScreen = ({ orders, onUpdateStatus }) => {
     return orders.filter((o) => o.status === internalStatus);
   }, [orders, selectedCategory]);
 
-  const renderCategoryTab = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.categoryTab,
-        selectedCategory === item && styles.activeCategoryTab,
-      ]}
-      onPress={() => setSelectedCategory(item)}
-    >
-      <Text
-        style={[
-          styles.categoryTabText,
-          selectedCategory === item && styles.activeCategoryTabText,
-        ]}
-      >
-        {item}
-      </Text>
-    </TouchableOpacity>
-  );
-
   const getStatusStyle = (status) => {
     // Mengambil warna dari konfigurasi, dengan warna default jika status tidak ditemukan
     return { backgroundColor: STATUS_CONFIG[status]?.color || "#7F8C8D" };
@@ -120,15 +102,32 @@ const ListScreen = ({ orders, onUpdateStatus }) => {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Daftar Pesanan</Text>
         </View>
-        <View>
-          <FlatList
-            data={categories}
-            renderItem={renderCategoryTab}
-            keyExtractor={(item) => item}
+        <View style={styles.categoryContainerWrapper}>
+          <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryListContainer}
-          />
+            contentContainerStyle={styles.categoryContainer}
+          >
+            {categories.map((item) => (
+              <TouchableOpacity
+                key={item}
+                style={[
+                  styles.categoryTab,
+                  selectedCategory === item && styles.activeCategoryTab,
+                ]}
+                onPress={() => setSelectedCategory(item)}
+              >
+                <Text
+                  style={[
+                    styles.categoryTabText,
+                    selectedCategory === item && styles.activeCategoryTabText,
+                  ]}
+                >
+                  {item}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
         <FlatList
           data={filteredOrders}
@@ -274,29 +273,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#7F8C8D",
   },
-  categoryListContainer: {
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+  categoryContainerWrapper: {
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
   },
+  categoryContainer: {
+    flexDirection: "row",
+    // flexGrow: 1 ensures the container itself can grow inside the ScrollView
+    // if its children are smaller than the ScrollView.
+    flexGrow: 1,
+  },
   categoryTab: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: "#e9ecef",
-    marginHorizontal: 5,
+    // flexGrow allows tabs to expand and fill available space
+    flexGrow: 1,
+    // minWidth ensures tabs are readable even if there are many
+    minWidth: 110,
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
   activeCategoryTab: {
-    backgroundColor: "#2ECC71",
+    borderBottomWidth: 3,
+    borderBottomColor: "#2ECC71",
   },
   categoryTabText: {
     color: "#495057",
     fontWeight: "600",
+    fontSize: 14,
+    textAlign: "center",
   },
   activeCategoryTabText: {
-    color: "#FFFFFF",
+    color: "#2ECC71",
   },
 });
 
