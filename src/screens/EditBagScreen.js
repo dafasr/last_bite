@@ -22,6 +22,8 @@ const EditBagScreen = ({ navigation, route }) => {
   const [originalPrice, setOriginalPrice] = useState("");
   const [discountedPrice, setDiscountedPrice] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [availableFrom, setAvailableFrom] = useState("");
+  const [availableTo, setAvailableTo] = useState("");
 
   // Mengisi form dengan data bag yang sudah ada saat komponen dimuat
   useEffect(() => {
@@ -31,6 +33,8 @@ const EditBagScreen = ({ navigation, route }) => {
       setOriginalPrice(String(bag.originalPrice));
       setDiscountedPrice(String(bag.discountedPrice));
       setQuantity(String(bag.quantity));
+      setAvailableFrom(bag.availableFrom || "");
+      setAvailableTo(bag.availableTo || "");
     }
   }, [bag]);
 
@@ -48,6 +52,8 @@ const EditBagScreen = ({ navigation, route }) => {
       originalPrice: parseFloat(originalPrice),
       discountedPrice: parseFloat(discountedPrice),
       quantity: parseInt(quantity, 10),
+      availableFrom,
+      availableTo,
     });
 
     Alert.alert("Sukses", "Surprise Bag berhasil diperbarui!", [
@@ -139,6 +145,27 @@ const EditBagScreen = ({ navigation, route }) => {
                   value={discountedPrice}
                   onChangeText={setDiscountedPrice}
                   keyboardType="numeric"
+                />
+              </View>
+            </View>
+
+            <View style={styles.priceRow}>
+              <View style={styles.priceInputContainer}>
+                <Text style={styles.label}>Tersedia Dari (Jam)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="cth: 09:00"
+                  value={availableFrom}
+                  onChangeText={setAvailableFrom}
+                />
+              </View>
+              <View style={styles.priceInputContainer}>
+                <Text style={styles.label}>Tersedia Sampai (Jam)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="cth: 17:00"
+                  value={availableTo}
+                  onChangeText={setAvailableTo}
                 />
               </View>
             </View>
