@@ -17,12 +17,17 @@ export default function LoginScreen({ navigation }) {
   const { isLoading, loginUser } = useAuth();
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      showToast("Email dan password wajib diisi.", "error");
+      return;
+    }
     const result = await loginUser({ email, password });
-    if (!result.success) {
+    if (result.success) {
+      // On successful login (for now, direct navigation)
+      navigation.navigate("RegisterMerchant");
+    } else {
       showToast(result.message, "error");
     }
-    // On successful login (for now, direct navigation)
-    navigation.navigate("RegisterMerchant");
   };
 
   const handleForgotPassword = () => {
@@ -95,9 +100,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
-    marginTop: -70,
   },
-  logo: { width: 300, height: 300, resizeMode: "contain", marginBottom: -50 },
+  logo: { width: 250, height: 250, resizeMode: "contain", marginBottom: 20 },
   formContainer: {
     width: "100%",
     backgroundColor: "#fff",
