@@ -50,14 +50,23 @@ const MerchantTabNavigator = () => {
           ];
           newOrder.note = "Jangan pakai bawang, alergi.";
         } else {
-          // Fallback untuk pesanan lain, mengubah string menjadi struktur array
-          const parts = order.items.split("x ");
-          newOrder.items = [
-            {
-              name: parts[1] || order.items,
-              quantity: parseInt(parts[0]) || 1,
-            },
-          ];
+          // Fallback untuk pesanan lain, mengubah string menjadi struktur array.
+          // Menggunakan regex untuk menangani format "1x Item" atau "1xItem" secara robust.
+          const itemString = order.items;
+          const match = itemString.match(/^(\d+)\s*x\s*(.*)$/);
+
+          if (match) {
+            // Format "Kuantitas x Nama" ditemukan
+            newOrder.items = [
+              {
+                quantity: parseInt(match[1], 10),
+                name: match[2],
+              },
+            ];
+          } else {
+            // Jika format tidak cocok (misal: hanya "Kue Coklat"), anggap kuantitas adalah 1
+            newOrder.items = [{ name: itemString, quantity: 1 }];
+          }
         }
         return newOrder;
       }),
