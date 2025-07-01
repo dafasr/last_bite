@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Switch,
+  Image,
   Alert,
 } from "react-native";
 import { useMenu } from "../context/MenuContext";
@@ -54,50 +55,60 @@ const MenuScreen = ({ navigation }) => {
 
   const renderItem = ({ item }) => (
     <View style={styles.bagItem}>
-      <Text style={styles.bagName}>{item.name}</Text>
+      <Image
+        style={styles.bagImage}
+        source={{
+          uri:
+            item.image ||
+            "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?w=500&q=80",
+        }}
+      />
+      <View style={styles.bagContent}>
+        <Text style={styles.bagName}>{item.name}</Text>
 
-      <Text style={styles.bagItemsLabel}>Kemungkinan isi:</Text>
-      <Text style={styles.bagItems}>{item.description}</Text>
+        <Text style={styles.bagItemsLabel}>Kemungkinan isi:</Text>
+        <Text style={styles.bagItems}>{item.description}</Text>
 
-      <View style={styles.priceContainer}>
-        <Text style={styles.originalPrice}>
-          Rp {item.originalPrice.toLocaleString("id-ID")}
-        </Text>
-        <Text style={styles.discountedPrice}>
-          Rp {item.discountedPrice.toLocaleString("id-ID")}
-        </Text>
-      </View>
+        <View style={styles.priceContainer}>
+          <Text style={styles.originalPrice}>
+            Rp {item.originalPrice.toLocaleString("id-ID")}
+          </Text>
+          <Text style={styles.discountedPrice}>
+            Rp {item.discountedPrice.toLocaleString("id-ID")}
+          </Text>
+        </View>
 
-      <View style={styles.availabilityContainer}>
-        <Text style={styles.availabilityLabel}>Waktu Tersedia:</Text>
-        <Text style={styles.availabilityTime}>
-          {item.availableFrom || "N/A"} - {item.availableTo || "N/A"}
-        </Text>
-      </View>
+        <View style={styles.availabilityContainer}>
+          <Text style={styles.availabilityLabel}>Waktu Tersedia:</Text>
+          <Text style={styles.availabilityTime}>
+            {item.availableFrom || "N/A"} - {item.availableTo || "N/A"}
+          </Text>
+        </View>
 
-      <View style={styles.statusContainer}>
-        <Text style={styles.statusLabel}>Ready</Text>
-        <Switch
-          trackColor={{ false: "#767577", true: "#81b0ff" }}
-          thumbColor={item.isAvailable ? "#2ECC71" : "#f4f3f4"}
-          onValueChange={() => toggleAvailability(item.id)}
-          value={item.isAvailable}
-        />
-      </View>
+        <View style={styles.statusContainer}>
+          <Text style={styles.statusLabel}>Ready</Text>
+          <Switch
+            trackColor={{ false: "#767577", true: "#81b0ff" }}
+            thumbColor={item.isAvailable ? "#2ECC71" : "#f4f3f4"}
+            onValueChange={() => toggleAvailability(item.id)}
+            value={item.isAvailable}
+          />
+        </View>
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.editButton]}
-          onPress={() => handleEdit(item)}
-        >
-          <Text style={styles.actionButtonText}>Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.deleteButton]}
-          onPress={() => handleDelete(item.id, item.name)}
-        >
-          <Text style={styles.actionButtonText}>Hapus</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.editButton]}
+            onPress={() => handleEdit(item)}
+          >
+            <Text style={styles.actionButtonText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.deleteButton]}
+            onPress={() => handleDelete(item.id, item.name)}
+          >
+            <Text style={styles.actionButtonText}>Hapus</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -174,7 +185,6 @@ const styles = StyleSheet.create({
   },
   bagItem: {
     backgroundColor: "#FFFFFF",
-    padding: 20,
     borderRadius: 10,
     marginBottom: 20,
     shadowColor: "#000",
@@ -182,15 +192,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 4,
+    overflow: "hidden", // Ensures the image respects the border radius
+  },
+  bagImage: {
+    width: "100%",
+    height: 150,
+    resizeMode: "cover",
+  },
+  bagContent: {
+    padding: 20,
   },
   bagName: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#333",
-    marginBottom: 10,
+    // marginBottom is removed as spacing is now handled by the container
   },
   bagItemsLabel: {
     fontSize: 14,
+    marginTop: 10,
     color: "#7F8C8D",
     fontWeight: "600",
   },
