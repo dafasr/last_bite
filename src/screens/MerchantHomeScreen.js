@@ -140,48 +140,48 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: "row",
     marginHorizontal: 20,
-    marginVertical: 20,
+    marginVertical: 12, // Dikecilkan lagi
   },
   balanceCard: {
     flex: 1.5,
     backgroundColor: "#2ECC71",
-    padding: 20,
+    padding: 12, // Dikecilkan lagi
     borderRadius: 15,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 8,
-    marginRight: 10,
+    marginRight: 5, // Dikecilkan lagi
   },
   balanceLabel: {
-    fontSize: 14,
+    fontSize: 12, // Dikecilkan lagi
     color: "#FFFFFF",
     opacity: 0.9,
   },
   balanceAmount: {
-    fontSize: 24,
+    fontSize: 20, // Dikecilkan lagi
     fontWeight: "bold",
     color: "#FFFFFF",
     marginTop: 5,
-    marginBottom: 15,
+    marginBottom: 8, // Dikecilkan lagi
   },
   withdrawButton: {
     backgroundColor: "rgba(255, 255, 255, 0.9)",
-    paddingVertical: 8,
-    paddingHorizontal: 20,
+    paddingVertical: 5, // Dikecilkan lagi
+    paddingHorizontal: 12, // Dikecilkan lagi
     borderRadius: 25,
     alignSelf: "flex-start",
   },
   withdrawButtonText: {
     color: "#2ECC71",
     fontWeight: "bold",
-    fontSize: 14,
+    fontSize: 11, // Dikecilkan lagi
   },
   soldCard: {
     flex: 1,
     backgroundColor: "#3498DB",
-    padding: 20,
+    padding: 12, // Dikecilkan lagi
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
@@ -190,15 +190,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 8,
-    marginLeft: 10,
+    marginLeft: 5, // Dikecilkan lagi
   },
   soldLabel: {
-    fontSize: 14,
+    fontSize: 12, // Dikecilkan lagi
     color: "#FFFFFF",
     opacity: 0.9,
   },
   soldAmount: {
-    fontSize: 36,
+    fontSize: 28, // Dikecilkan lagi
     fontWeight: "bold",
     color: "#FFFFFF",
     marginTop: 5,
