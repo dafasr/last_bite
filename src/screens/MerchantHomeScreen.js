@@ -31,7 +31,13 @@ const MerchantHomeScreen = ({
         </View>
         <Text style={styles.orderPrice}>Rp {item.price}</Text>
       </View>
-      <Text style={styles.orderItems}>{item.items}</Text>
+      <View style={styles.orderItemsContainer}>
+        {item.items.map((orderItem, index) => (
+          <Text key={index} style={styles.orderItemText}>
+            {orderItem.quantity}x {orderItem.name}
+          </Text>
+        ))}
+      </View>
       {item.note && (
         <View style={styles.noteContainer}>
           <Text style={styles.noteLabel}>Catatan Pembeli:</Text>
@@ -242,10 +248,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#2ECC71",
   },
-  orderItems: {
+  orderItemsContainer: {
+    marginBottom: 10,
+  },
+  orderItemText: {
     fontSize: 14,
     color: "#7F8C8D",
-    marginBottom: 10,
+    // Use lineHeight to add space between items if there are multiple
+    lineHeight: 20,
   },
   noteContainer: {
     marginTop: 5,

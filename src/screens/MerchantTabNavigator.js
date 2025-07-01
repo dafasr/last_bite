@@ -31,18 +31,35 @@ const MerchantTabNavigator = () => {
   const ordersWithNotes = useMemo(
     () =>
       orders.map((order) => {
-        // Menambahkan catatan pada pesanan dengan id '1' (tanpa melihat status)
+        const newOrder = { ...order };
+
+        // Simulasi data item yang lebih kompleks untuk demonstrasi
+        // Di aplikasi nyata, struktur ini seharusnya datang dari API
         if (order.id === "1") {
-          return {
-            ...order,
-            note: "Tolong rotinya yang baru matang ya, terima kasih!",
-          };
+          newOrder.items = [
+            { name: "Paket Roti Spesial", quantity: 1 },
+            { name: "Kue Coklat", quantity: 2 },
+          ];
+          newOrder.note = "Tolong rotinya yang baru matang ya, terima kasih!";
+        } else if (order.id === "2") {
+          newOrder.items = [{ name: "Kue Keju", quantity: 2 }];
+        } else if (order.id === "3") {
+          newOrder.items = [
+            { name: "Donat Gula", quantity: 3 },
+            { name: "Roti Sisir Mentega", quantity: 1 },
+          ];
+          newOrder.note = "Jangan pakai bawang, alergi.";
+        } else {
+          // Fallback untuk pesanan lain, mengubah string menjadi struktur array
+          const parts = order.items.split("x ");
+          newOrder.items = [
+            {
+              name: parts[1] || order.items,
+              quantity: parseInt(parts[0]) || 1,
+            },
+          ];
         }
-        // Menambahkan catatan pada pesanan dengan id '3' (tanpa melihat status)
-        if (order.id === "3") {
-          return { ...order, note: "Jangan pakai bawang, alergi." };
-        }
-        return order;
+        return newOrder;
       }),
     [orders]
   );
@@ -121,8 +138,14 @@ const MerchantTabNavigator = () => {
         <Tab.Screen name="Profile">
           {() => (
             <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
-              <ProfileStack.Screen name="ProfileScreen" component={ProfileScreen} />
-              <ProfileStack.Screen name="EditStore" component={EditStoreScreen} />
+              <ProfileStack.Screen
+                name="ProfileScreen"
+                component={ProfileScreen}
+              />
+              <ProfileStack.Screen
+                name="EditStore"
+                component={EditStoreScreen}
+              />
             </ProfileStack.Navigator>
           )}
         </Tab.Screen>
