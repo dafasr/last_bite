@@ -1,70 +1,97 @@
 import { useState } from "react";
+import axios from "axios";
 
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const loginUser = async ({ email, password }) => {
+  const loginUser = async ({ username, password }) => {
     setIsLoading(true);
     // 1. Validasi input
-    if (!email || !password) {
-      const message = "Email dan password harus diisi.";
+    if (!username || !password) {
+      const message = "Username dan password harus diisi.";
       setIsLoading(false);
       return { success: false, message };
     }
 
-    // 2. Simulasi panggilan API
+    // 2. Panggilan API menggunakan axios
     try {
-      // Di masa depan, di sini akan ada panggilan API (misalnya dengan axios)
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulasi delay jaringan
+      const response = await axios.post(
+        "http://10.10.102.131:8080/api/auth/login",
+        {
+          username,
+          password,
+        }
+      );
       setIsLoading(false);
       // Jika berhasil, kembalikan status sukses
-      return { success: true };
+      return { success: true, data: response.data };
     } catch (error) {
       setIsLoading(false);
       // Jika gagal, kembalikan pesan error
       return {
         success: false,
-        message: error.message || "Terjadi kesalahan saat login.",
+        message: error.response?.data?.message || "Terjadi kesalahan saat login.",
       };
     }
   };
 
   const registerUser = async ({
+    username,
     fullName,
     email,
-    phone,
     password,
-    retypePassword,
-    agree,
+    phoneNumber,
+    storeName,
+    storeDescription,
+    address,
+    latitude,
+    longitude,
   }) => {
     setIsLoading(true);
     // 1. Validasi input
-    if (!fullName || !email || !phone || !password || !retypePassword) {
+    if (
+      !username ||
+      !fullName ||
+      !email ||
+      !password ||
+      !phoneNumber ||
+      !storeName ||
+      !storeDescription ||
+      !address ||
+      !latitude ||
+      !longitude
+    ) {
       const message = "Lengkapi semua kolom isian";
       setIsLoading(false);
       return { success: false, message };
     }
-    if (password !== retypePassword) {
-      const message = "Password tidak cocok";
-      setIsLoading(false);
-      return { success: false, message };
-    }
-    if (!agree) {
-      const message = "Anda harus menyetujui syarat & ketentuan";
-      setIsLoading(false);
-      return { success: false, message };
-    }
 
-    // 2. Simulasi panggilan API
+    // 2. Panggilan API menggunakan axios
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await axios.post(
+        "http://10.10.102.131:8080/api/auth/register-seller",
+        {
+          username,
+          fullName,
+          email,
+          password,
+          phoneNumber,
+          storeName,
+          storeDescription,
+          address,
+          latitude,
+          longitude,
+        }
+      );
       setIsLoading(false);
-      return { success: true };
+      // Jika berhasil, kembalikan status sukses
+      return { success: true, data: response.data };
     } catch (error) {
       setIsLoading(false);
+      // Jika gagal, kembalikan pesan error
       return {
         success: false,
-        message: error.message || "Terjadi kesalahan saat registrasi.",
+        message: error.response?.data?.message || "Terjadi kesalahan saat registrasi.",
       };
     }
   };

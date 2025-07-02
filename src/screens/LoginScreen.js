@@ -15,17 +15,17 @@ import Toast from "../components/Toast";
 import { useToast, useAuth } from "../hooks";
 
 export default function LoginScreen({ navigation }) {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { toast, showToast, hideToast } = useToast();
   const { isLoading, loginUser } = useAuth();
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      showToast("Email dan password wajib diisi.", "error");
+    if (!username || !password) {
+      showToast("Username dan password wajib diisi.", "error");
       return;
     }
-    const result = await loginUser({ email, password });
+    const result = await loginUser({ username, password });
     if (result.success) {
       // On successful login (for now, direct navigation)
       navigation.navigate("RegisterMerchant");
@@ -66,10 +66,9 @@ export default function LoginScreen({ navigation }) {
           <View style={styles.formContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
+              placeholder="Username"
+              value={username}
+              onChangeText={setUsername}
               autoCapitalize="none"
             />
             <TextInput

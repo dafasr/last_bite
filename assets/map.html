@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenStreetMap Picker</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        #mapid { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="mapid"></div>
+    <script>
+        var mymap = L.map('mapid').setView([-6.2, 106.816666], 13); // Default to Jakarta
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mymap);
+
+        var marker = L.marker([-6.2, 106.816666]).addTo(mymap);
+
+        mymap.on('click', function(e) {
+            marker.setLatLng(e.latlng);
+            window.ReactNativeWebView.postMessage(JSON.stringify(e.latlng));
+        });
+
+        // Initial message to set the marker if location is already known
+        window.addEventListener('message', function(event) {
+            console.log("Pesan diterima di WebView:", event.data);
+            var data = JSON.parse(event.data);
+            if (data.type === 'setInitialLocation') {
+                mymap.setView([data.latitude, data.longitude], 13);
+                marker.setLatLng([data.latitude, data.longitude]);
+                console.log("Peta diperbarui ke:", data.latitude, data.longitude);
+            }
+        });
+    </script>
+</body>
+</html>
