@@ -28,7 +28,7 @@ export default function LoginScreen({ navigation }) {
     const result = await loginUser({ username, password });
     if (result.success) {
       // On successful login (for now, direct navigation)
-      navigation.navigate("RegisterMerchant");
+      navigation.navigate("MerchantHome");
     } else {
       showToast(result.message, "error");
     }

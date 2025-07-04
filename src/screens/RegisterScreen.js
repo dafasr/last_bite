@@ -17,6 +17,7 @@ const RegisterScreen = ({ navigation }) => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [storeName, setStoreName] = useState("");
   const [storeDescription, setStoreDescription] = useState("");
@@ -28,6 +29,11 @@ const RegisterScreen = ({ navigation }) => {
   const { isLoading, registerUser } = useAuth();
 
   const handleRegister = async () => {
+    if (password !== confirmPassword) {
+      showToast("Password dan konfirmasi password tidak cocok.", "error");
+      return;
+    }
+
     const result = await registerUser({
       username,
       fullName,
@@ -44,7 +50,8 @@ const RegisterScreen = ({ navigation }) => {
     if (!result.success) {
       showToast(result.message, "error");
     } else {
-      navigation.navigate("SuccessScreen");
+      showToast("Registrasi berhasil! Silakan login.", "success");
+      navigation.navigate("Login");
     }
   };
 
@@ -56,101 +63,110 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Daftarkan Toko Anda</Text>
+        <Text style={styles.subtitle}>Isi detail di bawah untuk memulai</Text>
+
+        <View style={styles.formContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Username"
+            value={username}
+            onChangeText={setUsername}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Full Name"
+            value={fullName}
+            onChangeText={setFullName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Konfirmasi Password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Phone Number"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            keyboardType="phone-pad"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Nama Toko"
+            value={storeName}
+            onChangeText={setStoreName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Deskripsi Toko"
+            value={storeDescription}
+            onChangeText={setStoreDescription}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Alamat"
+            value={address}
+            onChangeText={setAddress}
+          />
+          <Text style={styles.mapLabel}>
+            Pilih Lokasi di Peta (Latitude: {latitude.toFixed(4)}, Longitude:{" "}
+            {longitude.toFixed(4)})
+          </Text>
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: latitude,
+              longitude: longitude,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421,
+            }}
+            onPress={handleMapPress}
+          >
+            <Marker coordinate={{ latitude: latitude, longitude: longitude }} />
+          </MapView>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleRegister}
+            disabled={isLoading}
+          >
+            <Text style={styles.buttonText}>
+              {isLoading ? "Registering..." : "Register"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.loginContainer}>
+          <Text style={styles.loginText}>Sudah punya akun? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+            <Text style={styles.loginLink}>Masuk sekarang</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
       {toast.visible && (
         <Toast message={toast.message} type={toast.type} onHide={hideToast} />
       )}
-      <Text style={styles.title}>Daftarkan Toko Anda</Text>
-      <Text style={styles.subtitle}>Isi detail di bawah untuk memulai</Text>
-
-      <View style={styles.formContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Username"
-          value={username}
-          onChangeText={setUsername}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Full Name"
-          value={fullName}
-          onChangeText={setFullName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Phone Number"
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
-          keyboardType="phone-pad"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Nama Toko"
-          value={storeName}
-          onChangeText={setStoreName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Deskripsi Toko"
-          value={storeDescription}
-          onChangeText={setStoreDescription}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Alamat"
-          value={address}
-          onChangeText={setAddress}
-        />
-        <Text style={styles.mapLabel}>
-          Pilih Lokasi di Peta (Latitude: {latitude.toFixed(4)}, Longitude:{" "}
-          {longitude.toFixed(4)})
-        </Text>
-        <MapView
-          style={styles.map}
-          initialRegion={{
-            latitude: latitude,
-            longitude: longitude,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
-          }}
-          onPress={handleMapPress}
-        >
-          <Marker coordinate={{ latitude: latitude, longitude: longitude }} />
-        </MapView>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleRegister}
-          disabled={isLoading}
-        >
-          <Text style={styles.buttonText}>
-            {isLoading ? "Registering..." : "Register"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.loginContainer}>
-        <Text style={styles.loginText}>Sudah punya akun? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-          <Text style={styles.loginLink}>Masuk sekarang</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+    </View>
   );
 };
 

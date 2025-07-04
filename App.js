@@ -31,6 +31,11 @@ export default function App() {
           component={RegisterScreen}
           options={{ headerShown: false }}
         />
+        <Stack.Screen
+          name="RegisterMerchant"
+          component={RegisterScreen}
+          options={{ headerShown: false }}
+        />
         
         <Stack.Screen
           name="Success"
