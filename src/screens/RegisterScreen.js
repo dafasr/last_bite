@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,10 +7,13 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import Toast from "../components/Toast";
 import { useToast, useAuth } from "../hooks";
+import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Location from 'expo-location';
 
 const RegisterScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -24,27 +27,123 @@ const RegisterScreen = ({ navigation }) => {
   const [address, setAddress] = useState("");
   const [latitude, setLatitude] = useState(-6.2);
   const [longitude, setLongitude] = useState(106.816666);
+  const [errors, setErrors] = useState({});
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [mapRegion, setMapRegion] = useState({
+    latitude: -6.2,
+    longitude: 106.816666,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+  });
 
   const { toast, showToast, hideToast } = useToast();
   const { isLoading, registerUser } = useAuth();
 
-  const handleRegister = async () => {
-    if (password !== confirmPassword) {
-      showToast("Password dan konfirmasi password tidak cocok.", "error");
+  useEffect(() => {
+    setMapRegion({
+      latitude: latitude,
+      longitude: longitude,
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    });
+  }, [latitude, longitude]);
+
+  const requestLocationPermission = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status === 'granted') {
+      return true;
+    } else {
+      showToast("Izin lokasi ditolak.", "error");
+      return false;
+    }
+  };
+
+  const getCurrentLocation = async () => {
+    setIsLocating(true);
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) {
+      setIsLocating(false);
       return;
     }
 
+    try {
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      setLatitude(location.coords.latitude);
+      setLongitude(location.coords.longitude);
+      setMapRegion({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      });
+    } catch (error) {
+      showToast("Gagal mendapatkan lokasi saat ini. " + error.message, "error");
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    if (!username) {
+      newErrors.username = "Nama pengguna wajib diisi.";
+    } else if (username.length < 3) {
+      newErrors.username = "Nama pengguna minimal 3 karakter.";
+    } else if (!/^[a-zA-Z0-9]+$/.test(username)) {
+      newErrors.username = "Nama pengguna hanya boleh berisi huruf dan angka.";
+    }
+    if (!email) newErrors.email = "Email wajib diisi.";
+    else if (!/\S+@\S+\.\S+/.test(email))
+      newErrors.email = "Format email tidak valid.";
+    if (!password) {
+      newErrors.password = "Kata sandi wajib diisi.";
+    } else if (password.length < 8) {
+      newErrors.password = "Kata sandi minimal 8 karakter.";
+    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/.test(password)) {
+      newErrors.password =
+        "Sandi harus mengandung huruf besar, kecil, dan angka.";
+    }
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Konfirmasi kata sandi wajib diisi.";
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Kata sandi tidak cocok.";
+    }
+    if (!fullName) newErrors.fullName = "Nama lengkap wajib diisi.";
+    if (!phoneNumber) {
+      newErrors.phoneNumber = "Nomor telepon wajib diisi.";
+    } else if (!/^\d+$/.test(phoneNumber)) {
+      newErrors.phoneNumber = "Nomor telepon hanya boleh berisi angka.";
+    } else if (phoneNumber.length < 10 || phoneNumber.length > 15) {
+      newErrors.phoneNumber = "Nomor telepon harus antara 10 hingga 15 digit.";
+    }
+    if (!storeName) newErrors.storeName = "Nama toko wajib diisi.";
+    if (!storeDescription)
+      newErrors.storeDescription = "Deskripsi toko wajib diisi.";
+    if (!address) newErrors.address = "Alamat wajib diisi.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleRegister = async () => {
+    if (!validate()) return;
+
     const result = await registerUser({
       username,
-      fullName,
       email,
       password,
+      fullName,
       phoneNumber,
       storeName,
       storeDescription,
-      address,
       latitude,
       longitude,
+      address,
+      status: "INACTIVE",
     });
 
     if (!result.success) {
@@ -71,79 +170,162 @@ const RegisterScreen = ({ navigation }) => {
         <View style={styles.formContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Username"
+            placeholder="Nama Pengguna"
             value={username}
-            onChangeText={setUsername}
+            onChangeText={(text) => {
+              setUsername(text);
+              if (errors.username) setErrors({ ...errors, username: null });
+            }}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Full Name"
-            value={fullName}
-            onChangeText={setFullName}
-          />
+          {errors.username && (
+            <Text style={styles.errorText}>{errors.username}</Text>
+          )}
           <TextInput
             style={styles.input}
             placeholder="Email"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (errors.email) setErrors({ ...errors, email: null });
+            }}
             keyboardType="email-address"
             autoCapitalize="none"
           />
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.inputWithEye}
+              placeholder="Kata Sandi"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (errors.password) setErrors({ ...errors, password: null });
+              }}
+              secureTextEntry={!isPasswordVisible}
+            />
+            <TouchableOpacity
+              onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+              style={styles.eyeIcon}
+            >
+              <Ionicons
+                name={isPasswordVisible ? "eye" : "eye-off"}
+                size={24}
+                color="gray"
+              />
+            </TouchableOpacity>
+          </View>
+          {errors.password && (
+            <Text style={styles.errorText}>{errors.password}</Text>
+          )}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.inputWithEye}
+              placeholder="Konfirmasi Kata Sandi"
+              value={confirmPassword}
+              onChangeText={(text) => {
+                setConfirmPassword(text);
+                if (errors.confirmPassword)
+                  setErrors({ ...errors, confirmPassword: null });
+              }}
+              secureTextEntry={!isConfirmPasswordVisible}
+            />
+            <TouchableOpacity
+              onPress={() =>
+                setIsConfirmPasswordVisible(!isConfirmPasswordVisible)
+              }
+              style={styles.eyeIcon}
+            >
+              <Ionicons
+                name={isConfirmPasswordVisible ? "eye" : "eye-off"}
+                size={24}
+                color="gray"
+              />
+            </TouchableOpacity>
+          </View>
+          {errors.confirmPassword && (
+            <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+          )}
           <TextInput
             style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
+            placeholder="Nama Lengkap"
+            value={fullName}
+            onChangeText={(text) => {
+              setFullName(text);
+              if (errors.fullName) setErrors({ ...errors, fullName: null });
+            }}
           />
+          {errors.fullName && (
+            <Text style={styles.errorText}>{errors.fullName}</Text>
+          )}
           <TextInput
             style={styles.input}
-            placeholder="Konfirmasi Password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Phone Number"
+            placeholder="Nomor Telepon"
             value={phoneNumber}
-            onChangeText={setPhoneNumber}
+            onChangeText={(text) => {
+              setPhoneNumber(text);
+              if (errors.phoneNumber)
+                setErrors({ ...errors, phoneNumber: null });
+            }}
             keyboardType="phone-pad"
           />
+          {errors.phoneNumber && (
+            <Text style={styles.errorText}>{errors.phoneNumber}</Text>
+          )}
           <TextInput
             style={styles.input}
             placeholder="Nama Toko"
             value={storeName}
-            onChangeText={setStoreName}
+            onChangeText={(text) => {
+              setStoreName(text);
+              if (errors.storeName) setErrors({ ...errors, storeName: null });
+            }}
           />
+          {errors.storeName && (
+            <Text style={styles.errorText}>{errors.storeName}</Text>
+          )}
           <TextInput
             style={styles.input}
             placeholder="Deskripsi Toko"
             value={storeDescription}
-            onChangeText={setStoreDescription}
+            onChangeText={(text) => {
+              setStoreDescription(text);
+              if (errors.storeDescription)
+                setErrors({ ...errors, storeDescription: null });
+            }}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Alamat"
-            value={address}
-            onChangeText={setAddress}
-          />
+          {errors.storeDescription && (
+            <Text style={styles.errorText}>{errors.storeDescription}</Text>
+          )}
           <Text style={styles.mapLabel}>
             Pilih Lokasi di Peta (Latitude: {latitude.toFixed(4)}, Longitude:{" "}
             {longitude.toFixed(4)})
           </Text>
+          <TouchableOpacity style={styles.locationButton} onPress={getCurrentLocation} disabled={isLocating}>
+            {isLocating ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.locationButtonText}>Gunakan Lokasi Saat Ini</Text>
+            )}
+          </TouchableOpacity>
           <MapView
             style={styles.map}
-            initialRegion={{
-              latitude: latitude,
-              longitude: longitude,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}
+            region={mapRegion}
             onPress={handleMapPress}
           >
             <Marker coordinate={{ latitude: latitude, longitude: longitude }} />
           </MapView>
+          <TextInput
+            style={styles.input}
+            placeholder="Detail Alamat"
+            value={address}
+            onChangeText={(text) => {
+              setAddress(text);
+              if (errors.address) setErrors({ ...errors, address: null });
+            }}
+          />
+          {errors.address && (
+            <Text style={styles.errorText}>{errors.address}</Text>
+          )}
 
           <TouchableOpacity
             style={styles.button}
@@ -151,7 +333,7 @@ const RegisterScreen = ({ navigation }) => {
             disabled={isLoading}
           >
             <Text style={styles.buttonText}>
-              {isLoading ? "Registering..." : "Register"}
+              {isLoading ? "Mendaftar..." : "Daftar"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -265,6 +447,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#FF6B35",
     fontWeight: "bold",
+  },
+  errorText: {
+    color: "red",
+    marginBottom: 10,
+    marginLeft: 5,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    height: 50,
+    backgroundColor: "#f7f7f7",
+    borderRadius: 10,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  inputWithEye: {
+    flex: 1,
+    paddingHorizontal: 15,
+  },
+  eyeIcon: {
+    paddingHorizontal: 15,
   },
 });
 

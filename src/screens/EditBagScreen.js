@@ -12,81 +12,81 @@ import {
   Platform,
 } from "react-native";
 import { useMenu } from "../context/MenuContext";
+import { useAuthContext } from "../context/AuthContext";
+import apiClient from "../api/apiClient";
+import { Picker } from "@react-native-picker/picker";
+import { TimerPickerModal } from "react-native-timer-picker";
 
 const EditBagScreen = ({ navigation, route }) => {
-  const { bag } = route.params; // Mengambil data bag yang dikirim dari MenuScreen
-  const { updateBag, deleteBag } = useMenu();
+  const { bag } = route.params;
+  const { updateBag } = useMenu();
+  const { sellerProfileId } = useAuthContext();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
   const [discountedPrice, setDiscountedPrice] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [availableFrom, setAvailableFrom] = useState("");
-  const [availableTo, setAvailableTo] = useState("");
+  const [quantityAvailable, setQuantityAvailable] = useState("");
+  const [displayStartTime, setDisplayStartTime] = useState("");
+  const [displayEndTime, setDisplayEndTime] = useState("");
+  const [status, setStatus] = useState("AVAILABLE");
+  const [isStartTimePickerVisible, setStartTimePickerVisible] = useState(false);
+  const [isEndTimePickerVisible, setEndTimePickerVisible] = useState(false);
 
-  // Mengisi form dengan data bag yang sudah ada saat komponen dimuat
   useEffect(() => {
     if (bag) {
       setName(bag.name);
       setDescription(bag.description);
+      setImageUrl(bag.imageUrl);
       setOriginalPrice(String(bag.originalPrice));
       setDiscountedPrice(String(bag.discountedPrice));
-      setQuantity(String(bag.quantity));
-      setAvailableFrom(bag.availableFrom || "");
-      setAvailableTo(bag.availableTo || "");
+      setQuantityAvailable(String(bag.quantityAvailable));
+      setDisplayStartTime(bag.displayStartTime);
+      setDisplayEndTime(bag.displayEndTime);
+      setStatus(bag.status);
     }
   }, [bag]);
 
-  const handleSave = () => {
-    // Validasi dasar
-    if (!name || !originalPrice || !discountedPrice || !quantity) {
+  const handleSave = async () => {
+    if (!sellerProfileId) {
+      Alert.alert("Error", "Seller profile ID not found. Please log in again.");
+      return;
+    }
+
+    if (!name || !originalPrice || !discountedPrice || !quantityAvailable || !displayStartTime || !displayEndTime) {
       Alert.alert("Error", "Harap isi semua field yang wajib diisi.");
       return;
     }
 
-    // Panggil fungsi updateBag dari context
-    updateBag(bag.id, {
-      name,
-      description,
-      originalPrice: parseFloat(originalPrice),
-      discountedPrice: parseFloat(discountedPrice),
-      quantity: parseInt(quantity, 10),
-      availableFrom,
-      availableTo,
-    });
+    try {
+      const payload = {
+        sellerProfileId,
+        name,
+        description,
+        imageUrl,
+        originalPrice: parseFloat(originalPrice),
+        discountedPrice: parseFloat(discountedPrice),
+        quantityAvailable: parseInt(quantityAvailable, 10),
+        displayStartTime,
+        displayEndTime,
+        status,
+      };
+      console.log("Update Bag Request Payload:", payload);
+      const response = await apiClient.put(`/menu-items/${bag.id}`, payload);
 
-    Alert.alert("Sukses", "Surprise Bag berhasil diperbarui!", [
-      { text: "OK", onPress: () => navigation.goBack() },
-    ]);
-  };
-
-  const handleDelete = () => {
-    Alert.alert(
-      "Hapus Surprise Bag",
-      `Apakah Anda yakin ingin menghapus "${bag.name}"? Tindakan ini tidak dapat dibatalkan.`,
-      [
-        {
-          text: "Batal",
-          style: "cancel",
-        },
-        {
-          text: "Hapus",
-          onPress: () => {
-            deleteBag(bag.id);
-            navigation.goBack();
-          },
-          style: "destructive",
-        },
-      ]
-    );
-  };
-
-  const handleUploadImage = () => {
-    Alert.alert(
-      "Segera Hadir",
-      "Fitur unggah gambar sedang dalam pengembangan."
-    );
+      if (response.status === 200) {
+        updateBag(bag.id, response.data);
+        Alert.alert("Sukses", "Surprise Bag berhasil diperbarui!", [
+          { text: "OK", onPress: () => navigation.goBack() },
+        ]);
+      } else {
+        Alert.alert("Error", "Gagal memperbarui Surprise Bag. Silakan coba lagi.");
+      }
+    } catch (error) {
+      console.error("Failed to update menu item:", error);
+      Alert.alert("Error", error.response?.data?.message || "Terjadi kesalahan saat memperbarui Surprise Bag.");
+    }
   };
 
   return (
@@ -118,13 +118,13 @@ const EditBagScreen = ({ navigation, route }) => {
               multiline
             />
 
-            <Text style={styles.label}>Gambar</Text>
-            <TouchableOpacity
-              style={styles.outlineButton}
-              onPress={handleUploadImage}
-            >
-              <Text style={styles.outlineButtonText}>Unggah Gambar</Text>
-            </TouchableOpacity>
+            <Text style={styles.label}>Image URL</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="http://example.com/image.jpg"
+              value={imageUrl}
+              onChangeText={setImageUrl}
+            />
 
             <View style={styles.priceRow}>
               <View style={styles.priceInputContainer}>
@@ -152,41 +152,90 @@ const EditBagScreen = ({ navigation, route }) => {
             <View style={styles.priceRow}>
               <View style={styles.priceInputContainer}>
                 <Text style={styles.label}>Tersedia Dari (Jam)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="cth: 09:00"
-                  value={availableFrom}
-                  onChangeText={setAvailableFrom}
-                />
+                <TouchableOpacity
+                  style={styles.timeInput}
+                  onPress={() => setStartTimePickerVisible(true)}
+                >
+                  <Text style={displayStartTime ? styles.timeText : styles.placeholderText}>
+                    {displayStartTime ? displayStartTime.slice(11, 16) : "Pilih Jam"}
+                  </Text>
+                </TouchableOpacity>
               </View>
               <View style={styles.priceInputContainer}>
                 <Text style={styles.label}>Tersedia Sampai (Jam)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="cth: 17:00"
-                  value={availableTo}
-                  onChangeText={setAvailableTo}
-                />
+                <TouchableOpacity
+                  style={styles.timeInput}
+                  onPress={() => setEndTimePickerVisible(true)}
+                >
+                  <Text style={displayEndTime ? styles.timeText : styles.placeholderText}>
+                    {displayEndTime ? displayEndTime.slice(11, 16) : "Pilih Jam"}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
+
+            <TimerPickerModal
+              visible={isStartTimePickerVisible}
+              setIsVisible={setStartTimePickerVisible}
+              onConfirm={(pickedDuration) => {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(pickedDuration.hours).padStart(2, '0');
+                const minutes = String(pickedDuration.minutes).padStart(2, '0');
+                const seconds = String(pickedDuration.seconds).padStart(2, '0');
+                setDisplayStartTime(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+                setStartTimePickerVisible(false);
+              }}
+              modalTitle="Pilih Jam Mulai"
+              onCancel={() => setStartTimePickerVisible(false)}
+              closeOnOverlayPress
+            />
+
+            <TimerPickerModal
+              visible={isEndTimePickerVisible}
+              setIsVisible={setEndTimePickerVisible}
+              onConfirm={(pickedDuration) => {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(pickedDuration.hours).padStart(2, '0');
+                const minutes = String(pickedDuration.minutes).padStart(2, '0');
+                const seconds = String(pickedDuration.seconds).padStart(2, '0');
+                setDisplayEndTime(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+                setEndTimePickerVisible(false);
+              }}
+              modalTitle="Pilih Jam Selesai"
+              onCancel={() => setEndTimePickerVisible(false)}
+              closeOnOverlayPress
+            />
 
             <Text style={styles.label}>Kuantitas</Text>
             <TextInput
               style={styles.input}
               placeholder="10"
-              value={quantity}
-              onChangeText={setQuantity}
+              value={quantityAvailable}
+              onChangeText={setQuantityAvailable}
               keyboardType="numeric"
             />
 
+            <Text style={styles.label}>Status</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={status}
+                onValueChange={(itemValue) => setStatus(itemValue)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Available" value="AVAILABLE" />
+                <Picker.Item label="Sold Out" value="SOLD_OUT" />
+                <Picker.Item label="Not Available" value="NOT_AVAILABLE" />
+              </Picker>
+            </View>
+
             <TouchableOpacity style={styles.button} onPress={handleSave}>
               <Text style={styles.buttonText}>Simpan Perubahan</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.deleteButton]}
-              onPress={handleDelete}
-            >
-              <Text style={styles.buttonText}>Hapus Surprise Bag</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -252,27 +301,11 @@ const styles = StyleSheet.create({
   },
   priceRow: {
     flexDirection: "row",
-    marginHorizontal: -5, // Menghilangkan margin ekstra pada sisi
+    marginHorizontal: -5,
   },
   priceInputContainer: {
     flex: 1,
-    marginHorizontal: 5, // Memberi jarak antar input
-  },
-  outlineButton: {
-    width: "100%",
-    height: 50,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#3498DB",
-    marginBottom: 20,
-  },
-  outlineButtonText: {
-    color: "#3498DB",
-    fontSize: 16,
-    fontWeight: "bold",
+    marginHorizontal: 5,
   },
   button: {
     width: "100%",
@@ -283,14 +316,41 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 10,
   },
-  deleteButton: {
-    backgroundColor: "#E74C3C", // Red
-    marginTop: 15,
-  },
   buttonText: {
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  pickerContainer: {
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 10,
+    marginBottom: 20,
+    overflow: "hidden",
+  },
+  picker: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#f7f7f7",
+  },
+  timeInput: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#f7f7f7",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    justifyContent: "center",
+  },
+  timeText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: "#999",
   },
 });
 

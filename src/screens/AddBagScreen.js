@@ -12,9 +12,14 @@ import {
   Platform,
 } from "react-native";
 import { useMenu } from "../context/MenuContext";
+import { useAuthContext } from "../context/AuthContext";
+import apiClient from "../api/apiClient";
+import { Picker } from "@react-native-picker/picker";
+import { TimerPickerModal } from "react-native-timer-picker";
 
 const AddBagScreen = ({ navigation }) => {
-  const { addBag } = useMenu();
+  const { addBag } = useMenu(); // Keep this for now, might be used for local state update
+  const { sellerProfileId } = useAuthContext();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -23,29 +28,48 @@ const AddBagScreen = ({ navigation }) => {
   const [quantityAvailable, setQuantityAvailable] = useState("");
   const [displayStartTime, setDisplayStartTime] = useState("");
   const [displayEndTime, setDisplayEndTime] = useState("");
+  const [status, setStatus] = useState("AVAILABLE");
+  const [isStartTimePickerVisible, setStartTimePickerVisible] = useState(false);
+  const [isEndTimePickerVisible, setEndTimePickerVisible] = useState(false);
 
-  const handleSave = () => {
-    // Validasi dasar
-    if (!name || !originalPrice || !discountedPrice || !quantityAvailable) {
+  const handleSave = async () => {
+    if (!sellerProfileId) {
+      Alert.alert("Error", "Seller profile ID not found. Please log in again.");
+      return;
+    }
+
+    if (!name || !originalPrice || !discountedPrice || !quantityAvailable || !displayStartTime || !displayEndTime) {
       Alert.alert("Error", "Harap isi semua field yang wajib diisi.");
       return;
     }
 
-    // Panggil fungsi addBag dari context
-    addBag({
-      name,
-      description,
-      imageUrl,
-      originalPrice: parseFloat(originalPrice),
-      discountedPrice: parseFloat(discountedPrice),
-      quantityAvailable: parseInt(quantityAvailable, 10),
-      displayStartTime,
-      displayEndTime,
-    });
+    try {
+      const payload = {
+        sellerProfileId,
+        name,
+        description,
+        imageUrl,
+        originalPrice: parseFloat(originalPrice),
+        discountedPrice: parseFloat(discountedPrice),
+        quantityAvailable: parseInt(quantityAvailable, 10),
+        displayStartTime,
+        displayEndTime,
+        status: "AVAILABLE", // Default status
+      };
+      console.log("Add Bag Request Payload:", payload);
+      const response = await apiClient.post("/menu-items", payload);
 
-    Alert.alert("Sukses", "Surprise Bag berhasil ditambahkan!", [
-      { text: "OK", onPress: () => navigation.goBack() },
-    ]);
+      if (response.status === 201) {
+        Alert.alert("Sukses", "Surprise Bag berhasil ditambahkan!", [
+          { text: "OK", onPress: () => navigation.goBack() },
+        ]);
+      } else {
+        Alert.alert("Error", "Gagal menambahkan Surprise Bag. Silakan coba lagi.");
+      }
+    } catch (error) {
+      console.error("Failed to add menu item:", error);
+      Alert.alert("Error", error.response?.data?.message || "Terjadi kesalahan saat menambahkan Surprise Bag.");
+    }
   };
 
   const handleUploadImage = () => {
@@ -118,23 +142,71 @@ const AddBagScreen = ({ navigation }) => {
             <View style={styles.priceRow}>
               <View style={styles.priceInputContainer}>
                 <Text style={styles.label}>Tersedia Dari (Jam)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="cth: 10:00:00"
-                  value={displayStartTime}
-                  onChangeText={setDisplayStartTime}
-                />
+                <TouchableOpacity
+                  style={styles.timeInput}
+                  onPress={() => setStartTimePickerVisible(true)}
+                >
+                  <Text style={displayStartTime ? styles.timeText : styles.placeholderText}>
+                    {displayStartTime || "Pilih Jam"}
+                  </Text>
+                </TouchableOpacity>
               </View>
               <View style={styles.priceInputContainer}>
                 <Text style={styles.label}>Tersedia Sampai (Jam)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="cth: 22:00:00"
-                  value={displayEndTime}
-                  onChangeText={setDisplayEndTime}
-                />
+                <TouchableOpacity
+                  style={styles.timeInput}
+                  onPress={() => setEndTimePickerVisible(true)}
+                >
+                  <Text style={displayEndTime ? styles.timeText : styles.placeholderText}>
+                    {displayEndTime || "Pilih Jam"}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
+
+            <TimerPickerModal
+              visible={isStartTimePickerVisible}
+              setIsVisible={setStartTimePickerVisible}
+              onConfirm={(pickedDuration) => {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(pickedDuration.hours).padStart(2, '0');
+                const minutes = String(pickedDuration.minutes).padStart(2, '0');
+                const seconds = String(pickedDuration.seconds).padStart(2, '0');
+                setDisplayStartTime(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+                setStartTimePickerVisible(false);
+              }}
+              modalTitle="Pilih Jam Mulai"
+              onCancel={() => setStartTimePickerVisible(false)}
+              closeOnOverlayPress
+              initialHours={parseInt(displayStartTime.split(':')[0] || '0', 10)}
+              initialMinutes={parseInt(displayStartTime.split(':')[1] || '0', 10)}
+              initialSeconds={parseInt(displayStartTime.split(':')[2] || '0', 10)}
+            />
+
+            <TimerPickerModal
+              visible={isEndTimePickerVisible}
+              setIsVisible={setEndTimePickerVisible}
+              onConfirm={(pickedDuration) => {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(pickedDuration.hours).padStart(2, '0');
+                const minutes = String(pickedDuration.minutes).padStart(2, '0');
+                const seconds = String(pickedDuration.seconds).padStart(2, '0');
+                setDisplayEndTime(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+                setEndTimePickerVisible(false);
+              }}
+              modalTitle="Pilih Jam Selesai"
+              onCancel={() => setEndTimePickerVisible(false)}
+              closeOnOverlayPress
+              initialHours={parseInt(displayEndTime.split(':')[0] || '0', 10)}
+              initialMinutes={parseInt(displayEndTime.split(':')[1] || '0', 10)}
+              initialSeconds={parseInt(displayEndTime.split(':')[2] || '0', 10)}
+            />
 
             <Text style={styles.label}>Kuantitas</Text>
             <TextInput
@@ -144,6 +216,19 @@ const AddBagScreen = ({ navigation }) => {
               onChangeText={setQuantityAvailable}
               keyboardType="numeric"
             />
+
+            <Text style={styles.label}>Status</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={status}
+                onValueChange={(itemValue) => setStatus(itemValue)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Available" value="AVAILABLE" />
+                <Picker.Item label="Sold Out" value="SOLD_OUT" />
+                <Picker.Item label="Not Available" value="NOT_AVAILABLE" />
+              </Picker>
+            </View>
 
             <TouchableOpacity style={styles.button} onPress={handleSave}>
               <Text style={styles.buttonText}>Simpan Surprise Bag</Text>
@@ -247,6 +332,37 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  pickerContainer: {
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 10,
+    marginBottom: 20,
+    overflow: "hidden",
+  },
+  picker: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#f7f7f7",
+  },
+  timeInput: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#f7f7f7",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    justifyContent: "center",
+  },
+  timeText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: "#999",
   },
 });
 

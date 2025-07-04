@@ -19,4 +19,8 @@ apiClient.interceptors.request.use(
   }
 );
 
+export const getMenuItems = () => {
+  return apiClient.get("/menu-items/me");
+};
+
 export default apiClient;

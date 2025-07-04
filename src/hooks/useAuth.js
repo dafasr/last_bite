@@ -1,9 +1,11 @@
 import { useState } from "react";
 import apiClient from "../api/apiClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuthContext } from "../context/AuthContext";
 
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const { updateSellerProfileId } = useAuthContext();
 
   const loginUser = async ({ username, password }) => {
     setIsLoading(true);
@@ -21,10 +23,23 @@ export const useAuth = () => {
         password,
       });
 
-      // Asumsikan token ada di response.data.data.token
+      // Asumsikan token dan status ada di response.data.data
       // Sesuaikan path ini jika struktur response dari API Anda berbeda
       if (response.data && response.data.data && response.data.data.token) {
-        await AsyncStorage.setItem("userToken", response.data.data.token);
+        const { token, status } = response.data.data;
+
+        if (status === 'INACTIVE') {
+          setIsLoading(false);
+          return { success: false, message: 'Akun Anda tidak aktif. Silakan hubungi admin.' };
+        }
+
+        await AsyncStorage.setItem("userToken", token);
+
+        // Fetch user profile after successful login
+        const userProfileResponse = await apiClient.get("/users/me");
+        if (userProfileResponse.data && userProfileResponse.data.data && userProfileResponse.data.data.id) {
+          await updateSellerProfileId(userProfileResponse.data.data.id);
+        }
       }
 
       setIsLoading(false);

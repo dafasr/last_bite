@@ -11,9 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { useMenu } from "../context/MenuContext";
-import { getMenuItems } from "../api";
-
-const categories = ["Semua", "Ready", "Tidak Ready"];
+import { getMenuItems } from "../api/apiClient";
 
 const MenuScreen = ({ navigation }) => {
   const { surpriseBags, setSurpriseBags, toggleAvailability, deleteBag } = useMenu();
@@ -23,7 +21,7 @@ const MenuScreen = ({ navigation }) => {
     const fetchMenuItems = async () => {
       try {
         const response = await getMenuItems();
-        setSurpriseBags(response.data);
+        setSurpriseBags(response.data.data);
       } catch (error) {
         console.error("Failed to fetch menu items:", error);
         Alert.alert("Error", "Failed to fetch menu items.");
@@ -34,7 +32,6 @@ const MenuScreen = ({ navigation }) => {
 
     fetchMenuItems();
   }, []);
-  const [selectedCategory, setSelectedCategory] = useState("Semua");
 
   // Placeholder untuk fungsi edit
   // Mengarahkan ke layar EditBag dan mengirimkan data 'bag' yang dipilih
@@ -62,14 +59,8 @@ const MenuScreen = ({ navigation }) => {
   };
 
   const filteredBags = useMemo(() => {
-    if (selectedCategory === "Ready") {
-      return surpriseBags.filter((bag) => bag.status === "AVAILABLE");
-    }
-    if (selectedCategory === "Tidak Ready") {
-      return surpriseBags.filter((bag) => bag.status === "UNAVAILABLE");
-    }
-    return surpriseBags; // "Semua"
-  }, [surpriseBags, selectedCategory]);
+    return surpriseBags;
+  }, [surpriseBags]);
 
   const renderItem = ({ item }) => (
     <View style={styles.bagItem}>
@@ -97,7 +88,7 @@ const MenuScreen = ({ navigation }) => {
         <View style={styles.availabilityContainer}>
           <Text style={styles.availabilityLabel}>Waktu Tersedia:</Text>
           <Text style={styles.availabilityTime}>
-            {item.displayStartTime || "N/A"} - {item.displayEndTime || "N/A"}
+            {item.displayStartTime ? item.displayStartTime.slice(11, 16) : "N/A"} - {item.displayEndTime ? item.displayEndTime.slice(11, 16) : "N/A"}
           </Text>
         </View>
 
@@ -106,7 +97,7 @@ const MenuScreen = ({ navigation }) => {
           <Text style={styles.quantityText}>{item.quantityAvailable}</Text>
         </View>
 
-        <View style={styles.statusContainer}>
+        {/* <View style={styles.statusContainer}>
           <Text style={styles.statusLabel}>Ready</Text>
           <Switch
             trackColor={{ false: "#767577", true: "#81b0ff" }}
@@ -114,7 +105,7 @@ const MenuScreen = ({ navigation }) => {
             onValueChange={() => toggleAvailability(item.id)}
             value={item.status === "AVAILABLE"}
           />
-        </View>
+        </View> */}
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
@@ -139,27 +130,6 @@ const MenuScreen = ({ navigation }) => {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Your Surprise Bags</Text>
-        </View>
-        <View style={styles.categoryContainer}>
-          {categories.map((item) => (
-            <TouchableOpacity
-              key={item}
-              style={[
-                styles.categoryTab,
-                selectedCategory === item && styles.activeCategoryTab,
-              ]}
-              onPress={() => setSelectedCategory(item)}
-            >
-              <Text
-                style={[
-                  styles.categoryTabText,
-                  selectedCategory === item && styles.activeCategoryTabText,
-                ]}
-              >
-                {item}
-              </Text>
-            </TouchableOpacity>
-          ))}
         </View>
         <FlatList
           data={filteredBags}
