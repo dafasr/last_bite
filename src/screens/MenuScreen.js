@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,11 +11,29 @@ import {
   Alert,
 } from "react-native";
 import { useMenu } from "../context/MenuContext";
+import { getMenuItems } from "../api";
 
 const categories = ["Semua", "Ready", "Tidak Ready"];
 
 const MenuScreen = ({ navigation }) => {
-  const { surpriseBags, toggleAvailability, deleteBag } = useMenu();
+  const { surpriseBags, setSurpriseBags, toggleAvailability, deleteBag } = useMenu();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      try {
+        const response = await getMenuItems();
+        setSurpriseBags(response.data);
+      } catch (error) {
+        console.error("Failed to fetch menu items:", error);
+        Alert.alert("Error", "Failed to fetch menu items.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMenuItems();
+  }, []);
   const [selectedCategory, setSelectedCategory] = useState("Semua");
 
   // Placeholder untuk fungsi edit
@@ -45,10 +63,10 @@ const MenuScreen = ({ navigation }) => {
 
   const filteredBags = useMemo(() => {
     if (selectedCategory === "Ready") {
-      return surpriseBags.filter((bag) => bag.isAvailable);
+      return surpriseBags.filter((bag) => bag.status === "AVAILABLE");
     }
     if (selectedCategory === "Tidak Ready") {
-      return surpriseBags.filter((bag) => !bag.isAvailable);
+      return surpriseBags.filter((bag) => bag.status === "UNAVAILABLE");
     }
     return surpriseBags; // "Semua"
   }, [surpriseBags, selectedCategory]);
@@ -58,9 +76,7 @@ const MenuScreen = ({ navigation }) => {
       <Image
         style={styles.bagImage}
         source={{
-          uri:
-            item.image ||
-            "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?w=500&q=80",
+          uri: item.imageUrl || "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?w=500&q=80",
         }}
       />
       <View style={styles.bagContent}>
@@ -81,22 +97,22 @@ const MenuScreen = ({ navigation }) => {
         <View style={styles.availabilityContainer}>
           <Text style={styles.availabilityLabel}>Waktu Tersedia:</Text>
           <Text style={styles.availabilityTime}>
-            {item.availableFrom || "N/A"} - {item.availableTo || "N/A"}
+            {item.displayStartTime || "N/A"} - {item.displayEndTime || "N/A"}
           </Text>
         </View>
 
         <View style={styles.quantityContainer}>
           <Text style={styles.quantityLabel}>Kuantitas:</Text>
-          <Text style={styles.quantityText}>{item.quantity}</Text>
+          <Text style={styles.quantityText}>{item.quantityAvailable}</Text>
         </View>
 
         <View style={styles.statusContainer}>
           <Text style={styles.statusLabel}>Ready</Text>
           <Switch
             trackColor={{ false: "#767577", true: "#81b0ff" }}
-            thumbColor={item.isAvailable ? "#2ECC71" : "#f4f3f4"}
+            thumbColor={item.status === "AVAILABLE" ? "#2ECC71" : "#f4f3f4"}
             onValueChange={() => toggleAvailability(item.id)}
-            value={item.isAvailable}
+            value={item.status === "AVAILABLE"}
           />
         </View>
 

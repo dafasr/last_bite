@@ -17,15 +17,16 @@ const AddBagScreen = ({ navigation }) => {
   const { addBag } = useMenu();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
   const [discountedPrice, setDiscountedPrice] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [availableFrom, setAvailableFrom] = useState("");
-  const [availableTo, setAvailableTo] = useState("");
+  const [quantityAvailable, setQuantityAvailable] = useState("");
+  const [displayStartTime, setDisplayStartTime] = useState("");
+  const [displayEndTime, setDisplayEndTime] = useState("");
 
   const handleSave = () => {
     // Validasi dasar
-    if (!name || !originalPrice || !discountedPrice || !quantity) {
+    if (!name || !originalPrice || !discountedPrice || !quantityAvailable) {
       Alert.alert("Error", "Harap isi semua field yang wajib diisi.");
       return;
     }
@@ -34,11 +35,12 @@ const AddBagScreen = ({ navigation }) => {
     addBag({
       name,
       description,
+      imageUrl,
       originalPrice: parseFloat(originalPrice),
       discountedPrice: parseFloat(discountedPrice),
-      quantity: parseInt(quantity, 10),
-      availableFrom,
-      availableTo,
+      quantityAvailable: parseInt(quantityAvailable, 10),
+      displayStartTime,
+      displayEndTime,
     });
 
     Alert.alert("Sukses", "Surprise Bag berhasil ditambahkan!", [
@@ -82,13 +84,13 @@ const AddBagScreen = ({ navigation }) => {
               multiline
             />
 
-            <Text style={styles.label}>Gambar</Text>
-            <TouchableOpacity
-              style={styles.outlineButton}
-              onPress={handleUploadImage}
-            >
-              <Text style={styles.outlineButtonText}>Unggah Gambar</Text>
-            </TouchableOpacity>
+            <Text style={styles.label}>Image URL</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="http://example.com/image.jpg"
+              value={imageUrl}
+              onChangeText={setImageUrl}
+            />
 
             <View style={styles.priceRow}>
               <View style={styles.priceInputContainer}>
@@ -118,18 +120,18 @@ const AddBagScreen = ({ navigation }) => {
                 <Text style={styles.label}>Tersedia Dari (Jam)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="cth: 09:00"
-                  value={availableFrom}
-                  onChangeText={setAvailableFrom}
+                  placeholder="cth: 10:00:00"
+                  value={displayStartTime}
+                  onChangeText={setDisplayStartTime}
                 />
               </View>
               <View style={styles.priceInputContainer}>
                 <Text style={styles.label}>Tersedia Sampai (Jam)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="cth: 17:00"
-                  value={availableTo}
-                  onChangeText={setAvailableTo}
+                  placeholder="cth: 22:00:00"
+                  value={displayEndTime}
+                  onChangeText={setDisplayEndTime}
                 />
               </View>
             </View>
@@ -138,8 +140,8 @@ const AddBagScreen = ({ navigation }) => {
             <TextInput
               style={styles.input}
               placeholder="10"
-              value={quantity}
-              onChangeText={setQuantity}
+              value={quantityAvailable}
+              onChangeText={setQuantityAvailable}
               keyboardType="numeric"
             />
 

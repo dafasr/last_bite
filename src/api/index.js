@@ -1,19 +1,25 @@
-// This file will be used for actual API calls later.
-// For now, it's a placeholder.
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Example of a future function:
-/*
-import axios from 'axios';
+const apiClient = axios.create({
+  baseURL: "http://10.10.102.131:8080", // Adjust this to your API's base URL
+});
 
-const API_URL = 'https://your-backend-api.com/api';
-
-export const getOrders = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/orders`);
-    return response.data;
-  } catch (error) {
-    console.error("Failed to fetch orders:", error);
-    throw error;
+apiClient.interceptors.request.use(
+  async (config) => {
+    const token = await AsyncStorage.getItem("userToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
+);
+
+export const getMenuItems = () => {
+  return apiClient.get("/api/menu-items/me");
 };
-*/
+
+export default apiClient;

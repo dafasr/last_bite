@@ -1,0 +1,164 @@
+{
+  "info": {
+    "_postman_id": "b3c4d5e6-f7g8-9h0i-j1k2-l3m4n5o6p7q8",
+    "name": "Lastbite-MenuItems",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Menu Item",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{
+    \"sellerProfileId\": \"<seller_profile_id>\",
+    \"name\": \"Nasi Goreng\",
+    \"description\": \"Nasi goreng spesial dengan telur dan ayam\",
+    \"imageUrl\": \"http://example.com/nasi-goreng.jpg\",
+    \"originalPrice\": 25000,
+    \"discountedPrice\": 20000,
+    \"quantityAvailable\": 10,
+    \"displayStartTime\": \"2025-07-03T10:00:00\",
+    \"displayEndTime\": \"2025-07-03T22:00:00\",
+    \"status\": \"AVAILABLE\"
+}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/menu-items",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "menu-items"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Menu Item By Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/menu-items/<menu_item_id>",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "menu-items",
+            "<menu_item_id>"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get All Menu Items",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/menu-items?name=Nasi&maxPrice=25000",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "menu-items"
+          ],
+          "query": [
+            {
+              "key": "name",
+              "value": "Nasi"
+            },
+            {
+              "key": "maxPrice",
+              "value": "25000"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get My Menu Items",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/menu-items/me",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "menu-items",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Menu Item",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{
+    \"name\": \"Nasi Goreng Updated\",
+    \"description\": \"Nasi goreng spesial dengan telur, ayam, dan udang\",
+    \"originalPrice\": 27000
+}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/menu-items/<menu_item_id>",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "menu-items",
+            "<menu_item_id>"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Menu Item",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/menu-items/<menu_item_id>",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "menu-items",
+            "<menu_item_id>"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

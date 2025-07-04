@@ -9,8 +9,10 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
+import { useAuth } from "../hooks";
 
 const ProfileScreen = ({ navigation }) => {
+  const { logoutUser } = useAuth();
   const [merchantProfile, setMerchantProfile] = useState({
     storeName: "Toko Roti Enak",
     rating: 4.8,
@@ -55,14 +57,14 @@ const ProfileScreen = ({ navigation }) => {
     Alert.alert("About Us", "Link ke website resmi kami akan segera tersedia.");
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     // In a real app, you would clear user session and navigate to the login screen
     Alert.alert("Logout", "Apakah Anda yakin ingin keluar?", [
       { text: "Batal", style: "cancel" },
       {
         text: "Keluar",
-        onPress: () => {
-          // For now, just navigate to Login. A real app would have more complex logic.
+        onPress: async () => {
+          await logoutUser();
           navigation.navigate("Login");
         },
         style: "destructive",
