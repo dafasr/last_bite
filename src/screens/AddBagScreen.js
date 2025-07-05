@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,19 +10,21 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  ActivityIndicator,
 } from "react-native";
 import { useMenu } from "../context/MenuContext";
 import { useAuthContext } from "../context/AuthContext";
-import apiClient from "../api/apiClient";
+import apiClient, { uploadImage } from "../api/apiClient";
 import { Picker } from "@react-native-picker/picker";
 import { TimerPickerModal } from "react-native-timer-picker";
+import * as ImagePicker from "expo-image-picker";
 
 const AddBagScreen = ({ navigation }) => {
-  const { addBag } = useMenu(); // Keep this for now, might be used for local state update
   const { sellerProfileId } = useAuthContext();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [image, setImage] = useState(null);
   const [originalPrice, setOriginalPrice] = useState("");
   const [discountedPrice, setDiscountedPrice] = useState("");
   const [quantityAvailable, setQuantityAvailable] = useState("");
@@ -31,19 +33,79 @@ const AddBagScreen = ({ navigation }) => {
   const [status, setStatus] = useState("AVAILABLE");
   const [isStartTimePickerVisible, setStartTimePickerVisible] = useState(false);
   const [isEndTimePickerVisible, setEndTimePickerVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      if (Platform.OS !== "web") {
+        const { status } =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+          alert("Sorry, we need camera roll permissions to make this work!");
+        }
+      }
+    })();
+  }, []);
+
+  const handleChoosePhoto = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0]);
+    }
+  };
 
   const handleSave = async () => {
+    if (loading) return;
+    setLoading(true);
+
     if (!sellerProfileId) {
       Alert.alert("Error", "Seller profile ID not found. Please log in again.");
+      setLoading(false);
       return;
     }
 
-    if (!name || !originalPrice || !discountedPrice || !quantityAvailable || !displayStartTime || !displayEndTime) {
-      Alert.alert("Error", "Harap isi semua field yang wajib diisi.");
+    if (
+      !name ||
+      !originalPrice ||
+      !discountedPrice ||
+      !quantityAvailable ||
+      !displayStartTime ||
+      !displayEndTime ||
+      !image
+    ) {
+      Alert.alert(
+        "Error",
+        "Harap isi semua field yang wajib diisi dan pilih gambar."
+      );
+      setLoading(false);
       return;
     }
 
     try {
+      // Step 1: Upload image
+      const imageFormData = new FormData();
+      imageFormData.append("file", {
+        uri: image.uri,
+        type: image.mimeType,
+        name: image.fileName,
+      });
+
+      const imageResponse = await uploadImage(imageFormData);
+      const imageUrl = imageResponse.data.url;
+
+      if (!imageUrl) {
+        Alert.alert("Error", "Gagal mengunggah gambar. URL tidak ditemukan.");
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Create menu item with the returned image URL
       const payload = {
         sellerProfileId,
         name,
@@ -54,9 +116,9 @@ const AddBagScreen = ({ navigation }) => {
         quantityAvailable: parseInt(quantityAvailable, 10),
         displayStartTime,
         displayEndTime,
-        status: "AVAILABLE", // Default status
+        status: "AVAILABLE",
       };
-      console.log("Add Bag Request Payload:", payload);
+
       const response = await apiClient.post("/menu-items", payload);
 
       if (response.status === 201) {
@@ -64,19 +126,21 @@ const AddBagScreen = ({ navigation }) => {
           { text: "OK", onPress: () => navigation.goBack() },
         ]);
       } else {
-        Alert.alert("Error", "Gagal menambahkan Surprise Bag. Silakan coba lagi.");
+        Alert.alert(
+          "Error",
+          "Gagal menambahkan Surprise Bag. Silakan coba lagi."
+        );
       }
     } catch (error) {
       console.error("Failed to add menu item:", error);
-      Alert.alert("Error", error.response?.data?.message || "Terjadi kesalahan saat menambahkan Surprise Bag.");
+      Alert.alert(
+        "Error",
+        error.response?.data?.message ||
+          "Terjadi kesalahan saat menambahkan Surprise Bag."
+      );
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleUploadImage = () => {
-    Alert.alert(
-      "Segera Hadir",
-      "Fitur unggah gambar sedang dalam pengembangan."
-    );
   };
 
   return (
@@ -108,13 +172,21 @@ const AddBagScreen = ({ navigation }) => {
               multiline
             />
 
-            <Text style={styles.label}>Image URL</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="http://example.com/image.jpg"
-              value={imageUrl}
-              onChangeText={setImageUrl}
-            />
+            <Text style={styles.label}>Foto</Text>
+            <TouchableOpacity
+              style={styles.outlineButton}
+              onPress={handleChoosePhoto}
+            >
+              <Text style={styles.outlineButtonText}>Pilih Foto</Text>
+            </TouchableOpacity>
+            {image && (
+              <View style={styles.imagePreviewContainer}>
+                <Image
+                  source={{ uri: image.uri }}
+                  style={styles.imagePreview}
+                />
+              </View>
+            )}
 
             <View style={styles.priceRow}>
               <View style={styles.priceInputContainer}>
@@ -146,7 +218,13 @@ const AddBagScreen = ({ navigation }) => {
                   style={styles.timeInput}
                   onPress={() => setStartTimePickerVisible(true)}
                 >
-                  <Text style={displayStartTime ? styles.timeText : styles.placeholderText}>
+                  <Text
+                    style={
+                      displayStartTime
+                        ? styles.timeText
+                        : styles.placeholderText
+                    }
+                  >
                     {displayStartTime || "Pilih Jam"}
                   </Text>
                 </TouchableOpacity>
@@ -157,7 +235,11 @@ const AddBagScreen = ({ navigation }) => {
                   style={styles.timeInput}
                   onPress={() => setEndTimePickerVisible(true)}
                 >
-                  <Text style={displayEndTime ? styles.timeText : styles.placeholderText}>
+                  <Text
+                    style={
+                      displayEndTime ? styles.timeText : styles.placeholderText
+                    }
+                  >
                     {displayEndTime || "Pilih Jam"}
                   </Text>
                 </TouchableOpacity>
@@ -170,20 +252,28 @@ const AddBagScreen = ({ navigation }) => {
               onConfirm={(pickedDuration) => {
                 const now = new Date();
                 const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                const hours = String(pickedDuration.hours).padStart(2, '0');
-                const minutes = String(pickedDuration.minutes).padStart(2, '0');
-                const seconds = String(pickedDuration.seconds).padStart(2, '0');
-                setDisplayStartTime(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+                const month = String(now.getMonth() + 1).padStart(2, "0");
+                const day = String(now.getDate()).padStart(2, "0");
+                const hours = String(pickedDuration.hours).padStart(2, "0");
+                const minutes = String(pickedDuration.minutes).padStart(2, "0");
+                const seconds = String(pickedDuration.seconds).padStart(2, "0");
+                setDisplayStartTime(
+                  `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+                );
                 setStartTimePickerVisible(false);
               }}
               modalTitle="Pilih Jam Mulai"
               onCancel={() => setStartTimePickerVisible(false)}
               closeOnOverlayPress
-              initialHours={parseInt(displayStartTime.split(':')[0] || '0', 10)}
-              initialMinutes={parseInt(displayStartTime.split(':')[1] || '0', 10)}
-              initialSeconds={parseInt(displayStartTime.split(':')[2] || '0', 10)}
+              initialHours={parseInt(displayStartTime.split(":")[0] || "0", 10)}
+              initialMinutes={parseInt(
+                displayStartTime.split(":")[1] || "0",
+                10
+              )}
+              initialSeconds={parseInt(
+                displayStartTime.split(":")[2] || "0",
+                10
+              )}
             />
 
             <TimerPickerModal
@@ -192,20 +282,22 @@ const AddBagScreen = ({ navigation }) => {
               onConfirm={(pickedDuration) => {
                 const now = new Date();
                 const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                const hours = String(pickedDuration.hours).padStart(2, '0');
-                const minutes = String(pickedDuration.minutes).padStart(2, '0');
-                const seconds = String(pickedDuration.seconds).padStart(2, '0');
-                setDisplayEndTime(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+                const month = String(now.getMonth() + 1).padStart(2, "0");
+                const day = String(now.getDate()).padStart(2, "0");
+                const hours = String(pickedDuration.hours).padStart(2, "0");
+                const minutes = String(pickedDuration.minutes).padStart(2, "0");
+                const seconds = String(pickedDuration.seconds).padStart(2, "0");
+                setDisplayEndTime(
+                  `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+                );
                 setEndTimePickerVisible(false);
               }}
               modalTitle="Pilih Jam Selesai"
               onCancel={() => setEndTimePickerVisible(false)}
               closeOnOverlayPress
-              initialHours={parseInt(displayEndTime.split(':')[0] || '0', 10)}
-              initialMinutes={parseInt(displayEndTime.split(':')[1] || '0', 10)}
-              initialSeconds={parseInt(displayEndTime.split(':')[2] || '0', 10)}
+              initialHours={parseInt(displayEndTime.split(":")[0] || "0", 10)}
+              initialMinutes={parseInt(displayEndTime.split(":")[1] || "0", 10)}
+              initialSeconds={parseInt(displayEndTime.split(":")[2] || "0", 10)}
             />
 
             <Text style={styles.label}>Kuantitas</Text>
@@ -230,8 +322,16 @@ const AddBagScreen = ({ navigation }) => {
               </Picker>
             </View>
 
-            <TouchableOpacity style={styles.button} onPress={handleSave}>
-              <Text style={styles.buttonText}>Simpan Surprise Bag</Text>
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleSave}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.buttonText}>Simpan Surprise Bag</Text>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -297,11 +397,11 @@ const styles = StyleSheet.create({
   },
   priceRow: {
     flexDirection: "row",
-    marginHorizontal: -5, // Menghilangkan margin ekstra pada sisi
+    marginHorizontal: -5,
   },
   priceInputContainer: {
     flex: 1,
-    marginHorizontal: 5, // Memberi jarak antar input
+    marginHorizontal: 5,
   },
   outlineButton: {
     width: "100%",
@@ -327,6 +427,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 10,
+  },
+  buttonDisabled: {
+    backgroundColor: "#A5D6A7",
   },
   buttonText: {
     color: "#FFFFFF",
@@ -363,6 +466,17 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 16,
     color: "#999",
+  },
+  imagePreviewContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  imagePreview: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
   },
 });
 

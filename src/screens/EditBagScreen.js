@@ -73,16 +73,10 @@ const EditBagScreen = ({ navigation, route }) => {
         status,
       };
       console.log("Update Bag Request Payload:", payload);
-      const response = await apiClient.put(`/menu-items/${bag.id}`, payload);
-
-      if (response.status === 200) {
-        updateBag(bag.id, response.data);
-        Alert.alert("Sukses", "Surprise Bag berhasil diperbarui!", [
-          { text: "OK", onPress: () => navigation.goBack() },
-        ]);
-      } else {
-        Alert.alert("Error", "Gagal memperbarui Surprise Bag. Silakan coba lagi.");
-      }
+      await updateBag(bag.id, payload);
+      Alert.alert("Sukses", "Surprise Bag berhasil diperbarui!", [
+        { text: "OK", onPress: () => navigation.goBack() },
+      ]);
     } catch (error) {
       console.error("Failed to update menu item:", error);
       Alert.alert("Error", error.response?.data?.message || "Terjadi kesalahan saat memperbarui Surprise Bag.");

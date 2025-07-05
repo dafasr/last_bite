@@ -23,4 +23,20 @@ export const getMenuItems = () => {
   return apiClient.get("/menu-items/me");
 };
 
+export const deleteMenuItem = (id) => {
+  return apiClient.delete(`/menu-items/${id}`);
+};
+
+export const updateMenuItem = (id, data) => {
+  return apiClient.put(`/menu-items/${id}`, data);
+};
+
+export const uploadImage = (formData) => {
+  return apiClient.post("/upload", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
 export default apiClient;

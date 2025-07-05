@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext } from "react";
+import { deleteMenuItem, updateMenuItem } from "../api/apiClient";
 
 const MenuContext = createContext();
 
@@ -14,17 +15,26 @@ export const MenuProvider = ({ children }) => {
     setSurpriseBags((prevBags) => [bagWithId, ...prevBags]);
   };
 
-  const updateBag = (id, updatedData) => {
-    setSurpriseBags(
-      surpriseBags.map((bag) =>
-        // Cari bag dengan id yang cocok, lalu gabungkan data lama dengan data baru
-        bag.id === id ? { ...bag, ...updatedData } : bag
-      )
-    );
+  const updateBag = async (id, updatedData) => {
+    try {
+      const response = await updateMenuItem(id, updatedData);
+      setSurpriseBags((prevBags) =>
+        prevBags.map((bag) => (bag.id === id ? { ...bag, ...response.data } : bag))
+      );
+    } catch (error) {
+      console.error("Failed to update menu item:", error);
+      // Optionally, show an alert to the user
+    }
   };
 
-  const deleteBag = (id) => {
-    setSurpriseBags((prevBags) => prevBags.filter((bag) => bag.id !== id));
+  const deleteBag = async (id) => {
+    try {
+      await deleteMenuItem(id);
+      setSurpriseBags((prevBags) => prevBags.filter((bag) => bag.id !== id));
+    } catch (error) {
+      console.error("Failed to delete menu item:", error);
+      // Optionally, show an alert to the user
+    }
   };
 
   const toggleAvailability = (id) => {
