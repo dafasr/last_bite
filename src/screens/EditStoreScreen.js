@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,22 +7,159 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
 } from "react-native";
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import MapView, { Marker } from "react-native-maps";
+import * as Location from "expo-location";
+import { getSellerProfile, updateSellerProfile } from "../api/apiClient";
+import { useAuthContext } from "../context/AuthContext";
 
 const EditStoreScreen = ({ navigation, route }) => {
-  const { storeName: initialStoreName, description: initialDescription, onSave } =
-    route.params;
+  const { sellerProfileId } = useAuthContext();
+  const sellerId = sellerProfileId;
 
-  const [storeName, setStoreName] = useState(initialStoreName);
-  const [description, setDescription] = useState(initialDescription);
+  useEffect(() => {
+  }, [sellerId, loading]);
 
-  const handleSave = () => {
-    onSave({ storeName, description });
-    Alert.alert("Save", "Store information updated successfully!", [
-      { text: "OK", onPress: () => navigation.goBack() },
-    ]);
+  const [storeName, setStoreName] = useState("");
+  const [description, setDescription] = useState("");
+  const [address, setAddress] = useState("");
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
+  const [storeImageUrl, setStoreImageUrl] = useState("");
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [mapRegion, setMapRegion] = useState(null);
+
+  useEffect(() => {
+    const fetchSellerProfile = async () => {
+      try {
+        const response = await getSellerProfile(sellerId);
+        const {
+          storeName,
+          storeDescription: description,
+          address,
+          latitude,
+          longitude,
+          storeImageUrl,
+          status,
+        } = response.data.data;
+        setStoreName(storeName);
+        setDescription(description);
+        setAddress(address);
+        setLatitude(latitude);
+        setLongitude(longitude);
+        setStoreImageUrl(storeImageUrl);
+        setStatus(status);
+
+        if (latitude && longitude) {
+          setMapRegion({
+            latitude,
+            longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          });
+        } else {
+          let { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
+          if (locationStatus !== "granted") {
+            Dialog.show({
+              type: ALERT_TYPE.WARNING,
+              title: 'Izin Ditolak',
+              textBody: 'Akses lokasi diperlukan untuk mengatur lokasi toko.',
+              button: 'Tutup',
+            });
+            setLoading(false);
+            return;
+          }
+          let location = await Location.getCurrentPositionAsync({});
+          setMapRegion({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          });
+        }
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: 'Error',
+          textBody: 'Gagal mengambil profil penjual. Silakan periksa koneksi jaringan Anda atau coba lagi nanti.',
+          button: 'Tutup',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (sellerId) {
+      fetchSellerProfile();
+    }
+  }, [sellerId]);
+
+  const handleMapPress = (event) => {
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+    setLatitude(latitude);
+    setLongitude(longitude);
+    setMapRegion({
+      ...mapRegion,
+      latitude,
+      longitude,
+    });
   };
+
+  const handleSave = async () => {
+    if (!sellerId) {
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: 'ID Penjual tidak ditemukan.',
+        button: 'Tutup',
+      });
+      return;
+    }
+
+    try {
+      const updatedData = {
+        storeName,
+        storeDescription: description, // Use the local 'description' state for storeDescription
+        address,
+        latitude,
+        longitude,
+        storeImageUrl,
+        status: "ACTIVE", // Set status to ACTIVE, no UI needed
+      };
+      await updateSellerProfile(sellerId, updatedData);
+      Dialog.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: 'Sukses',
+        textBody: 'Informasi toko berhasil diperbarui!',
+        button: 'OK',
+        onPressButton: () => {
+          Dialog.hide(); // Explicitly hide the dialog
+          navigation.goBack();
+        },
+      });
+    } catch (error) {
+      console.error("Failed to update seller profile:", error);
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: 'Gagal memperbarui informasi toko.',
+        button: 'Tutup',
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -51,6 +188,45 @@ const EditStoreScreen = ({ navigation, route }) => {
               placeholder="Tell us about your store"
               multiline
             />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Address</Text>
+            <TextInput
+              style={styles.input}
+              value={address}
+              onChangeText={setAddress}
+              placeholder="Enter your store address"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Store Image URL</Text>
+            <TextInput
+              style={styles.input}
+              value={storeImageUrl}
+              onChangeText={setStoreImageUrl}
+              placeholder="Enter store image URL"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Store Location (Tap on map to select)</Text>
+            {mapRegion && (
+              <MapView
+                style={styles.map}
+                region={mapRegion}
+                onPress={handleMapPress}
+              >
+                {latitude && longitude && (
+                  <Marker coordinate={{ latitude, longitude }} />
+                )}
+              </MapView>
+            )}
+            <Text style={styles.coordinatesText}>
+              Latitude: {latitude ? latitude.toFixed(6) : "N/A"}, Longitude:{" "}
+              {longitude ? longitude.toFixed(6) : "N/A"}
+            </Text>
           </View>
         </View>
 
@@ -122,6 +298,17 @@ const styles = StyleSheet.create({
     height: 120,
     textAlignVertical: "top",
   },
+  map: {
+    height: 200,
+    width: "100%",
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  coordinatesText: {
+    fontSize: 14,
+    color: "#555",
+    textAlign: "center",
+  },
   actionsContainer: {
     marginTop: 10,
     paddingHorizontal: 20,
@@ -150,6 +337,12 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
   },
 });
 

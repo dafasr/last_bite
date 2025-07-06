@@ -9,9 +9,9 @@ import EditBagScreen from "./EditBagScreen";
 import EditStoreScreen from "./EditStoreScreen";
 import ProfileScreen from "./ProfileScreen";
 import { MenuProvider } from "../context/MenuContext";
-import { useOrders, useToast } from "../hooks";
+import { useOrders } from "../hooks";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import Toast from "../components/Toast";
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
 const Tab = createBottomTabNavigator();
 const MenuStack = createStackNavigator();
@@ -20,11 +20,40 @@ const ProfileStack = createStackNavigator();
 const MerchantTabNavigator = () => {
   const {
     orders,
-    handleAcceptOrder,
-    handleRejectOrder,
-    handleUpdateOrderStatus,
+    handleAcceptOrder: originalHandleAcceptOrder,
+    handleRejectOrder: originalHandleRejectOrder,
+    handleUpdateOrderStatus: originalHandleUpdateOrderStatus,
   } = useOrders();
-  const { toast, showToast, hideToast } = useToast();
+
+  const handleAcceptOrder = async (orderId) => {
+    await originalHandleAcceptOrder(orderId);
+    Dialog.show({
+      type: ALERT_TYPE.SUCCESS,
+      title: 'Sukses',
+      textBody: 'Pesanan berhasil diterima!',
+      button: 'Tutup',
+    });
+  };
+
+  const handleRejectOrder = async (orderId) => {
+    await originalHandleRejectOrder(orderId);
+    Dialog.show({
+      type: ALERT_TYPE.SUCCESS,
+      title: 'Sukses',
+      textBody: 'Pesanan berhasil ditolak!',
+      button: 'Tutup',
+    });
+  };
+
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    await originalHandleUpdateOrderStatus(orderId, newStatus);
+    Dialog.show({
+      type: ALERT_TYPE.SUCCESS,
+      title: 'Sukses',
+      textBody: `Status pesanan berhasil diperbarui menjadi ${newStatus}!`, 
+      button: 'Tutup',
+    });
+  };
 
   // MOCKUP: Menambahkan data 'note' ke dalam pesanan untuk keperluan demonstrasi.
   // Di aplikasi nyata, data ini seharusnya datang langsung dari API/useOrders.
@@ -78,11 +107,6 @@ const MerchantTabNavigator = () => {
     [orders]
   );
 
-  const handleRejectWithToast = (orderId) => {
-    handleRejectOrder(orderId);
-    showToast("Pesanan berhasil ditolak", "success");
-  };
-
   return (
     <MenuProvider>
       <Tab.Navigator
@@ -114,7 +138,7 @@ const MerchantTabNavigator = () => {
               {...props}
               incomingOrders={ordersWithNotes.filter((o) => o.status === "New")}
               onAccept={handleAcceptOrder}
-              onReject={handleRejectWithToast}
+              onReject={handleRejectOrder}
               soldBagsCount={soldBagsCount}
             />
           )}
@@ -159,9 +183,7 @@ const MerchantTabNavigator = () => {
           )}
         </Tab.Screen>
       </Tab.Navigator>
-      {toast.visible && (
-        <Toast message={toast.message} type={toast.type} onHide={hideToast} />
-      )}
+      
     </MenuProvider>
   );
 };

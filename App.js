@@ -10,47 +10,50 @@ import RegisterScreen from "./src/screens/RegisterScreen";
 import SuccessScreen from "./src/screens/SuccessScreen";
 import MerchantTabNavigator from "./src/screens/MerchantTabNavigator";
 import { AuthProvider } from "./src/context/AuthContext";
+import { AlertNotificationRoot } from 'react-native-alert-notification';
 
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="Login"
-          screenOptions={{
-            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
-          }}
-        >
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Register"
-            component={RegisterScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="RegisterMerchant"
-            component={RegisterScreen}
-            options={{ headerShown: false }}
-          />
-          
-          <Stack.Screen
-            name="Success"
-            component={SuccessScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="MerchantHome"
-            component={MerchantTabNavigator}
-            options={{ headerShown: false }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </AuthProvider>
+    <AlertNotificationRoot style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <AuthProvider>
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName="Login"
+            screenOptions={{
+              cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+            }}
+          >
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Register"
+              component={RegisterScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="RegisterMerchant"
+              component={RegisterScreen}
+              options={{ headerShown: false }}
+            />
+            
+            <Stack.Screen
+              name="Success"
+              component={SuccessScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="MerchantHome"
+              component={MerchantTabNavigator}
+              options={{ headerShown: false }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </AuthProvider>
+    </AlertNotificationRoot>
   );
 }

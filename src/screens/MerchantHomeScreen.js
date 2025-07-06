@@ -6,8 +6,8 @@ import {
   FlatList,
   SafeAreaView,
   TouchableOpacity,
-  Alert,
 } from "react-native";
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
 const MerchantHomeScreen = ({
   incomingOrders,
@@ -17,7 +17,12 @@ const MerchantHomeScreen = ({
 }) => {
   const handleWithdraw = () => {
     // Placeholder for withdraw logic
-    Alert.alert("Coming Soon", "Withdraw feature is under development.");
+    Dialog.show({
+      type: ALERT_TYPE.INFO,
+      title: 'Segera Hadir',
+      textBody: 'Fitur penarikan sedang dalam pengembangan.',
+      button: 'Tutup',
+    });
   };
 
   const renderOrderItem = ({ item }) => (

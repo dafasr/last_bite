@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -8,30 +9,38 @@ import {
   SafeAreaView,
   Switch,
   Image,
-  Alert,
 } from "react-native";
+import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import { useMenu } from "../context/MenuContext";
 import { getMenuItems } from "../api/apiClient";
 
 const MenuScreen = ({ navigation }) => {
-  const { surpriseBags, setSurpriseBags, toggleAvailability, deleteBag } = useMenu();
+  const { surpriseBags, setSurpriseBags, toggleAvailability, deleteBag } =
+    useMenu();
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchMenuItems = async () => {
-      try {
-        const response = await getMenuItems();
-        setSurpriseBags(response.data.data);
-      } catch (error) {
-        console.error("Failed to fetch menu items:", error);
-        Alert.alert("Error", "Failed to fetch menu items.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchMenuItems = async () => {
+        try {
+          const response = await getMenuItems();
+          setSurpriseBags(response.data.data);
+        } catch (error) {
+          console.error("Failed to fetch menu items:", error);
+          Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: "Error",
+            textBody: "Gagal mengambil item menu.",
+            button: "Tutup",
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    fetchMenuItems();
-  }, []);
+      fetchMenuItems();
+    }, [])
+  );
 
   // Placeholder untuk fungsi edit
   // Mengarahkan ke layar EditBag dan mengirimkan data 'bag' yang dipilih
@@ -41,21 +50,15 @@ const MenuScreen = ({ navigation }) => {
   const handleAddBag = () => navigation.navigate("AddBag");
 
   const handleDelete = (bagId, bagName) => {
-    Alert.alert(
-      "Hapus Surprise Bag",
-      `Apakah Anda yakin ingin menghapus "${bagName}"? Tindakan ini tidak dapat dibatalkan.`,
-      [
-        {
-          text: "Batal",
-          style: "cancel",
-        },
-        {
-          text: "Hapus",
-          onPress: () => deleteBag(bagId),
-          style: "destructive",
-        },
-      ]
-    );
+    Dialog.show({
+      type: ALERT_TYPE.WARNING,
+      title: "Hapus Surprise Bag",
+      textBody: `Apakah Anda yakin ingin menghapus "${bagName}"? Tindakan ini tidak dapat dibatalkan.`,
+      button: "Hapus",
+      onPressButton: () => deleteBag(bagId),
+      showCancelButton: true,
+      cancelButton: "Batal",
+    });
   };
 
   const filteredBags = useMemo(() => {
@@ -67,7 +70,9 @@ const MenuScreen = ({ navigation }) => {
       <Image
         style={styles.bagImage}
         source={{
-          uri: item.imageUrl || "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?w=500&q=80",
+          uri:
+            item.imageUrl ||
+            "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?w=500&q=80",
         }}
       />
       <View style={styles.bagContent}>
@@ -88,7 +93,10 @@ const MenuScreen = ({ navigation }) => {
         <View style={styles.availabilityContainer}>
           <Text style={styles.availabilityLabel}>Waktu Tersedia:</Text>
           <Text style={styles.availabilityTime}>
-            {item.displayStartTime ? item.displayStartTime.slice(11, 16) : "N/A"} - {item.displayEndTime ? item.displayEndTime.slice(11, 16) : "N/A"}
+            {item.displayStartTime
+              ? item.displayStartTime.slice(11, 16)
+              : "N/A"}{" "}
+            - {item.displayEndTime ? item.displayEndTime.slice(11, 16) : "N/A"}
           </Text>
         </View>
 
@@ -97,15 +105,10 @@ const MenuScreen = ({ navigation }) => {
           <Text style={styles.quantityText}>{item.quantityAvailable}</Text>
         </View>
 
-        {/* <View style={styles.statusContainer}>
-          <Text style={styles.statusLabel}>Ready</Text>
-          <Switch
-            trackColor={{ false: "#767577", true: "#81b0ff" }}
-            thumbColor={item.status === "AVAILABLE" ? "#2ECC71" : "#f4f3f4"}
-            onValueChange={() => toggleAvailability(item.id)}
-            value={item.status === "AVAILABLE"}
-          />
-        </View> */}
+        <View style={styles.statusInfoContainer}>
+          <Text style={styles.statusInfoLabel}>Status:</Text>
+          <Text style={styles.statusInfoText}>{item.status}</Text>
+        </View>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity
@@ -260,6 +263,25 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   quantityText: {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  statusInfoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
+    backgroundColor: "#f9f9f9",
+    padding: 10,
+    borderRadius: 5,
+  },
+  statusInfoLabel: {
+    fontSize: 14,
+    color: "#7F8C8D",
+    fontWeight: "600",
+    marginRight: 8,
+  },
+  statusInfoText: {
     fontSize: 15,
     fontWeight: "bold",
     color: "#333",

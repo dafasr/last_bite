@@ -6,14 +6,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
-import Toast from "../components/Toast";
-import { useToast, useAuth } from "../hooks";
+import { useAuth } from "../hooks";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Location from 'expo-location';
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
 const RegisterScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -38,7 +37,7 @@ const RegisterScreen = ({ navigation }) => {
     longitudeDelta: 0.0421,
   });
 
-  const { toast, showToast, hideToast } = useToast();
+  
   const { isLoading, registerUser } = useAuth();
 
   useEffect(() => {
@@ -55,7 +54,12 @@ const RegisterScreen = ({ navigation }) => {
     if (status === 'granted') {
       return true;
     } else {
-      showToast("Izin lokasi ditolak.", "error");
+      Dialog.show({
+        type: ALERT_TYPE.WARNING,
+        title: 'Izin Ditolak',
+        textBody: 'Izin lokasi ditolak.',
+        button: 'Tutup',
+      });
       return false;
     }
   };
@@ -81,7 +85,12 @@ const RegisterScreen = ({ navigation }) => {
         longitudeDelta: 0.0421,
       });
     } catch (error) {
-      showToast("Gagal mendapatkan lokasi saat ini. " + error.message, "error");
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: 'Gagal mendapatkan lokasi saat ini. ' + error.message,
+        button: 'Tutup',
+      });
     } finally {
       setIsLocating(false);
     }
@@ -147,10 +156,23 @@ const RegisterScreen = ({ navigation }) => {
     });
 
     if (!result.success) {
-      showToast(result.message, "error");
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: result.message,
+        button: 'Tutup',
+      });
     } else {
-      showToast("Registrasi berhasil! Silakan login.", "success");
-      navigation.navigate("Login");
+      Dialog.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: 'Sukses',
+        textBody: 'Registrasi berhasil! Silakan login.',
+        button: 'OK',
+        onPressButton: () => {
+          Dialog.hide();
+          navigation.navigate("Login");
+        },
+      });
     }
   };
 
@@ -345,9 +367,7 @@ const RegisterScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      {toast.visible && (
-        <Toast message={toast.message} type={toast.type} onHide={hideToast} />
-      )}
+      
     </View>
   );
 };

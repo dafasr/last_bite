@@ -17,9 +17,13 @@ export const MenuProvider = ({ children }) => {
 
   const updateBag = async (id, updatedData) => {
     try {
+      console.log(updatedData);
       const response = await updateMenuItem(id, updatedData);
+      console.log(response.data);
       setSurpriseBags((prevBags) =>
-        prevBags.map((bag) => (bag.id === id ? { ...bag, ...response.data } : bag))
+        prevBags.map((bag) =>
+          bag.id === id ? { ...bag, ...response.data } : bag
+        )
       );
     } catch (error) {
       console.error("Failed to update menu item:", error);
@@ -33,7 +37,10 @@ export const MenuProvider = ({ children }) => {
       setSurpriseBags((prevBags) => prevBags.filter((bag) => bag.id !== id));
     } catch (error) {
       console.error("Failed to delete menu item:", error);
-      // Optionally, show an alert to the user
+      Alert.alert(
+        "Error",
+        "Failed to delete menu item. Please try again later."
+      );
     }
   };
 

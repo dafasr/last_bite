@@ -39,4 +39,12 @@ export const uploadImage = (formData) => {
   });
 };
 
+export const getSellerProfile = (id) => {
+  return apiClient.get(`/sellers/${id}`);
+};
+
+export const updateSellerProfile = (id, data) => {
+  return apiClient.put(`/sellers/${id}`, data);
+};
+
 export default apiClient;

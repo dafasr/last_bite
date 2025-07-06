@@ -10,19 +10,26 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from "react-native";
-import Toast from "../components/Toast";
-import { useToast, useAuth } from "../hooks";
+import { useAuth } from "../hooks";
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { toast, showToast, hideToast } = useToast();
+  
   const { isLoading, loginUser } = useAuth();
 
   const handleLogin = async () => {
+    Keyboard.dismiss();
     if (!username || !password) {
-      showToast("Username dan password wajib diisi.", "error");
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: 'Username dan password wajib diisi.',
+        button: 'Tutup',
+      });
       return;
     }
     const result = await loginUser({ username, password });
@@ -30,12 +37,24 @@ export default function LoginScreen({ navigation }) {
       // On successful login (for now, direct navigation)
       navigation.navigate("MerchantHome");
     } else {
-      showToast(result.message, "error");
+      Keyboard.dismiss();
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: 'Username atau password salah.',
+        button: 'Tutup',
+      });
     }
   };
 
   const handleForgotPassword = () => {
-    showToast("Fitur ini sedang dalam pengembangan.", "error");
+    Keyboard.dismiss();
+    Dialog.show({
+      type: ALERT_TYPE.WARNING,
+      title: 'Informasi',
+      textBody: 'Fitur ini sedang dalam pengembangan.',
+      button: 'Tutup',
+    });
   };
 
   const handleRegister = () => {
@@ -45,66 +64,63 @@ export default function LoginScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior="padding"
         style={styles.keyboardAvoidingContainer}
       >
-        <ScrollView contentContainerStyle={styles.container}>
-          {toast.visible && (
-            <Toast
-              message={toast.message}
-              type={toast.type}
-              onHide={hideToast}
-            />
-          )}
-          {/* Logo Aplikasi */}
-          <Image
-            source={require("../../assets/logo.png")}
-            style={styles.logo}
-          />
-
-          {/* Box untuk Form */}
-          <View style={styles.formContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Username"
-              value={username}
-              onChangeText={setUsername}
-              autoCapitalize="none"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false} // Menghilangkan indikator scroll
+        >
+            {/* Logo Aplikasi */}
+            <Image
+              source={require("../../assets/logo.png")}
+              style={styles.logo}
             />
 
-            <TouchableOpacity
-              style={styles.forgotPasswordContainer}
-              onPress={handleForgotPassword}
-            >
-              <Text style={styles.forgotPasswordText}>Lupa Password?</Text>
-            </TouchableOpacity>
+            {/* Box untuk Form */}
+            <View style={styles.formContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
 
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={handleLogin}
-              disabled={isLoading}
-            >
-              <Text style={styles.loginButtonText}>
-                {isLoading ? "Logging in..." : "Login"}
-              </Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={styles.forgotPasswordContainer}
+                onPress={handleForgotPassword}
+              >
+                <Text style={styles.forgotPasswordText}>Lupa Password?</Text>
+              </TouchableOpacity>
 
-          {/* Link untuk Registrasi */}
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>Belum punya akun? </Text>
-            <TouchableOpacity onPress={handleRegister}>
-              <Text style={styles.registerLink}>Daftar sekarang</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={handleLogin}
+                disabled={isLoading}
+              >
+                <Text style={styles.loginButtonText}>
+                  {isLoading ? "Logging in..." : "Login"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Link untuk Registrasi */}
+            <View style={styles.registerContainer}>
+              <Text style={styles.registerText}>Belum punya akun? </Text>
+              <TouchableOpacity onPress={handleRegister}>
+                <Text style={styles.registerLink}>Daftar sekarang</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

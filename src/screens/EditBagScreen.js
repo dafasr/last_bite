@@ -7,64 +7,137 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-  Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  ActivityIndicator,
 } from "react-native";
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 import { useMenu } from "../context/MenuContext";
 import { useAuthContext } from "../context/AuthContext";
-import apiClient from "../api/apiClient";
+import apiClient, { uploadImage } from "../api/apiClient";
 import { Picker } from "@react-native-picker/picker";
 import { TimerPickerModal } from "react-native-timer-picker";
+import * as ImagePicker from "expo-image-picker";
 
 const EditBagScreen = ({ navigation, route }) => {
   const { bag } = route.params;
   const { updateBag } = useMenu();
   const { sellerProfileId } = useAuthContext();
 
+  // Form state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [image, setImage] = useState(null); // For new image asset
+  const [imageUrl, setImageUrl] = useState(""); // For existing image URL
   const [originalPrice, setOriginalPrice] = useState("");
   const [discountedPrice, setDiscountedPrice] = useState("");
   const [quantityAvailable, setQuantityAvailable] = useState("");
   const [displayStartTime, setDisplayStartTime] = useState("");
   const [displayEndTime, setDisplayEndTime] = useState("");
   const [status, setStatus] = useState("AVAILABLE");
+
+  // UI state
   const [isStartTimePickerVisible, setStartTimePickerVisible] = useState(false);
   const [isEndTimePickerVisible, setEndTimePickerVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [isChanged, setIsChanged] = useState(false);
 
+  // Populate form with initial data
   useEffect(() => {
     if (bag) {
-      setName(bag.name);
-      setDescription(bag.description);
-      setImageUrl(bag.imageUrl);
-      setOriginalPrice(String(bag.originalPrice));
-      setDiscountedPrice(String(bag.discountedPrice));
-      setQuantityAvailable(String(bag.quantityAvailable));
-      setDisplayStartTime(bag.displayStartTime);
-      setDisplayEndTime(bag.displayEndTime);
-      setStatus(bag.status);
+      setName(bag.name || "");
+      setDescription(bag.description || "");
+      setImageUrl(bag.imageUrl || "");
+      setOriginalPrice(String(bag.originalPrice || ""));
+      setDiscountedPrice(String(bag.discountedPrice || ""));
+      setQuantityAvailable(String(bag.quantityAvailable || ""));
+      setDisplayStartTime(bag.displayStartTime || "");
+      setDisplayEndTime(bag.displayEndTime || "");
+      setStatus(bag.status || "AVAILABLE");
     }
   }, [bag]);
 
-  const handleSave = async () => {
-    if (!sellerProfileId) {
-      Alert.alert("Error", "Seller profile ID not found. Please log in again.");
-      return;
-    }
+  // Check for changes to enable/disable the save button
+  useEffect(() => {
+    if (!bag) return;
 
-    if (!name || !originalPrice || !discountedPrice || !quantityAvailable || !displayStartTime || !displayEndTime) {
-      Alert.alert("Error", "Harap isi semua field yang wajib diisi.");
-      return;
+    const hasChanged =
+      bag.name !== name ||
+      bag.description !== description ||
+      String(bag.originalPrice) !== originalPrice ||
+      String(bag.discountedPrice) !== discountedPrice ||
+      String(bag.quantityAvailable) !== quantityAvailable ||
+      bag.displayStartTime !== displayStartTime ||
+      bag.displayEndTime !== displayEndTime ||
+      bag.status !== status ||
+      image !== null; // A new image has been selected
+
+    setIsChanged(hasChanged);
+  }, [
+    name,
+    description,
+    originalPrice,
+    discountedPrice,
+    quantityAvailable,
+    displayStartTime,
+    displayEndTime,
+    status,
+    image,
+    bag,
+  ]);
+
+  const handleChoosePhoto = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0]);
     }
+  };
+
+  const handleSave = async () => {
+    if (loading) return;
+    setLoading(true);
 
     try {
+      let finalImageUrl = imageUrl;
+
+      // Step 1 (Conditional): If a new image is selected, upload it
+      if (image) {
+        const imageFormData = new FormData();
+        imageFormData.append("file", {
+          uri: image.uri,
+          type: image.mimeType,
+          name: image.fileName,
+        });
+
+        const imageResponse = await uploadImage(imageFormData);
+        console.log(imageResponse);
+        finalImageUrl = imageResponse.data.url;
+
+        if (!finalImageUrl) {
+          Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: 'Error',
+            textBody: 'Gagal mengunggah gambar. URL tidak ditemukan.',
+            button: 'Tutup',
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Step 2: Prepare payload and update the menu item
       const payload = {
         sellerProfileId,
         name,
         description,
-        imageUrl,
+        imageUrl: finalImageUrl,
         originalPrice: parseFloat(originalPrice),
         discountedPrice: parseFloat(discountedPrice),
         quantityAvailable: parseInt(quantityAvailable, 10),
@@ -72,24 +145,42 @@ const EditBagScreen = ({ navigation, route }) => {
         displayEndTime,
         status,
       };
-      console.log("Update Bag Request Payload:", payload);
-      await updateBag(bag.id, payload);
-      Alert.alert("Sukses", "Surprise Bag berhasil diperbarui!", [
-        { text: "OK", onPress: () => navigation.goBack() },
-      ]);
+
+      console.log("Payload to be sent:", payload);
+
+      const responseUpdate = await updateBag(bag.id, payload);
+      console.log("responseUpdate : ", responseUpdate);
+      Dialog.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: 'Sukses',
+        textBody: 'Surprise Bag berhasil diperbarui!',
+        button: 'OK',
+        onPressButton: () => {
+          Dialog.hide();
+          navigation.navigate("MenuList");
+        },
+      });
     } catch (error) {
       console.error("Failed to update menu item:", error);
-      Alert.alert("Error", error.response?.data?.message || "Terjadi kesalahan saat memperbarui Surprise Bag.");
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: error.response?.data?.message ||
+          'Terjadi kesalahan saat memperbarui Surprise Bag.',
+        button: 'Tutup',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.container}
       >
-        <ScrollView>
+        <ScrollView keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Edit Surprise Bag</Text>
           </View>
@@ -112,13 +203,19 @@ const EditBagScreen = ({ navigation, route }) => {
               multiline
             />
 
-            <Text style={styles.label}>Image URL</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="http://example.com/image.jpg"
-              value={imageUrl}
-              onChangeText={setImageUrl}
-            />
+            <Text style={styles.label}>Foto</Text>
+            <TouchableOpacity
+              style={styles.outlineButton}
+              onPress={handleChoosePhoto}
+            >
+              <Text style={styles.outlineButtonText}>Pilih Foto Baru</Text>
+            </TouchableOpacity>
+            <View style={styles.imagePreviewContainer}>
+              <Image
+                source={{ uri: image ? image.uri : imageUrl }}
+                style={styles.imagePreview}
+              />
+            </View>
 
             <View style={styles.priceRow}>
               <View style={styles.priceInputContainer}>
@@ -150,8 +247,16 @@ const EditBagScreen = ({ navigation, route }) => {
                   style={styles.timeInput}
                   onPress={() => setStartTimePickerVisible(true)}
                 >
-                  <Text style={displayStartTime ? styles.timeText : styles.placeholderText}>
-                    {displayStartTime ? displayStartTime.slice(11, 16) : "Pilih Jam"}
+                  <Text
+                    style={
+                      displayStartTime
+                        ? styles.timeText
+                        : styles.placeholderText
+                    }
+                  >
+                    {displayStartTime
+                      ? displayStartTime.slice(11, 16)
+                      : "Pilih Jam"}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -161,8 +266,14 @@ const EditBagScreen = ({ navigation, route }) => {
                   style={styles.timeInput}
                   onPress={() => setEndTimePickerVisible(true)}
                 >
-                  <Text style={displayEndTime ? styles.timeText : styles.placeholderText}>
-                    {displayEndTime ? displayEndTime.slice(11, 16) : "Pilih Jam"}
+                  <Text
+                    style={
+                      displayEndTime ? styles.timeText : styles.placeholderText
+                    }
+                  >
+                    {displayEndTime
+                      ? displayEndTime.slice(11, 16)
+                      : "Pilih Jam"}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -174,12 +285,14 @@ const EditBagScreen = ({ navigation, route }) => {
               onConfirm={(pickedDuration) => {
                 const now = new Date();
                 const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                const hours = String(pickedDuration.hours).padStart(2, '0');
-                const minutes = String(pickedDuration.minutes).padStart(2, '0');
-                const seconds = String(pickedDuration.seconds).padStart(2, '0');
-                setDisplayStartTime(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+                const month = String(now.getMonth() + 1).padStart(2, "0");
+                const day = String(now.getDate()).padStart(2, "0");
+                const hours = String(pickedDuration.hours).padStart(2, "0");
+                const minutes = String(pickedDuration.minutes).padStart(2, "0");
+                const seconds = String(pickedDuration.seconds).padStart(2, "0");
+                setDisplayStartTime(
+                  `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+                );
                 setStartTimePickerVisible(false);
               }}
               modalTitle="Pilih Jam Mulai"
@@ -193,12 +306,14 @@ const EditBagScreen = ({ navigation, route }) => {
               onConfirm={(pickedDuration) => {
                 const now = new Date();
                 const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                const hours = String(pickedDuration.hours).padStart(2, '0');
-                const minutes = String(pickedDuration.minutes).padStart(2, '0');
-                const seconds = String(pickedDuration.seconds).padStart(2, '0');
-                setDisplayEndTime(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+                const month = String(now.getMonth() + 1).padStart(2, "0");
+                const day = String(now.getDate()).padStart(2, "0");
+                const hours = String(pickedDuration.hours).padStart(2, "0");
+                const minutes = String(pickedDuration.minutes).padStart(2, "0");
+                const seconds = String(pickedDuration.seconds).padStart(2, "0");
+                setDisplayEndTime(
+                  `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+                );
                 setEndTimePickerVisible(false);
               }}
               modalTitle="Pilih Jam Selesai"
@@ -228,8 +343,19 @@ const EditBagScreen = ({ navigation, route }) => {
               </Picker>
             </View>
 
-            <TouchableOpacity style={styles.button} onPress={handleSave}>
-              <Text style={styles.buttonText}>Simpan Perubahan</Text>
+            <TouchableOpacity
+              style={[
+                styles.button,
+                (!isChanged || loading) && styles.buttonDisabled,
+              ]}
+              onPress={handleSave}
+              disabled={!isChanged || loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.buttonText}>Simpan Perubahan</Text>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -301,6 +427,22 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 5,
   },
+  outlineButton: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#3498DB",
+    marginBottom: 20,
+  },
+  outlineButtonText: {
+    color: "#3498DB",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
   button: {
     width: "100%",
     height: 50,
@@ -309,6 +451,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 10,
+  },
+  buttonDisabled: {
+    backgroundColor: "#A5D6A7",
   },
   buttonText: {
     color: "#FFFFFF",
@@ -345,6 +490,17 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 16,
     color: "#999",
+  },
+  imagePreviewContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  imagePreview: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
   },
 });
 

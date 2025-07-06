@@ -7,12 +7,12 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Image,
   ActivityIndicator,
 } from "react-native";
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 import { useMenu } from "../context/MenuContext";
 import { useAuthContext } from "../context/AuthContext";
 import apiClient, { uploadImage } from "../api/apiClient";
@@ -41,7 +41,12 @@ const AddBagScreen = ({ navigation }) => {
         const { status } =
           await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
-          alert("Sorry, we need camera roll permissions to make this work!");
+          Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: 'Peringatan',
+            textBody: 'Kami memerlukan izin galeri untuk memilih gambar.',
+            button: 'Tutup',
+          });
         }
       }
     })();
@@ -65,7 +70,12 @@ const AddBagScreen = ({ navigation }) => {
     setLoading(true);
 
     if (!sellerProfileId) {
-      Alert.alert("Error", "Seller profile ID not found. Please log in again.");
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: 'Seller profile ID not found. Please log in again.',
+        button: 'Tutup',
+      });
       setLoading(false);
       return;
     }
@@ -79,10 +89,12 @@ const AddBagScreen = ({ navigation }) => {
       !displayEndTime ||
       !image
     ) {
-      Alert.alert(
-        "Error",
-        "Harap isi semua field yang wajib diisi dan pilih gambar."
-      );
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: 'Harap isi semua field yang wajib diisi dan pilih gambar.',
+        button: 'Tutup',
+      });
       setLoading(false);
       return;
     }
@@ -97,10 +109,16 @@ const AddBagScreen = ({ navigation }) => {
       });
 
       const imageResponse = await uploadImage(imageFormData);
+      console.log(imageResponse);
       const imageUrl = imageResponse.data.url;
 
       if (!imageUrl) {
-        Alert.alert("Error", "Gagal mengunggah gambar. URL tidak ditemukan.");
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: 'Error',
+          textBody: 'Gagal mengunggah gambar. URL tidak ditemukan.',
+          button: 'Tutup',
+        });
         setLoading(false);
         return;
       }
@@ -122,22 +140,35 @@ const AddBagScreen = ({ navigation }) => {
       const response = await apiClient.post("/menu-items", payload);
 
       if (response.status === 201) {
-        Alert.alert("Sukses", "Surprise Bag berhasil ditambahkan!", [
-          { text: "OK", onPress: () => navigation.goBack() },
-        ]);
+        Dialog.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: 'Sukses',
+          textBody: 'Surprise Bag berhasil ditambahkan!',
+          button: 'OK',
+        onPressButton: () => {
+          Dialog.hide();
+          navigation.goBack();
+        },
+      });
       } else {
-        Alert.alert(
-          "Error",
-          "Gagal menambahkan Surprise Bag. Silakan coba lagi."
-        );
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: 'Error',
+          textBody: 'Gagal menambahkan Surprise Bag. Silakan coba lagi.',
+          button: 'Tutup',
+        });
       }
     } catch (error) {
       console.error("Failed to add menu item:", error);
-      Alert.alert(
-        "Error",
-        error.response?.data?.message ||
-          "Terjadi kesalahan saat menambahkan Surprise Bag."
-      );
+      console.log("");
+      console.log(error.response.data);
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: error.response?.data?.message ||
+          'Terjadi kesalahan saat menambahkan Surprise Bag.',
+        button: 'Tutup',
+      });
     } finally {
       setLoading(false);
     }

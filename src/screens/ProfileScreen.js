@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,70 +7,151 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  Alert,
+  ActivityIndicator,
 } from "react-native";
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 import { useAuth } from "../hooks";
+import { useAuthContext } from "../context/AuthContext";
+import { getSellerProfile } from "../api/apiClient";
+import { useFocusEffect } from "@react-navigation/native";
 
 const ProfileScreen = ({ navigation }) => {
   const { logoutUser } = useAuth();
-  const [merchantProfile, setMerchantProfile] = useState({
-    storeName: "Toko Roti Enak",
-    rating: 4.8,
-    reviews: 125,
-    description:
-      "Kami menyajikan berbagai macam roti, kue, dan jajanan pasar yang dibuat setiap hari dengan bahan-bahan berkualitas. Cicipi kelezatan produk kami yang akan memanjakan lidah Anda.",
-    profileImage:
-      "https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=200&h=200&fit=crop", // Placeholder image
-  });
+  const { sellerProfileId, isLoading: isAuthLoading } = useAuthContext();
+  const [merchantProfile, setMerchantProfile] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchSellerProfile = async () => {
+    if (!sellerProfileId) {
+      setIsLoading(false);
+      setError("Seller ID not found.");
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: 'ID Penjual tidak ditemukan.',
+        button: 'Tutup',
+      });
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await getSellerProfile(sellerProfileId);
+      const data = response.data.data;
+      setMerchantProfile({
+        storeName: data.storeName,
+        averageRating: data.averageRating,
+        storeDescription: data.storeDescription,
+        storeImageUrl: data.storeImageUrl,
+      });
+    } catch (err) {
+      console.error("Failed to fetch seller profile:", err);
+      setError("Failed to load profile. Please try again.");
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: 'Gagal memuat profil. Silakan coba lagi.',
+        button: 'Tutup',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!isAuthLoading) {
+        fetchSellerProfile();
+      }
+    }, [isAuthLoading, sellerProfileId])
+  );
 
   const handleUpdateStore = (updatedData) => {
     setMerchantProfile((prevProfile) => ({
       ...prevProfile,
       storeName: updatedData.storeName,
-      description: updatedData.description,
+      storeDescription: updatedData.description,
     }));
   };
 
   const handleEditStore = () => {
     navigation.navigate("EditStore", {
       storeName: merchantProfile.storeName,
-      description: merchantProfile.description,
-      onSave: handleUpdateStore,
+      description: merchantProfile.storeDescription,
     });
   };
 
   const handleChangePassword = () => {
-    Alert.alert(
-      "Change Password",
-      "Fitur untuk mengubah password sedang dalam pengembangan."
-    );
+    Dialog.show({
+      type: ALERT_TYPE.INFO,
+      title: 'Ubah Kata Sandi',
+      textBody: 'Fitur untuk mengubah kata sandi sedang dalam pengembangan.',
+      button: 'Tutup',
+    });
   };
 
   const handleHelpAndFeedback = () => {
-    Alert.alert(
-      "Help & Feedback",
-      "Fitur untuk bantuan dan masukan sedang dalam pengembangan."
-    );
+    Dialog.show({
+      type: ALERT_TYPE.INFO,
+      title: 'Bantuan & Masukan',
+      textBody: 'Fitur untuk bantuan dan masukan sedang dalam pengembangan.',
+      button: 'Tutup',
+    });
   };
 
   const handleOfficialWebsite = () => {
-    Alert.alert("About Us", "Link ke website resmi kami akan segera tersedia.");
+    Dialog.show({
+      type: ALERT_TYPE.INFO,
+      title: 'Tentang Kami',
+      textBody: 'Tautan ke situs web resmi kami akan segera tersedia.',
+      button: 'Tutup',
+    });
   };
 
   const handleLogout = async () => {
-    // In a real app, you would clear user session and navigate to the login screen
-    Alert.alert("Logout", "Apakah Anda yakin ingin keluar?", [
-      { text: "Batal", style: "cancel" },
-      {
-        text: "Keluar",
-        onPress: async () => {
-          await logoutUser();
-          navigation.navigate("Login");
-        },
-        style: "destructive",
+    Dialog.show({
+      type: ALERT_TYPE.WARNING,
+      title: 'Logout',
+      textBody: 'Apakah Anda yakin ingin keluar?',
+      button: 'Keluar',
+      onPressButton: async () => {
+        Dialog.hide();
+        await logoutUser();
+        navigation.navigate("Login");
       },
-    ]);
+      showCancelButton: true,
+      cancelButton: 'Batal',
+    });
   };
+
+  if (isLoading || isAuthLoading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2ECC71" />
+        <Text style={styles.loadingText}>Loading profile...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchSellerProfile}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  if (!merchantProfile) {
+    return (
+      <SafeAreaView style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>No profile data available.</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -81,23 +162,29 @@ const ProfileScreen = ({ navigation }) => {
 
         <View style={styles.profileContainer}>
           <Image
-            source={{ uri: merchantProfile.profileImage }}
+            source={{
+              uri:
+                merchantProfile.storeImageUrl ||
+                "https://via.placeholder.com/150",
+            }}
             style={styles.profileImage}
           />
           <Text style={styles.storeName}>{merchantProfile.storeName}</Text>
           <View style={styles.ratingContainer}>
             <Text style={styles.ratingText}>
-              ★ {merchantProfile.rating.toFixed(1)}
+              ★ {merchantProfile.averageRating?.toFixed(1) || "N/A"}
             </Text>
-            <Text style={styles.reviewsText}>
+            {/* <Text style={styles.reviewsText}>
               ({merchantProfile.reviews} reviews)
-            </Text>
+            </Text> */}
           </View>
         </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Store Description</Text>
-          <Text style={styles.description}>{merchantProfile.description}</Text>
+          <Text style={styles.description}>
+            {merchantProfile.storeDescription}
+          </Text>
         </View>
 
         <View style={styles.menuContainer}>
@@ -279,6 +366,51 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#555",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#E74C3C",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: "#3498DB",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#7F8C8D",
   },
 });
 

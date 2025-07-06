@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, StyleSheet, Animated } from "react-native";
 
 const Toast = ({ message, type, onHide }) => {
   const [fadeAnim] = useState(new Animated.Value(0));
+  const isMounted = useRef(true); // To track if the component is mounted
 
   useEffect(() => {
+    isMounted.current = true; // Component is mounted
+
     Animated.sequence([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -18,8 +21,16 @@ const Toast = ({ message, type, onHide }) => {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      onHide();
+      if (isMounted.current) { // Only call onHide if component is still mounted
+        onHide();
+      }
     });
+
+    return () => {
+      isMounted.current = false; // Component is unmounted
+      // Stop any ongoing animations if the component unmounts
+      fadeAnim.stopAnimation();
+    };
   }, [fadeAnim, onHide]);
 
   const backgroundColor = type === "error" ? "#E74C3C" : "#2ECC71";
