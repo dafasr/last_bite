@@ -8,6 +8,8 @@ import AddBagScreen from "./AddBagScreen";
 import EditBagScreen from "./EditBagScreen";
 import EditStoreScreen from "./EditStoreScreen";
 import ProfileScreen from "./ProfileScreen";
+import ChangePasswordScreen from "./ChangePasswordScreen";
+import EditUserInformationScreen from "./EditUserInformationScreen";
 import { MenuProvider } from "../context/MenuContext";
 import { useOrders } from "../hooks";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -178,6 +180,14 @@ const MerchantTabNavigator = () => {
               <ProfileStack.Screen
                 name="EditStore"
                 component={EditStoreScreen}
+              />
+              <ProfileStack.Screen
+                name="ChangePassword"
+                component={ChangePasswordScreen}
+              />
+              <ProfileStack.Screen
+                name="EditUserInformation"
+                component={EditUserInformationScreen}
               />
             </ProfileStack.Navigator>
           )}

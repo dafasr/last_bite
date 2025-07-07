@@ -109,7 +109,6 @@ const AddBagScreen = ({ navigation }) => {
       });
 
       const imageResponse = await uploadImage(imageFormData);
-      console.log(imageResponse);
       const imageUrl = imageResponse.data.url;
 
       if (!imageUrl) {
@@ -160,8 +159,6 @@ const AddBagScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error("Failed to add menu item:", error);
-      console.log("");
-      console.log(error.response.data);
       Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: 'Error',

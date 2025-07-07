@@ -35,7 +35,7 @@ const EditBagScreen = ({ navigation, route }) => {
   const [quantityAvailable, setQuantityAvailable] = useState("");
   const [displayStartTime, setDisplayStartTime] = useState("");
   const [displayEndTime, setDisplayEndTime] = useState("");
-  const [status, setStatus] = useState("AVAILABLE");
+  
 
   // UI state
   const [isStartTimePickerVisible, setStartTimePickerVisible] = useState(false);
@@ -54,7 +54,7 @@ const EditBagScreen = ({ navigation, route }) => {
       setQuantityAvailable(String(bag.quantityAvailable || ""));
       setDisplayStartTime(bag.displayStartTime || "");
       setDisplayEndTime(bag.displayEndTime || "");
-      setStatus(bag.status || "AVAILABLE");
+      
     }
   }, [bag]);
 
@@ -70,7 +70,7 @@ const EditBagScreen = ({ navigation, route }) => {
       String(bag.quantityAvailable) !== quantityAvailable ||
       bag.displayStartTime !== displayStartTime ||
       bag.displayEndTime !== displayEndTime ||
-      bag.status !== status ||
+      
       image !== null; // A new image has been selected
 
     setIsChanged(hasChanged);
@@ -82,7 +82,7 @@ const EditBagScreen = ({ navigation, route }) => {
     quantityAvailable,
     displayStartTime,
     displayEndTime,
-    status,
+
     image,
     bag,
   ]);
@@ -117,7 +117,6 @@ const EditBagScreen = ({ navigation, route }) => {
         });
 
         const imageResponse = await uploadImage(imageFormData);
-        console.log(imageResponse);
         finalImageUrl = imageResponse.data.url;
 
         if (!finalImageUrl) {
@@ -143,13 +142,10 @@ const EditBagScreen = ({ navigation, route }) => {
         quantityAvailable: parseInt(quantityAvailable, 10),
         displayStartTime,
         displayEndTime,
-        status,
+    
       };
 
-      console.log("Payload to be sent:", payload);
-
       const responseUpdate = await updateBag(bag.id, payload);
-      console.log("responseUpdate : ", responseUpdate);
       Dialog.show({
         type: ALERT_TYPE.SUCCESS,
         title: 'Sukses',
@@ -330,18 +326,7 @@ const EditBagScreen = ({ navigation, route }) => {
               keyboardType="numeric"
             />
 
-            <Text style={styles.label}>Status</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={status}
-                onValueChange={(itemValue) => setStatus(itemValue)}
-                style={styles.picker}
-              >
-                <Picker.Item label="Available" value="AVAILABLE" />
-                <Picker.Item label="Sold Out" value="SOLD_OUT" />
-                <Picker.Item label="Not Available" value="NOT_AVAILABLE" />
-              </Picker>
-            </View>
+            
 
             <TouchableOpacity
               style={[

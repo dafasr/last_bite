@@ -55,7 +55,10 @@ const MenuScreen = ({ navigation }) => {
       title: "Hapus Surprise Bag",
       textBody: `Apakah Anda yakin ingin menghapus "${bagName}"? Tindakan ini tidak dapat dibatalkan.`,
       button: "Hapus",
-      onPressButton: () => deleteBag(bagId),
+      onPressButton: () => {
+        deleteBag(bagId);
+        Dialog.hide();
+      },
       showCancelButton: true,
       cancelButton: "Batal",
     });

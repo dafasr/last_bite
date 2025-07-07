@@ -7,12 +7,14 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { useAuth } from "../hooks";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Location from 'expo-location';
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import * as ImagePicker from "expo-image-picker";
 
 const RegisterScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -36,9 +38,48 @@ const RegisterScreen = ({ navigation }) => {
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
+  const [image, setImage] = useState(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   
   const { isLoading, registerUser } = useAuth();
+
+  // Cloudinary configuration (REPLACE WITH YOUR ACTUAL VALUES)
+  const CLOUD_NAME = 'YOUR_CLOUD_NAME'; 
+  const UPLOAD_PRESET = 'YOUR_UPLOAD_PRESET';
+
+  const uploadImageToCloudinary = async (imageUri) => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: imageUri,
+      type: 'image/jpeg', // Adjust type if needed
+      name: 'upload.jpg',
+    });
+    formData.append('upload_preset', UPLOAD_PRESET);
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      const data = await response.json();
+      if (data.secure_url) {
+        return data.secure_url;
+      } else {
+        throw new Error('Cloudinary upload failed: ' + (data.error ? data.error.message : 'Unknown error'));
+      }
+    } catch (error) {
+      console.error("Cloudinary upload error:", error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     setMapRegion({
@@ -96,6 +137,19 @@ const RegisterScreen = ({ navigation }) => {
     }
   };
 
+  const handleChoosePhoto = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0]);
+    }
+  };
+
   const validate = () => {
     const newErrors = {};
     if (!username) {
@@ -141,6 +195,24 @@ const RegisterScreen = ({ navigation }) => {
   const handleRegister = async () => {
     if (!validate()) return;
 
+    setIsUploadingImage(true);
+    let finalStoreImageUrl = "";
+    if (image) {
+      try {
+        finalStoreImageUrl = await uploadImageToCloudinary(image.uri);
+      } catch (error) {
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: 'Error',
+          textBody: 'Gagal mengunggah gambar toko.',
+          button: 'Tutup',
+        });
+        setIsUploadingImage(false);
+        return;
+      }
+    }
+    setIsUploadingImage(false);
+
     const result = await registerUser({
       username,
       email,
@@ -153,6 +225,7 @@ const RegisterScreen = ({ navigation }) => {
       longitude,
       address,
       status: "INACTIVE",
+      storeImageUrl: finalStoreImageUrl,
     });
 
     if (!result.success) {
@@ -318,6 +391,25 @@ const RegisterScreen = ({ navigation }) => {
           {errors.storeDescription && (
             <Text style={styles.errorText}>{errors.storeDescription}</Text>
           )}
+
+          <Text style={styles.photoLabel}>Foto Toko</Text>
+          <TouchableOpacity
+            style={styles.outlineButton}
+            onPress={handleChoosePhoto}
+            disabled={isUploadingImage}
+          >
+            {isUploadingImage ? (
+              <ActivityIndicator color="#3498DB" />
+            ) : (
+              <Text style={styles.outlineButtonText}>Pilih Foto Toko</Text>
+            )}
+          </TouchableOpacity>
+          {image && (
+            <View style={styles.imagePreviewContainer}>
+              <Image source={{ uri: image.uri }} style={styles.imagePreview} />
+            </View>
+          )}
+
           <Text style={styles.mapLabel}>
             Pilih Lokasi di Peta (Latitude: {latitude.toFixed(4)}, Longitude:{" "}
             {longitude.toFixed(4)})
@@ -415,10 +507,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
   },
-  mapLabel: {
-    fontSize: 14,
-    color: "#7F8C8D",
+  label: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  photoLabel: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 10,
+    marginTop: 10,
   },
   map: {
     width: "100%",
@@ -490,6 +590,42 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     paddingHorizontal: 15,
+  },
+  outlineButton: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#3498DB",
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  outlineButtonText: {
+    color: "#3498DB",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  imagePreviewContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+    backgroundColor: "#f7f7f7",
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  imagePreview: {
+    width: 200,
+    height: 200,
+    borderRadius: 8,
+    resizeMode: "cover",
   },
 });
 

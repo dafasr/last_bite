@@ -26,17 +26,6 @@ const categories = [
 const ListScreen = ({ orders, onUpdateStatus }) => {
   const [selectedCategory, setSelectedCategory] = useState("Semua");
 
-  // DEBUG: Untuk melihat data 'orders' yang diterima oleh komponen ini.
-  // Periksa output di terminal Metro Bundler setelah mereject pesanan.
-  console.log(
-    "Data diterima di ListScreen:",
-    JSON.stringify(
-      orders.map((o) => ({ id: o.id, status: o.status })),
-      null,
-      2
-    )
-  );
-
   const renderOrderItem = ({ item }) => (
     <View style={styles.orderItem}>
       <View style={styles.orderItemHeader}>

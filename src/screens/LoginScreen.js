@@ -11,25 +11,25 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Alert,
 } from "react-native";
 import { useAuth } from "../hooks";
-import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import { ALERT_TYPE, Toast } from "react-native-alert-notification";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  
+  const [showPassword, setShowPassword] = useState(false);
+
   const { isLoading, loginUser } = useAuth();
 
   const handleLogin = async () => {
     Keyboard.dismiss();
     if (!username || !password) {
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: 'Error',
-        textBody: 'Username dan password wajib diisi.',
-        button: 'Tutup',
-      });
+      Alert.alert("Error", "Username dan password wajib diisi.", [
+        { text: "Tutup" },
+      ]);
       return;
     }
     const result = await loginUser({ username, password });
@@ -38,23 +38,19 @@ export default function LoginScreen({ navigation }) {
       navigation.navigate("MerchantHome");
     } else {
       Keyboard.dismiss();
-      Dialog.show({
+      Toast.show({
         type: ALERT_TYPE.DANGER,
-        title: 'Error',
-        textBody: 'Username atau password salah.',
-        button: 'Tutup',
+        title: "Error",
+        textBody: "Username atau password salah.",
       });
     }
   };
 
   const handleForgotPassword = () => {
     Keyboard.dismiss();
-    Dialog.show({
-      type: ALERT_TYPE.WARNING,
-      title: 'Informasi',
-      textBody: 'Fitur ini sedang dalam pengembangan.',
-      button: 'Tutup',
-    });
+    Alert.alert("Informasi", "Fitur ini sedang dalam pengembangan.", [
+      { text: "Tutup" },
+    ]);
   };
 
   const handleRegister = () => {
@@ -72,55 +68,81 @@ export default function LoginScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false} // Menghilangkan indikator scroll
         >
-            {/* Logo Aplikasi */}
-            <Image
-              source={require("../../assets/logo.png")}
-              style={styles.logo}
-            />
+          {/* Logo Aplikasi */}
+          <Image
+            source={require("../../assets/logo.png")}
+            style={styles.logo}
+          />
 
-            {/* Box untuk Form */}
-            <View style={styles.formContainer}>
+          {/* Box untuk Form */}
+          <View style={styles.formContainer}>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="person-outline"
+                size={24}
+                color="#7F8C8D"
+                style={styles.icon}
+              />
               <TextInput
-                style={styles.input}
+                style={styles.inputField}
                 placeholder="Username"
                 value={username}
                 onChangeText={setUsername}
                 autoCapitalize="none"
               />
+            </View>
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="lock-closed-outline"
+                size={24}
+                color="#7F8C8D"
+                style={styles.icon}
+              />
               <TextInput
-                style={styles.input}
+                style={styles.inputField}
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                secureTextEntry={!showPassword}
               />
-
               <TouchableOpacity
-                style={styles.forgotPasswordContainer}
-                onPress={handleForgotPassword}
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeIcon}
               >
-                <Text style={styles.forgotPasswordText}>Lupa Password?</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.loginButton}
-                onPress={handleLogin}
-                disabled={isLoading}
-              >
-                <Text style={styles.loginButtonText}>
-                  {isLoading ? "Logging in..." : "Login"}
-                </Text>
+                <Ionicons
+                  name={showPassword ? "eye-outline" : "eye-off-outline"}
+                  size={24}
+                  color="#7F8C8D"
+                />
               </TouchableOpacity>
             </View>
 
-            {/* Link untuk Registrasi */}
-            <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>Belum punya akun? </Text>
-              <TouchableOpacity onPress={handleRegister}>
-                <Text style={styles.registerLink}>Daftar sekarang</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
+            <TouchableOpacity
+              style={styles.forgotPasswordContainer}
+              onPress={handleForgotPassword}
+            >
+              <Text style={styles.forgotPasswordText}>Lupa Password?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={handleLogin}
+              disabled={isLoading}
+            >
+              <Text style={styles.loginButtonText}>
+                {isLoading ? "Logging in..." : "Login"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Link untuk Registrasi */}
+          <View style={styles.registerContainer}>
+            <Text style={styles.registerText}>Belum punya akun? </Text>
+            <TouchableOpacity onPress={handleRegister}>
+              <Text style={styles.registerLink}>Daftar sekarang</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -164,6 +186,31 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderWidth: 1,
     borderColor: "#ddd",
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    height: 50,
+    backgroundColor: "#f7f7f7",
+    borderRadius: 10,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    paddingHorizontal: 15,
+  },
+  inputField: {
+    flex: 1,
+    height: "100%",
+    color: "#333",
+    fontSize: 16,
+    paddingLeft: 10,
+  },
+  icon: {
+    marginRight: 10,
+  },
+  eyeIcon: {
+    paddingHorizontal: 5,
   },
   forgotPasswordContainer: {
     width: "100%",

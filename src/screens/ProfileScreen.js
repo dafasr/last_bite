@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 import { useAuth } from "../hooks";
 import { useAuthContext } from "../context/AuthContext";
@@ -21,7 +12,6 @@ const ProfileScreen = ({ navigation }) => {
   const [merchantProfile, setMerchantProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const fetchSellerProfile = async () => {
     if (!sellerProfileId) {
       setIsLoading(false);
@@ -83,12 +73,7 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleChangePassword = () => {
-    Dialog.show({
-      type: ALERT_TYPE.INFO,
-      title: 'Ubah Kata Sandi',
-      textBody: 'Fitur untuk mengubah kata sandi sedang dalam pengembangan.',
-      button: 'Tutup',
-    });
+    navigation.navigate("ChangePassword");
   };
 
   const handleHelpAndFeedback = () => {
@@ -192,6 +177,10 @@ const ProfileScreen = ({ navigation }) => {
             <Text style={styles.menuItemText}>Edit Store Information</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("EditUserInformation")}>
+            <Text style={styles.menuItemText}>Edit User Information</Text>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.menuItem}
             onPress={handleChangePassword}
@@ -224,7 +213,8 @@ const ProfileScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+
+      </SafeAreaView>
   );
 };
 
@@ -412,6 +402,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#7F8C8D",
   },
-});
+  });
 
 export default ProfileScreen;
