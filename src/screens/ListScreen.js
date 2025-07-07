@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from "react";
+import { AlertPrompt } from "react-native-alert-prompt";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   View,
@@ -11,7 +12,7 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from "react-native";
-import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
+import { ALERT_TYPE, Dialog, prompt } from "react-native-alert-notification";
 import apiClient from "../api/apiClient";
 
 // Konfigurasi terpusat untuk semua status pesanan
@@ -38,18 +39,50 @@ const ListScreen = ({ onUpdateStatus }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isPromptVisible, setIsPromptVisible] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState(null);
   
+
+  const handleCompleteOrder = useCallback((orderId) => {
+    setCurrentOrderId(orderId);
+    setIsPromptVisible(true);
+  }, []);
+
+  const handleVerificationSubmit = useCallback(async (verificationCode) => {
+    setIsPromptVisible(false);
+    if (!currentOrderId) return;
+
+    try {
+      await apiClient.put(`/orders/${currentOrderId}/complete`, { verificationCode });
+      fetchOrders();
+      Dialog.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: "Berhasil",
+        textBody: "Pesanan berhasil diselesaikan.",
+        button: "Tutup",
+      });
+    } catch (error) {
+      console.error("Failed to complete order:", error);
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Gagal menyelesaikan pesanan. Pastikan kode verifikasi benar.",
+        button: "Tutup",
+      });
+    }
+    setCurrentOrderId(null);
+  }, [currentOrderId, fetchOrders]);
+
+  const handleVerificationCancel = useCallback(() => {
+    setIsPromptVisible(false);
+    setCurrentOrderId(null);
+  }, []);
 
   const handleUpdateStatus = useCallback(async (orderId, newStatus) => {
     try {
       if (newStatus === "READY_FOR_PICKUP") {
         await apiClient.put(`/orders/${orderId}/ready`);
         // After successful API call, refresh the orders
-        fetchOrders();
-      } else if (newStatus === "Completed") {
-        // Assuming there will be a similar endpoint for 'Completed'
-        // For now, just update locally or handle as per existing logic
-        // await apiClient.put(`/orders/${orderId}/complete`);
         fetchOrders();
       }
     } catch (error) {
@@ -160,7 +193,7 @@ const ListScreen = ({ onUpdateStatus }) => {
           {item.status === "READY_FOR_PICKUP" && (
             <TouchableOpacity
               style={[styles.actionButton, styles.acceptButton]}
-              onPress={() => handleUpdateStatus(item.orderId, "COMPLETED")}
+              onPress={() => handleCompleteOrder(item.orderId)}
             >
               <Text style={styles.actionButtonText}>✅ Selesai</Text>
             </TouchableOpacity>
@@ -265,6 +298,16 @@ const ListScreen = ({ onUpdateStatus }) => {
           />
         </View>
       )}
+      <AlertPrompt
+        visible={isPromptVisible}
+        title="Verifikasi Selesai"
+        placeholder="Kode Verifikasi"
+        onCancel={handleVerificationCancel}
+        onSubmit={handleVerificationSubmit}
+        submitButtonText="Selesaikan"
+        cancelButtonText="Batal"
+        closePrompt={handleVerificationCancel}
+      />
     </SafeAreaView>
   );
 };
