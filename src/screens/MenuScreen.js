@@ -134,7 +134,7 @@ const MenuScreen = ({ navigation }) => {
             {item.displayStartTime
               ? item.displayStartTime.slice(11, 16)
               : "N/A"}{" "}
-            - {item.displayEndTime ? item.displayEndTime.slice(11, 16) : "N/A"}
+            s/d {item.displayEndTime ? item.displayEndTime.slice(11, 16) : "N/A"}
           </Text>
         </View>
 
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     fontSize: 12, // Reduced font size
     color: "#2C3E50",
     fontWeight: "400",
-    flex: 1,
+    flex: 1, // Allow text to wrap
   },
   orderItemPrice: {
     fontSize: 13, // Reduced font size
@@ -319,6 +319,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "baseline",
     marginBottom: 8, // Reduced margin
+    flexWrap: 'wrap', // Allow price to wrap if needed
   },
   originalPrice: {
     fontSize: 12, // Reduced font size
@@ -332,23 +333,25 @@ const styles = StyleSheet.create({
     color: "#2ECC71",
   },
   availabilityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6, // Reduced margin
+    flexDirection: "column", // Change to column
+    alignItems: "flex-start", // Align items to the start
+    marginBottom: 6,
     backgroundColor: "#F0F2F5",
-    padding: 6, // Reduced padding
+    padding: 6,
     borderRadius: 5,
   },
   availabilityLabel: {
-    fontSize: 10, // Reduced font size
+    fontSize: 10,
     color: "#7F8C8D",
     fontWeight: "500",
-    marginRight: 4,
+    // marginRight: 4, // No longer needed
   },
   availabilityTime: {
-    fontSize: 11, // Reduced font size
+    fontSize: 11,
     fontWeight: "600",
     color: "#333",
+    flex: 1,
+    marginTop: 2, // Add a small top margin for spacing
   },
   quantityContainer: {
     flexDirection: "row",
@@ -368,6 +371,7 @@ const styles = StyleSheet.create({
     fontSize: 11, // Reduced font size
     fontWeight: "600",
     color: "#333",
+    flex: 1, // Allow text to wrap
   },
   statusInfoContainer: {
     flexDirection: "row",
@@ -387,6 +391,7 @@ const styles = StyleSheet.create({
     fontSize: 11, // Reduced font size
     fontWeight: "600",
     color: "#333",
+    flex: 1, // Allow text to wrap
   },
 
   buttonContainer: {

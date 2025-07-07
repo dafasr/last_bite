@@ -15,12 +15,10 @@ import {
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { useAuth } from "../hooks";
-import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Location from 'expo-location';
-import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import Ionicons from "@expo/vector-icons/Ionicons";
+import * as Location from "expo-location";
+import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from 'expo-file-system'; // Import FileSystem
-import { uploadImage } from "../api/apiClient"; // Import uploadImage
 
 const RegisterScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -36,7 +34,8 @@ const RegisterScreen = ({ navigation }) => {
   const [longitude, setLongitude] = useState(106.816666);
   const [errors, setErrors] = useState({});
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
+    useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [mapRegion, setMapRegion] = useState({
     latitude: -6.2,
@@ -68,6 +67,45 @@ const RegisterScreen = ({ navigation }) => {
     ]).start();
   }, [fadeAnim, slideAnim]);
 
+  // Cloudinary configuration (REPLACE WITH YOUR ACTUAL VALUES)
+  const CLOUD_NAME = "YOUR_CLOUD_NAME";
+  const UPLOAD_PRESET = "YOUR_UPLOAD_PRESET";
+
+  const uploadImageToCloudinary = async (imageUri) => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: imageUri,
+      type: "image/jpeg", // Adjust type if needed
+      name: "upload.jpg",
+    });
+    formData.append("upload_preset", UPLOAD_PRESET);
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      const data = await response.json();
+      if (data.secure_url) {
+        return data.secure_url;
+      } else {
+        throw new Error(
+          "Cloudinary upload failed: " +
+            (data.error ? data.error.message : "Unknown error")
+        );
+      }
+    } catch (error) {
+      console.error("Cloudinary upload error:", error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     setMapRegion({
@@ -80,14 +118,14 @@ const RegisterScreen = ({ navigation }) => {
 
   const requestLocationPermission = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status === 'granted') {
+    if (status === "granted") {
       return true;
     } else {
       Dialog.show({
         type: ALERT_TYPE.WARNING,
-        title: 'Izin Ditolak',
-        textBody: 'Izin lokasi ditolak.',
-        button: 'Tutup',
+        title: "Izin Ditolak",
+        textBody: "Izin lokasi ditolak.",
+        button: "Tutup",
       });
       return false;
     }
@@ -116,9 +154,9 @@ const RegisterScreen = ({ navigation }) => {
     } catch (error) {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
-        title: 'Error',
-        textBody: 'Gagal mendapatkan lokasi saat ini. ' + error.message,
-        button: 'Tutup',
+        title: "Error",
+        textBody: "Gagal mendapatkan lokasi saat ini. " + error.message,
+        button: "Tutup",
       });
     } finally {
       setIsLocating(false);
@@ -187,20 +225,13 @@ const RegisterScreen = ({ navigation }) => {
     let finalStoreImageUrl = "";
     if (image) {
       try {
-        const formData = new FormData();
-        formData.append('file', {
-          uri: image.uri,
-          name: `photo_${Date.now()}.jpg`,
-          type: 'image/jpeg',
-        });
-        const response = await uploadImage(formData);
-        finalStoreImageUrl = response.data.url;
+        finalStoreImageUrl = await uploadImageToCloudinary(image.uri);
       } catch (error) {
         Dialog.show({
           type: ALERT_TYPE.DANGER,
-          title: 'Error',
-          textBody: 'Gagal mengunggah gambar toko.',
-          button: 'Tutup',
+          title: "Error",
+          textBody: "Gagal mengunggah gambar toko.",
+          button: "Tutup",
         });
         setIsUploadingImage(false);
         return;
@@ -226,16 +257,16 @@ const RegisterScreen = ({ navigation }) => {
     if (!result.success) {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
-        title: 'Error',
+        title: "Error",
         textBody: result.message,
-        button: 'Tutup',
+        button: "Tutup",
       });
     } else {
       Dialog.show({
         type: ALERT_TYPE.SUCCESS,
-        title: 'Sukses',
-        textBody: 'Registrasi berhasil! Silakan login.',
-        button: 'OK',
+        title: "Sukses",
+        textBody: "Registrasi berhasil! Silakan login.",
+        button: "OK",
         onPressButton: () => {
           Dialog.hide();
           navigation.navigate("Login");
@@ -264,7 +295,9 @@ const RegisterScreen = ({ navigation }) => {
             ]}
           >
             <Text style={styles.title}>Daftarkan Toko Anda</Text>
-            <Text style={styles.subtitle}>Isi detail di bawah untuk memulai</Text>
+            <Text style={styles.subtitle}>
+              Isi detail di bawah untuk memulai
+            </Text>
           </Animated.View>
 
           <Animated.View
