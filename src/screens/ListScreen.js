@@ -42,7 +42,7 @@ const ListScreen = ({ onUpdateStatus }) => {
 
   const handleUpdateStatus = useCallback(async (orderId, newStatus) => {
     try {
-      if (newStatus === "Ready for Pickup") {
+      if (newStatus === "READY_FOR_PICKUP") {
         await apiClient.put(`/orders/${orderId}/ready`);
         // After successful API call, refresh the orders
         fetchOrders();
@@ -68,7 +68,6 @@ const ListScreen = ({ onUpdateStatus }) => {
     try {
       const response = await apiClient.get("/orders/seller/me");
       setOrders(response.data.data);
-      console.log("Fetched order IDs:", response.data.data.map(order => order.id));
     } catch (error) {
       console.error("Failed to fetch orders:", error);
       Dialog.show({
@@ -98,16 +97,23 @@ const ListScreen = ({ onUpdateStatus }) => {
     return (
       <View style={styles.orderItem}>
         <View style={styles.orderItemHeader}>
-          <View style={styles.customerInfoContainer}>
-            <Text style={styles.customerName}>{item.customerName}</Text>
-            <Text style={styles.orderIdText}>Order ID: {item.orderId}</Text>
+            <View style={styles.customerInfoContainer}>
+              <View style={styles.nameAndStatusRow}>
+                <Text style={styles.customerName}>{item.customerName}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: STATUS_CONFIG[item.status]?.color || '#7F8C8D' }]}>
+                  <Text style={styles.statusText}>
+                    {STATUS_CONFIG[item.status]?.displayName || item.status}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.orderIdText}>Order ID: {item.orderId}</Text>
+            </View>
+            <View style={styles.priceContainer}>
+              <Text style={styles.orderPrice}>
+                Rp {item.totalAmount?.toLocaleString("id-ID")}
+              </Text>
+            </View>
           </View>
-          <View style={styles.priceContainer}>
-            <Text style={styles.orderPrice}>
-              Rp {item.totalAmount?.toLocaleString("id-ID")}
-            </Text>
-          </View>
-        </View>
 
         <View style={styles.orderItemsContainer}>
           <Text style={styles.orderItemsTitle}>📦 Order Items:</Text>
@@ -146,8 +152,7 @@ const ListScreen = ({ onUpdateStatus }) => {
           {item.status === "PREPARING" && (
             <TouchableOpacity
               style={[styles.actionButton, styles.acceptButton]}
-              onPress={() => handleUpdateStatus(item.id, "READY_FOR_PICKUP")}
-              activeOpacity={0.8}
+              onPress={() => handleUpdateStatus(item.orderId, "READY_FOR_PICKUP")}
             >
               <Text style={styles.actionButtonText}>✅ Siap Diambil</Text>
             </TouchableOpacity>
@@ -155,8 +160,7 @@ const ListScreen = ({ onUpdateStatus }) => {
           {item.status === "READY_FOR_PICKUP" && (
             <TouchableOpacity
               style={[styles.actionButton, styles.acceptButton]}
-              onPress={() => handleUpdateStatus(item.id, "COMPLETED")}
-              activeOpacity={0.8}
+              onPress={() => handleUpdateStatus(item.orderId, "COMPLETED")}
             >
               <Text style={styles.actionButtonText}>✅ Selesai</Text>
             </TouchableOpacity>
@@ -164,8 +168,7 @@ const ListScreen = ({ onUpdateStatus }) => {
           {item.status !== "COMPLETED" && item.status !== "CANCELLED" && (
             <TouchableOpacity
               style={[styles.actionButton, styles.rejectButton]}
-              onPress={() => handleUpdateStatus(item.id, "CANCELLED")}
-              activeOpacity={0.8}
+              onPress={() => handleUpdateStatus(item.orderId, "CANCELLED")}
             >
               <Text style={styles.actionButtonText}>❌ Batalkan</Text>
             </TouchableOpacity>
@@ -244,7 +247,7 @@ const ListScreen = ({ onUpdateStatus }) => {
           <FlatList
             data={filteredOrders}
             renderItem={renderOrderItem}
-            keyExtractor={(item, index) => item.id != null ? String(item.id) : String(index)}
+            keyExtractor={(item) => String(item.orderId)}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
@@ -327,12 +330,17 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
+  nameAndStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
   
   customerName: {
     fontSize: 18,
     fontWeight: "700",
     color: "#2C3E50",
-    marginBottom: 4,
+    marginRight: 8, // Add margin to separate from status badge
   },
   
   priceContainer: {
@@ -529,6 +537,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: "#555",
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 15,
+    marginLeft: 8, // Add margin to separate from customer name
+  },
+  statusText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });
 
