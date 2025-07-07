@@ -1,6 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native";
-import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+} from "react-native";
+import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import { useAuth } from "../hooks";
 import { useAuthContext } from "../context/AuthContext";
 import { getSellerProfile } from "../api/apiClient";
@@ -12,15 +23,17 @@ const ProfileScreen = ({ navigation }) => {
   const [merchantProfile, setMerchantProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const fetchSellerProfile = async () => {
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchSellerProfile = useCallback(async () => {
     if (!sellerProfileId) {
       setIsLoading(false);
       setError("Seller ID not found.");
       Dialog.show({
         type: ALERT_TYPE.DANGER,
-        title: 'Error',
-        textBody: 'ID Penjual tidak ditemukan.',
-        button: 'Tutup',
+        title: "Error",
+        textBody: "ID Penjual tidak ditemukan.",
+        button: "Tutup",
       });
       return;
     }
@@ -40,22 +53,28 @@ const ProfileScreen = ({ navigation }) => {
       setError("Failed to load profile. Please try again.");
       Dialog.show({
         type: ALERT_TYPE.DANGER,
-        title: 'Error',
-        textBody: 'Gagal memuat profil. Silakan coba lagi.',
-        button: 'Tutup',
+        title: "Error",
+        textBody: "Gagal memuat profil. Silakan coba lagi.",
+        button: "Tutup",
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [sellerProfileId]);
 
   useFocusEffect(
     React.useCallback(() => {
       if (!isAuthLoading) {
         fetchSellerProfile();
       }
-    }, [isAuthLoading, sellerProfileId])
+    }, [isAuthLoading, fetchSellerProfile])
   );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchSellerProfile();
+    setRefreshing(false);
+  }, [fetchSellerProfile]);
 
   const handleUpdateStore = (updatedData) => {
     setMerchantProfile((prevProfile) => ({
@@ -79,34 +98,34 @@ const ProfileScreen = ({ navigation }) => {
   const handleHelpAndFeedback = () => {
     Dialog.show({
       type: ALERT_TYPE.INFO,
-      title: 'Bantuan & Masukan',
-      textBody: 'Fitur untuk bantuan dan masukan sedang dalam pengembangan.',
-      button: 'Tutup',
+      title: "Bantuan & Masukan",
+      textBody: "Fitur untuk bantuan dan masukan sedang dalam pengembangan.",
+      button: "Tutup",
     });
   };
 
   const handleOfficialWebsite = () => {
     Dialog.show({
       type: ALERT_TYPE.INFO,
-      title: 'Tentang Kami',
-      textBody: 'Tautan ke situs web resmi kami akan segera tersedia.',
-      button: 'Tutup',
+      title: "Tentang Kami",
+      textBody: "Tautan ke situs web resmi kami akan segera tersedia.",
+      button: "Tutup",
     });
   };
 
   const handleLogout = async () => {
     Dialog.show({
       type: ALERT_TYPE.WARNING,
-      title: 'Logout',
-      textBody: 'Apakah Anda yakin ingin keluar?',
-      button: 'Keluar',
+      title: "Logout",
+      textBody: "Apakah Anda yakin ingin keluar?",
+      button: "Keluar",
       onPressButton: async () => {
         Dialog.hide();
         await logoutUser();
         navigation.navigate("Login");
       },
       showCancelButton: true,
-      cancelButton: 'Batal',
+      cancelButton: "Batal",
     });
   };
 
@@ -123,7 +142,10 @@ const ProfileScreen = ({ navigation }) => {
     return (
       <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchSellerProfile}>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={fetchSellerProfile}
+        >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -140,9 +162,14 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>My Profile</Text>
+          {/* <Text style={styles.headerTitle}>My Profile</Text> */}
         </View>
 
         <View style={styles.profileContainer}>
@@ -177,7 +204,10 @@ const ProfileScreen = ({ navigation }) => {
             <Text style={styles.menuItemText}>Edit Store Information</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("EditUserInformation")}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigation.navigate("EditUserInformation")}
+          >
             <Text style={styles.menuItemText}>Edit User Information</Text>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
@@ -213,8 +243,7 @@ const ProfileScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-      </SafeAreaView>
+    </SafeAreaView>
   );
 };
 
@@ -228,53 +257,71 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   header: {
-    paddingVertical: 30,
+    paddingVertical: 40,
     paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    backgroundColor: "#2ECC71", // A vibrant green
     justifyContent: "center",
+    alignItems: "center",
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 8,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#FFFFFF", // White text for contrast
     textAlign: "center",
   },
   profileContainer: {
     alignItems: "center",
-    padding: 20,
+    padding: 25,
     backgroundColor: "#FFFFFF",
-    margin: 20,
-    borderRadius: 15,
+    marginHorizontal: 20,
+    marginTop: -50, // Pull it up into the header area
+    borderRadius: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 15,
+    elevation: 10,
+    zIndex: 1, // Ensure it's above other elements
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     marginBottom: 15,
-    borderWidth: 3,
-    borderColor: "#2ECC71",
+    borderWidth: 5,
+    borderColor: "#FFFFFF", // White border around the image
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   storeName: {
-    fontSize: 22,
-    fontWeight: "bold",
+    fontSize: 26,
+    fontWeight: "900",
     color: "#333",
-    marginBottom: 5,
+    marginBottom: 8,
+    textAlign: "center",
   },
   ratingContainer: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#FFC107",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
   },
   ratingText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#FFC107", // Gold color for the star
+    color: "#FFFFFF", // White text for rating
     marginRight: 5,
   },
   reviewsText: {
@@ -284,78 +331,82 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#FFFFFF",
     marginHorizontal: 20,
+    marginTop: 20,
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 15,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 20,
+    fontWeight: "700",
     color: "#333",
     marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    paddingBottom: 10,
   },
   description: {
-    fontSize: 15,
+    fontSize: 16,
     color: "#555",
-    lineHeight: 22,
+    lineHeight: 24,
   },
   menuContainer: {
     marginTop: 20,
     marginHorizontal: 20,
     backgroundColor: "#FFFFFF",
-    borderRadius: 10,
+    borderRadius: 15,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 3,
-    overflow: "hidden", // Ensures the border radius is respected by children
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+    overflow: "hidden",
   },
   menuItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 18,
-    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 25,
     borderBottomWidth: 1,
-    borderBottomColor: "#f5f5f5",
+    borderBottomColor: "#f0f0f0",
   },
   menuItemText: {
-    fontSize: 16,
+    fontSize: 17,
     color: "#333",
+    fontWeight: "500",
   },
   menuItemArrow: {
-    fontSize: 20,
+    fontSize: 22,
     color: "#7F8C8D",
+    fontWeight: "bold",
   },
   actionsContainer: {
-    marginTop: 20,
+    marginTop: 30,
     paddingHorizontal: 20,
+    marginBottom: 20,
   },
   actionButton: {
-    paddingVertical: 15,
-    borderRadius: 10,
+    paddingVertical: 18,
+    borderRadius: 15,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
   },
   logoutButton: {
     backgroundColor: "#E74C3C", // Red
   },
   actionButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: "700",
   },
   loadingContainer: {
     flex: 1,
@@ -402,6 +453,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#7F8C8D",
   },
-  });
+});
 
 export default ProfileScreen;

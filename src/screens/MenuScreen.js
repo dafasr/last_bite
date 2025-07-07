@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   View,
@@ -7,8 +7,9 @@ import {
   FlatList,
   TouchableOpacity,
   SafeAreaView,
-  Switch,
   Image,
+  RefreshControl,
+  ScrollView,
 } from "react-native";
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import { useMenu } from "../context/MenuContext";
@@ -18,29 +19,38 @@ const MenuScreen = ({ navigation }) => {
   const { surpriseBags, setSurpriseBags, toggleAvailability, deleteBag } =
     useMenu();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchMenuItems = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getMenuItems();
+      setSurpriseBags(response.data.data);
+      console.log("Fetched surprise bag IDs:", response.data.data.map(bag => bag.id));
+    } catch (error) {
+      console.error("Failed to fetch menu items:", error);
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Gagal mengambil item menu.",
+        button: "Tutup",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [setSurpriseBags]);
 
   useFocusEffect(
     React.useCallback(() => {
-      const fetchMenuItems = async () => {
-        try {
-          const response = await getMenuItems();
-          setSurpriseBags(response.data.data);
-        } catch (error) {
-          console.error("Failed to fetch menu items:", error);
-          Dialog.show({
-            type: ALERT_TYPE.DANGER,
-            title: "Error",
-            textBody: "Gagal mengambil item menu.",
-            button: "Tutup",
-          });
-        } finally {
-          setLoading(false);
-        }
-      };
-
       fetchMenuItems();
-    }, [])
+    }, [fetchMenuItems])
   );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchMenuItems();
+    setRefreshing(false);
+  }, [fetchMenuItems]);
 
   // Placeholder untuk fungsi edit
   // Mengarahkan ke layar EditBag dan mengirimkan data 'bag' yang dipilih
@@ -52,7 +62,7 @@ const MenuScreen = ({ navigation }) => {
   const handleDelete = (bagId, bagName) => {
     Dialog.show({
       type: ALERT_TYPE.WARNING,
-      title: "Hapus Surprise Bag",
+      title: "Hapus Menu",
       textBody: `Apakah Anda yakin ingin menghapus "${bagName}"? Tindakan ini tidak dapat dibatalkan.`,
       button: "Hapus",
       onPressButton: () => {
@@ -63,10 +73,6 @@ const MenuScreen = ({ navigation }) => {
       cancelButton: "Batal",
     });
   };
-
-  const filteredBags = useMemo(() => {
-    return surpriseBags;
-  }, [surpriseBags]);
 
   const renderItem = ({ item }) => (
     <View style={styles.bagItem}>
@@ -81,8 +87,10 @@ const MenuScreen = ({ navigation }) => {
       <View style={styles.bagContent}>
         <Text style={styles.bagName}>{item.name}</Text>
 
-        <Text style={styles.bagItemsLabel}>Kemungkinan isi:</Text>
-        <Text style={styles.bagItems}>{item.description}</Text>
+        <View style={styles.orderItemsContainer}>
+          <Text style={styles.orderItemsTitle}>📦 Kemungkinan isi:</Text>
+          <Text style={styles.orderItemText}>{item.description}</Text>
+        </View>
 
         <View style={styles.priceContainer}>
           <Text style={styles.originalPrice}>
@@ -135,24 +143,34 @@ const MenuScreen = ({ navigation }) => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Your Surprise Bags</Text>
+          <Text style={styles.headerTitle}>Daftar Menu</Text>
+          <Text style={styles.headerSubtitle}>
+            Kelola menu Anda dengan mudah
+          </Text>
         </View>
         <FlatList
-          data={filteredBags}
+          data={surpriseBags}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => item.id != null ? String(item.id) : String(index)}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>
-                Tidak ada Surprise Bag di kategori ini.
+              <Text style={styles.emptyIcon}>📭</Text>
+              <Text style={styles.emptyText}>Tidak ada menu</Text>
+              <Text style={styles.emptySubtext}>
+                Menu Anda akan muncul di sini
               </Text>
             </View>
           }
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAddBag}>
-          <Text style={styles.addButtonText}>+ Tambah Surprise Bag</Text>
+          <Text style={styles.addButtonText}>Tambah Menu</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -171,159 +189,180 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#2C3E50",
     textAlign: "center",
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: "#7F8C8D",
+    textAlign: "center",
+    fontWeight: "500",
   },
   listContainer: {
-    padding: 20,
+    padding: 10,
     flexGrow: 1,
   },
+  row: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  
   bagItem: {
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
-    marginBottom: 20,
+    marginBottom: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 4,
-    overflow: "hidden", // Ensures the image respects the border radius
+    overflow: "hidden",
+    width: "48%", // Approximately half the screen width minus some margin
   },
-  bagImage: {
+    bagImage: {
     width: "100%",
     height: 150,
     resizeMode: "cover",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
   },
   bagContent: {
     padding: 20,
   },
   bagName: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#333",
-    // marginBottom is removed as spacing is now handled by the container
   },
-  bagItemsLabel: {
+  orderItemsContainer: {
+    marginBottom: 16,
+    backgroundColor: "#F8F9FA",
+    padding: 16,
+    borderRadius: 12,
+  },
+  orderItemsTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#2C3E50",
+    marginBottom: 12,
+  },
+  orderItemText: {
     fontSize: 14,
-    marginTop: 10,
+    color: "#2C3E50",
+    fontWeight: "500",
+    flex: 1,
+  },
+  orderItemPrice: {
+    fontSize: 14,
     color: "#7F8C8D",
     fontWeight: "600",
   },
-  bagItems: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 15,
+  orderItemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ECF0F1",
   },
+  
+  
+  
   priceContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 10,
   },
   originalPrice: {
-    fontSize: 16,
+    fontSize: 13,
     color: "#E74C3C",
     textDecorationLine: "line-through",
-    marginRight: 10,
+    marginRight: 8,
   },
   discountedPrice: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#2ECC71",
   },
   availabilityContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 10,
     backgroundColor: "#f9f9f9",
-    padding: 10,
+    padding: 8,
     borderRadius: 5,
   },
   availabilityLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#7F8C8D",
     fontWeight: "600",
-    marginRight: 8,
+    marginRight: 5,
   },
   availabilityTime: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "bold",
     color: "#333",
   },
   quantityContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 10,
     backgroundColor: "#f9f9f9",
-    padding: 10,
+    padding: 8,
     borderRadius: 5,
   },
   quantityLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#7F8C8D",
     fontWeight: "600",
-    marginRight: 8,
+    marginRight: 5,
   },
   quantityText: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "bold",
     color: "#333",
   },
   statusInfoContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 10,
     backgroundColor: "#f9f9f9",
-    padding: 10,
+    padding: 8,
     borderRadius: 5,
   },
   statusInfoLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#7F8C8D",
     fontWeight: "600",
-    marginRight: 8,
+    marginRight: 5,
   },
   statusInfoText: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "bold",
     color: "#333",
   },
-  statusContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-    paddingTop: 15,
-  },
-  statusLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
+  
   buttonContainer: {
     flexDirection: "row",
-    marginTop: 10,
+    marginTop: 8,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderRadius: 8,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
   },
   actionButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
   },
   editButton: {
@@ -352,32 +391,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-  categoryContainer: {
-    flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  categoryTab: {
-    flex: 1,
-    paddingVertical: 15,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  activeCategoryTab: {
-    borderBottomWidth: 3,
-    borderBottomColor: "#2ECC71",
-  },
-  categoryTabText: {
-    color: "#495057",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  activeCategoryTabText: {
-    color: "#2ECC71",
-  },
-  emptyContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { textAlign: "center", fontSize: 16, color: "#7F8C8D" },
+  
+  
 });
 
 export default MenuScreen;

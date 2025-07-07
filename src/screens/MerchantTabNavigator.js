@@ -130,7 +130,20 @@ const MerchantTabNavigator = () => {
           },
           tabBarActiveTintColor: "#2ECC71",
           tabBarInactiveTintColor: "#7F8C8D",
-          tabBarStyle: { backgroundColor: "#FFFFFF" },
+          tabBarStyle: {
+            backgroundColor: "#FFFFFF",
+            borderTopWidth: 0,
+            elevation: 10,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 5 },
+            shadowOpacity: 0.1,
+            shadowRadius: 10,
+            height: 60,
+            paddingBottom: 5,
+            paddingTop: 5,
+          },
+          tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
+          tabBarItemStyle: { marginVertical: 5 },
           headerShown: false,
         })}
       >

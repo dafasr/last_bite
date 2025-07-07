@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,23 +6,181 @@ import {
   FlatList,
   SafeAreaView,
   TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+  Dimensions,
 } from "react-native";
-import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
+import apiClient, { getSellerProfile } from "../api/apiClient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const MerchantHomeScreen = ({
-  incomingOrders,
-  onAccept,
-  onReject,
-  soldBagsCount,
-}) => {
+// --- THEME CONSTANTS ---
+const COLORS = {
+  primary: "#27AE60", // Green
+  secondary: "#3498DB", // Blue
+  danger: "#E74C3C", // Red
+  warning: "#F39C12", // Yellow
+  white: "#FFFFFF",
+  black: "#000000",
+  lightGray: "#F8F9FA",
+  lightGray2: "#ECF0F1",
+  gray: "#BDC3C7",
+  darkGray: "#7F8C8D",
+  title: "#2C3E50",
+  text: "#2C3E50",
+  background: "#F8F9FA",
+  card: "#FFFFFF",
+  priceBg: "#E8F5E8",
+  paymentBg: "#EBF3FD",
+  noteBg: "#FFF9E6",
+};
+
+const SIZES = {
+  base: 8,
+  font: 14,
+  radius: 12,
+  padding: 20,
+  h1: 28,
+  h2: 22,
+  h3: 18,
+  h4: 16,
+  body2: 14,
+  body3: 12,
+  body4: 11,
+};
+
+const FONTS = {
+  h1: { fontSize: SIZES.h1, fontWeight: "800" },
+  h2: { fontSize: SIZES.h2, fontWeight: "700" },
+  h3: { fontSize: SIZES.h3, fontWeight: "700" },
+  h4: { fontSize: SIZES.h4, fontWeight: "700" },
+  body2: { fontSize: SIZES.body2, fontWeight: "500" },
+  body3: { fontSize: SIZES.body3, fontWeight: "700" },
+  body4: { fontSize: SIZES.body4, fontWeight: "500" },
+  cardLabel: {
+    fontSize: SIZES.body2,
+    color: COLORS.darkGray,
+    fontWeight: "600",
+  },
+};
+
+const SHADOWS = {
+  light: {
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  medium: {
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  dark: {
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+};
+// --- END OF THEME ---
+
+const MerchantHomeScreen = ({ soldBagsCount }) => {
+  const [balance, setBalance] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [incomingOrders, setIncomingOrders] = useState([]);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const userResponse = await apiClient.get("/users/me");
+      const userId = userResponse.data?.data?.id;
+
+      if (userId) {
+        const sellerResponse = await getSellerProfile(userId);
+        if (sellerResponse.data?.data?.balance !== undefined) {
+          setBalance(sellerResponse.data.data.balance);
+        }
+
+        const ordersResponse = await apiClient.get("/orders/seller/me");
+        const paidOrders = ordersResponse.data.data.filter(
+          (order) => order.status === "PAID"
+        );
+        setIncomingOrders(paidOrders);
+      } else {
+        console.warn("User ID not found from /users/me");
+        Dialog.show({
+          type: ALERT_TYPE.WARNING,
+          title: "Warning",
+          textBody: "Could not retrieve user ID. Please log in again.",
+          button: "Close",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Failed to fetch data. Please try again later.",
+        button: "Close",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  }, [fetchData]);
+
   const handleWithdraw = () => {
-    // Placeholder for withdraw logic
     Dialog.show({
       type: ALERT_TYPE.INFO,
-      title: 'Segera Hadir',
-      textBody: 'Fitur penarikan sedang dalam pengembangan.',
-      button: 'Tutup',
+      title: "Segera Hadir",
+      textBody: "Fitur penarikan sedang dalam pengembangan.",
+      button: "Tutup",
     });
+  };
+
+  const handleReject = async (orderId) => {
+    try {
+      await apiClient.put(`/orders/${orderId}/cancel`);
+      fetchData(); // Refresh data
+    } catch (error) {
+      console.error("Failed to reject order:", error);
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Gagal menolak pesanan.",
+        button: "Tutup",
+      });
+    }
+  };
+
+  const handleAccept = async (orderId) => {
+    try {
+      await apiClient.put(`/orders/${orderId}/accept`);
+      fetchData(); // Refresh data
+    } catch (error) {
+      console.error("Failed to accept order:", error);
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Gagal menerima pesanan.",
+        button: "Tutup",
+      });
+    }
   };
 
   const renderOrderItem = ({ item }) => (
@@ -30,89 +188,122 @@ const MerchantHomeScreen = ({
       <View style={styles.orderItemHeader}>
         <View style={styles.customerInfoContainer}>
           <Text style={styles.customerName}>{item.customerName}</Text>
-          <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
-            <Text style={styles.statusText}>{item.status}</Text>
-          </View>
+          <Text style={styles.orderIdText}>Order ID: {item.orderId}</Text>
         </View>
-        <Text style={styles.orderPrice}>Rp {item.price}</Text>
-      </View>
-      <View style={styles.orderItemsContainer}>
-        {item.items.map((orderItem, index) => (
-          <Text key={index} style={styles.orderItemText}>
-            {orderItem.quantity}x {orderItem.name}
+        <View style={styles.priceContainer}>
+          <Text style={styles.orderPrice}>
+            Rp {item.totalAmount?.toLocaleString("id-ID")}
           </Text>
+        </View>
+      </View>
+
+      <View style={styles.orderItemsContainer}>
+        <Text style={styles.orderItemsTitle}>📦 Order Items:</Text>
+        {item.orderItems?.map((orderItem, index) => (
+          <View key={`${item.id}-${index}`} style={styles.orderItemRow}>
+            <Text style={styles.orderItemText}>
+              {orderItem.quantity}x {orderItem.menuItemName}
+            </Text>
+            <Text style={styles.orderItemPrice}>
+              Rp {orderItem.pricePerItem?.toLocaleString("id-ID")}
+            </Text>
+          </View>
         ))}
       </View>
-      {item.note && (
-        <View style={styles.noteContainer}>
-          <Text style={styles.noteLabel}>Catatan Pembeli:</Text>
-          <Text style={styles.noteText}>{item.note}</Text>
+
+      {item.payment && (
+        <View style={styles.paymentContainer}>
+          <Text style={styles.paymentLabel}>💳 Payment Status:</Text>
+          <View style={styles.paymentStatusBadge}>
+            <Text style={styles.paymentStatusText}>{item.payment.status}</Text>
+          </View>
         </View>
       )}
+
+      <View style={styles.noteContainer}>
+        <Text style={styles.noteLabel}>📝 Catatan Pembeli:</Text>
+        <Text style={styles.noteText}>{item.notes || "Tidak ada catatan"}</Text>
+      </View>
+
       <View style={styles.actionContainer}>
         <TouchableOpacity
           style={[styles.actionButton, styles.rejectButton]}
-          onPress={() => onReject(item.id)}
+          onPress={() => handleReject(item.id)}
+          activeOpacity={0.8}
         >
-          <Text style={styles.actionButtonText}>Reject</Text>
+          <Text style={styles.actionButtonText}>❌ Tolak</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.actionButton, styles.acceptButton]}
-          onPress={() => onAccept(item.id)}
+          onPress={() => handleAccept(item.id)}
+          activeOpacity={0.8}
         >
-          <Text style={styles.actionButtonText}>Accept</Text>
+          <Text style={styles.actionButtonText}>✅ Terima</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case "New":
-        return { backgroundColor: "#FF6B35" }; // Orange
-      case "Preparing":
-        return { backgroundColor: "#7F8C8D" }; // Abu-abu
-      case "Ready for Pickup":
-        return { backgroundColor: "#2ECC71" }; // Hijau
-      default:
-        return { backgroundColor: "#7F8C8D" };
-    }
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Dashboard</Text>
+          <Text style={styles.headerTitle}>🏪 Merchant Dashboard</Text>
+          <Text style={styles.headerSubtitle}>
+            Kelola pesanan Anda dengan mudah
+          </Text>
         </View>
 
         <View style={styles.summaryRow}>
-          <View style={styles.balanceCard}>
-            <Text style={styles.balanceLabel}>Your Balance</Text>
-            <Text style={styles.balanceAmount}>Rp 1,250,000</Text>
+          <View style={[styles.summaryCardBase, styles.balanceCard]}>
+            <Text style={styles.cardIcon}>💰</Text>
+            <Text style={styles.cardLabel}>Saldo Anda</Text>
+            <Text style={styles.balanceAmount}>
+              Rp {balance.toLocaleString("id-ID")}
+            </Text>
             <TouchableOpacity
               style={styles.withdrawButton}
               onPress={handleWithdraw}
+              activeOpacity={0.8}
             >
-              <Text style={styles.withdrawButtonText}>Withdraw</Text>
+              <Text style={styles.withdrawButtonText}>💸 Tarik Saldo</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.soldCard}>
-            <Text style={styles.soldLabel}>Bags Sold</Text>
+
+          <View style={[styles.summaryCardBase, styles.soldCard]}>
+            <Text style={styles.cardIcon}>📊</Text>
+            <Text style={styles.cardLabel}>Tas Terjual</Text>
             <Text style={styles.soldAmount}>{soldBagsCount || 0}</Text>
+            <Text style={styles.soldSubtext}>Total penjualan</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Incoming Orders</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>📋 Pesanan Masuk</Text>
+          <Text style={styles.sectionSubtitle}>
+            {incomingOrders.length} pesanan menunggu konfirmasi
+          </Text>
+        </View>
 
         <FlatList
           data={incomingOrders}
           renderItem={renderOrderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) =>
+            item.id ? item.id.toString() : index.toString()
+          }
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No new orders.</Text>
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>📭</Text>
+              <Text style={styles.emptyText}>Tidak ada pesanan baru</Text>
+              <Text style={styles.emptySubtext}>
+                Pesanan akan muncul di sini
+              </Text>
+            </View>
+          }
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         />
       </View>
@@ -120,212 +311,281 @@ const MerchantHomeScreen = ({
   );
 };
 
+// --- REFACTORED STYLESHEET ---
 const styles = StyleSheet.create({
+  // --- Base ---
   safeArea: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
   },
+  // --- Header ---
   header: {
-    paddingVertical: 30,
-    paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    justifyContent: "center",
+    paddingVertical: 24,
+    paddingHorizontal: SIZES.padding,
+    backgroundColor: COLORS.white,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    marginBottom: SIZES.padding,
+    ...SHADOWS.medium,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
+    ...FONTS.h1,
+    color: COLORS.title,
     textAlign: "center",
+    marginBottom: 4,
   },
+  headerSubtitle: {
+    ...FONTS.body2,
+    color: COLORS.darkGray,
+    textAlign: "center",
+    fontWeight: "500",
+  },
+  // --- Summary Cards ---
   summaryRow: {
     flexDirection: "row",
-    marginHorizontal: 20,
-    marginVertical: 12, // Dikecilkan lagi
+    marginHorizontal: SIZES.padding,
+    marginBottom: 24,
+    gap: SIZES.radius,
+  },
+  summaryCardBase: {
+    backgroundColor: COLORS.card,
+    padding: SIZES.padding,
+    borderRadius: 20,
+    ...SHADOWS.dark,
   },
   balanceCard: {
-    flex: 1.5,
-    backgroundColor: "#2ECC71",
-    padding: 12, // Dikecilkan lagi
-    borderRadius: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
-    marginRight: 5, // Dikecilkan lagi
-  },
-  balanceLabel: {
-    fontSize: 12, // Dikecilkan lagi
-    color: "#FFFFFF",
-    opacity: 0.9,
-  },
-  balanceAmount: {
-    fontSize: 20, // Dikecilkan lagi
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginTop: 5,
-    marginBottom: 8, // Dikecilkan lagi
-  },
-  withdrawButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    paddingVertical: 5, // Dikecilkan lagi
-    paddingHorizontal: 12, // Dikecilkan lagi
-    borderRadius: 25,
-    alignSelf: "flex-start",
-  },
-  withdrawButtonText: {
-    color: "#2ECC71",
-    fontWeight: "bold",
-    fontSize: 11, // Dikecilkan lagi
+    flex: 1.2,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
   soldCard: {
     flex: 1,
-    backgroundColor: "#3498DB",
-    padding: 12, // Dikecilkan lagi
-    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
-    marginLeft: 5, // Dikecilkan lagi
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.secondary,
   },
-  soldLabel: {
-    fontSize: 12, // Dikecilkan lagi
-    color: "#FFFFFF",
-    opacity: 0.9,
+  cardIcon: {
+    fontSize: 24,
+    marginBottom: SIZES.base,
+  },
+  cardLabel: {
+    ...FONTS.cardLabel,
+    marginBottom: 4,
+  },
+  balanceAmount: {
+    ...FONTS.h2,
+    fontSize: 24, // Custom size
+    fontWeight: "800",
+    color: COLORS.primary,
+    marginBottom: 16,
   },
   soldAmount: {
-    fontSize: 28, // Dikecilkan lagi
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginTop: 5,
+    ...FONTS.h1,
+    fontSize: 32, // Custom size
+    color: COLORS.secondary,
+    marginBottom: 4,
+  },
+  soldSubtext: {
+    ...FONTS.body4,
+    color: COLORS.gray,
+  },
+  withdrawButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: SIZES.radius,
+    paddingHorizontal: 16,
+    borderRadius: SIZES.radius,
+    alignSelf: "flex-start",
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  withdrawButtonText: {
+    ...FONTS.body3,
+    color: COLORS.white,
+    fontSize: SIZES.body3,
+  },
+  // --- Section Header ---
+  sectionHeader: {
+    marginHorizontal: SIZES.padding,
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-    marginLeft: 20,
-    marginBottom: 10,
+    ...FONTS.h2,
+    color: COLORS.title,
+    marginBottom: 4,
   },
+  sectionSubtitle: {
+    ...FONTS.body2,
+    color: COLORS.darkGray,
+  },
+  // --- List ---
   listContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: SIZES.padding,
+    paddingBottom: SIZES.padding,
   },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 60,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: SIZES.h3,
+    fontWeight: "600",
+    color: COLORS.darkGray,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    ...FONTS.body2,
+    color: COLORS.gray,
+    textAlign: "center",
+  },
+  // --- Order Item Card ---
   orderItem: {
-    backgroundColor: "#FFFFFF",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 3,
+    backgroundColor: COLORS.card,
+    padding: SIZES.padding,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.danger,
+    ...SHADOWS.light,
   },
   orderItemHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
-    alignItems: "center",
+    alignItems: "flex-start",
+    marginBottom: 16,
   },
   customerInfoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
     flex: 1,
-    marginRight: 10,
+    marginRight: SIZES.radius,
   },
   customerName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginRight: 8,
-    flexShrink: 1,
+    ...FONTS.h3,
+    color: COLORS.title,
+    marginBottom: 4,
+  },
+  orderIdText: {
+    ...FONTS.body2,
+    color: COLORS.darkGray,
+  },
+  priceContainer: {
+    backgroundColor: COLORS.priceBg,
+    paddingHorizontal: SIZES.radius,
+    paddingVertical: SIZES.base,
+    borderRadius: SIZES.base,
   },
   orderPrice: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#2ECC71",
+    ...FONTS.h4,
+    color: COLORS.primary,
   },
   orderItemsContainer: {
-    marginBottom: 10,
+    marginBottom: 16,
+    backgroundColor: COLORS.lightGray,
+    padding: 16,
+    borderRadius: SIZES.radius,
+  },
+  orderItemsTitle: {
+    ...FONTS.h4,
+    color: COLORS.title,
+    marginBottom: SIZES.radius,
+  },
+  orderItemRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: SIZES.base,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray2,
   },
   orderItemText: {
-    fontSize: 14,
-    color: "#7F8C8D",
-    // Use lineHeight to add space between items if there are multiple
-    lineHeight: 20,
+    ...FONTS.body2,
+    color: COLORS.text,
+    flex: 1,
   },
-  noteContainer: {
-    marginTop: 5,
-    marginBottom: 15,
-    padding: 10,
-    backgroundColor: "#f0f8ff", // AliceBlue for a subtle highlight
-    borderRadius: 5,
-    borderLeftWidth: 3,
-    borderLeftColor: "#3498DB",
+  orderItemPrice: {
+    ...FONTS.body2,
+    color: COLORS.darkGray,
+    fontWeight: "600",
   },
-  noteLabel: {
-    fontSize: 13,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 3,
+  paymentContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    backgroundColor: COLORS.paymentBg,
+    padding: SIZES.radius,
+    borderRadius: SIZES.base,
   },
-  noteText: {
-    fontSize: 14,
-    color: "#555",
+  paymentLabel: {
+    ...FONTS.body2,
+    fontWeight: "600",
+    color: COLORS.title,
   },
-  statusBadge: {
-    paddingVertical: 5,
-    paddingHorizontal: 12,
+  paymentStatusBadge: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SIZES.radius,
+    paddingVertical: 6,
     borderRadius: 20,
   },
-  statusText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "bold",
+  paymentStatusText: {
+    ...FONTS.body3,
+    fontSize: SIZES.body3,
+    color: COLORS.white,
   },
+  noteContainer: {
+    marginBottom: SIZES.padding,
+    backgroundColor: COLORS.noteBg,
+    padding: 16,
+    borderRadius: SIZES.radius,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.warning,
+  },
+  noteLabel: {
+    ...FONTS.h4,
+    fontSize: SIZES.body2,
+    color: COLORS.title,
+    marginBottom: SIZES.base,
+  },
+  noteText: {
+    ...FONTS.body2,
+    color: COLORS.darkGray,
+    lineHeight: 20,
+    fontStyle: "italic",
+  },
+  // --- Actions ---
   actionContainer: {
     flexDirection: "row",
-    justifyContent: "flex-end",
-    marginTop: 15,
+    justifyContent: "space-between",
+    gap: SIZES.radius,
   },
   actionButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginLeft: 10,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: SIZES.radius,
+    alignItems: "center",
+    ...SHADOWS.light,
+    elevation: 3,
   },
   rejectButton: {
-    backgroundColor: "#E74C3C", // Red
+    backgroundColor: COLORS.danger,
   },
   acceptButton: {
-    backgroundColor: "#2ECC71", // Green
+    backgroundColor: COLORS.primary,
   },
   actionButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-  emptyText: {
-    textAlign: "center",
-    marginTop: 50,
-    fontSize: 16,
-    color: "#7F8C8D",
+    ...FONTS.body3,
+    fontSize: SIZES.font,
+    color: COLORS.white,
   },
 });
 

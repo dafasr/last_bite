@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import apiClient from '../api/apiClient';
-import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 
-const EditUserInformationScreen = () => {
+const EditUserInformationScreen = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -29,6 +30,35 @@ const EditUserInformationScreen = () => {
 
     fetchUserData();
   }, []);
+
+  const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const payload = {
+        fullName: userData.fullName,
+        email: userData.email,
+        phoneNumber: userData.phoneNumber,
+      };
+      await apiClient.put('/users/me', payload);
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: 'Sukses',
+        textBody: 'Informasi pengguna berhasil diperbarui.',
+      });
+      navigation.navigate('ProfileScreen');
+    } catch (err) {
+      console.error("Failed to update user data:", err);
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'Error',
+        textBody: err.response?.data?.message || 'Gagal memperbarui informasi pengguna. Silakan coba lagi.',
+        button: 'Tutup',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -63,7 +93,7 @@ const EditUserInformationScreen = () => {
         <View style={styles.formContainer}>
           <Text style={styles.label}>Username</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, styles.disabledInput]}
             value={userData.username}
             editable={false} // Username usually not editable
           />
@@ -90,6 +120,18 @@ const EditUserInformationScreen = () => {
             onChangeText={(text) => setUserData({ ...userData, phoneNumber: text })}
             keyboardType="phone-pad"
           />
+
+          <TouchableOpacity
+            style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+            onPress={handleSave}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.saveButtonText}>Save Changes</Text>
+            )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -105,7 +147,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 24,
@@ -148,7 +190,6 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     backgroundColor: "#FFFFFF",
-    marginHorizontal: 20,
     padding: 20,
     borderRadius: 10,
     shadowColor: "#000",
@@ -156,6 +197,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 3,
+    width: '100%',
   },
   label: {
     fontSize: 16,
@@ -170,6 +212,25 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 15,
     fontSize: 16,
+  },
+  disabledInput: {
+    backgroundColor: "#f0f0f0",
+    color: "#a0a0a0",
+  },
+  saveButton: {
+    backgroundColor: "#2ECC71",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  saveButtonDisabled: {
+    backgroundColor: "#A5D6A7",
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });
 
