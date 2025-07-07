@@ -43,7 +43,6 @@ const ListScreen = ({ onUpdateStatus }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [currentOrderId, setCurrentOrderId] = useState(null);
-  
 
   const handleCompleteOrder = useCallback((orderId) => {
     setCurrentOrderId(orderId);
@@ -55,7 +54,9 @@ const ListScreen = ({ onUpdateStatus }) => {
     if (!currentOrderId) return;
 
     try {
-      await apiClient.put(`/orders/${currentOrderId}/complete`, { verificationCode });
+      await apiClient.put(`/orders/${currentOrderId}/complete`, {
+        verificationCode,
+      });
       fetchOrders();
       Dialog.show({
         type: ALERT_TYPE.SUCCESS,
@@ -68,7 +69,8 @@ const ListScreen = ({ onUpdateStatus }) => {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",
-        textBody: "Gagal menyelesaikan pesanan. Pastikan kode verifikasi benar.",
+        textBody:
+          "Gagal menyelesaikan pesanan. Pastikan kode verifikasi benar.",
         button: "Tutup",
       });
     }
@@ -134,23 +136,31 @@ const ListScreen = ({ onUpdateStatus }) => {
     return (
       <View style={styles.orderItem}>
         <View style={styles.orderItemHeader}>
-            <View style={styles.customerInfoContainer}>
-              <View style={styles.nameAndStatusRow}>
-                <Text style={styles.customerName}>{item.customerName}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: STATUS_CONFIG[item.status]?.color || '#7F8C8D' }]}>
-                  <Text style={styles.statusText}>
-                    {STATUS_CONFIG[item.status]?.displayName || item.status}
-                  </Text>
-                </View>
+          <View style={styles.customerInfoContainer}>
+            <View style={styles.nameAndStatusRow}>
+              <Text style={styles.customerName}>{item.customerName}</Text>
+              <View
+                style={[
+                  styles.statusBadge,
+                  {
+                    backgroundColor:
+                      STATUS_CONFIG[item.status]?.color || "#7F8C8D",
+                  },
+                ]}
+              >
+                <Text style={styles.statusText}>
+                  {STATUS_CONFIG[item.status]?.displayName || item.status}
+                </Text>
               </View>
-              <Text style={styles.orderIdText}>Order ID: {item.orderId}</Text>
             </View>
-            <View style={styles.priceContainer}>
-              <Text style={styles.orderPrice}>
-                Rp {item.totalAmount?.toLocaleString("id-ID")}
-              </Text>
-            </View>
+            <Text style={styles.orderIdText}>Order ID: {item.orderId}</Text>
           </View>
+          <View style={styles.priceContainer}>
+            <Text style={styles.orderPrice}>
+              Rp {item.totalAmount?.toLocaleString("id-ID")}
+            </Text>
+          </View>
+        </View>
 
         <View style={styles.orderItemsContainer}>
           <Text style={styles.orderItemsTitle}>📦 Order Items:</Text>
@@ -189,7 +199,9 @@ const ListScreen = ({ onUpdateStatus }) => {
           {item.status === "PREPARING" && (
             <TouchableOpacity
               style={[styles.actionButton, styles.acceptButton]}
-              onPress={() => handleUpdateStatus(item.orderId, "READY_FOR_PICKUP")}
+              onPress={() =>
+                handleUpdateStatus(item.orderId, "READY_FOR_PICKUP")
+              }
             >
               <Text style={styles.actionButtonText}>✅ Siap Diambil</Text>
             </TouchableOpacity>
@@ -202,7 +214,6 @@ const ListScreen = ({ onUpdateStatus }) => {
               <Text style={styles.actionButtonText}>✅ Selesai</Text>
             </TouchableOpacity>
           )}
-          
         </View>
       </View>
     );
@@ -230,8 +241,6 @@ const ListScreen = ({ onUpdateStatus }) => {
     return orders.filter((o) => internalStatuses.includes(o.status));
   }, [orders, selectedCategory]);
 
-  
-
   return (
     <SafeAreaView style={styles.safeArea}>
       {loading ? (
@@ -243,9 +252,6 @@ const ListScreen = ({ onUpdateStatus }) => {
         <View style={styles.container}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Daftar Pesanan</Text>
-          <Text style={styles.headerSubtitle}>
-            Kelola pesanan Anda dengan mudah
-          </Text>
           </View>
           <View style={styles.categoryContainerWrapper}>
             <ScrollView
@@ -282,12 +288,12 @@ const ListScreen = ({ onUpdateStatus }) => {
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>📭</Text>
-              <Text style={styles.emptyText}>Tidak ada pesanan baru</Text>
-              <Text style={styles.emptySubtext}>
-                Pesanan akan muncul di sini
-              </Text>
-            </View>
+                <Text style={styles.emptyIcon}>📭</Text>
+                <Text style={styles.emptyText}>Tidak ada pesanan baru</Text>
+                <Text style={styles.emptySubtext}>
+                  Pesanan akan muncul di sini
+                </Text>
+              </View>
             }
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -299,7 +305,9 @@ const ListScreen = ({ onUpdateStatus }) => {
       <Modal isVisible={isModalVisible} onBackdropPress={handleModalCancel}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Verifikasi Selesai</Text>
-          <Text style={styles.modalText}>Masukkan kode verifikasi untuk menyelesaikan pesanan ini:</Text>
+          <Text style={styles.modalText}>
+            Masukkan kode verifikasi untuk menyelesaikan pesanan ini:
+          </Text>
           <TextInput
             style={styles.input}
             placeholder="Kode Verifikasi"
@@ -308,10 +316,16 @@ const ListScreen = ({ onUpdateStatus }) => {
             keyboardType="numeric"
           />
           <View style={styles.modalButtonContainer}>
-            <TouchableOpacity style={styles.modalButtonCancel} onPress={handleModalCancel}>
+            <TouchableOpacity
+              style={styles.modalButtonCancel}
+              onPress={handleModalCancel}
+            >
               <Text style={styles.modalButtonText}>Batal</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.modalButtonSubmit} onPress={handleModalSubmit}>
+            <TouchableOpacity
+              style={styles.modalButtonSubmit}
+              onPress={handleModalSubmit}
+            >
               <Text style={styles.modalButtonText}>Selesaikan</Text>
             </TouchableOpacity>
           </View>
@@ -330,31 +344,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingVertical: 24,
+    paddingTop: 20,
+    paddingBottom: 10,
     paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-    marginBottom: 20,
+    backgroundColor: "#F8F9FA", // Match safe area background
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: "800",
+    fontSize: 24,
+    fontWeight: "bold",
     color: "#2C3E50",
-    textAlign: "center",
-    marginBottom: 4,
   },
-  headerSubtitle: {
-    fontSize: 14,
-    color: "#7F8C8D",
-    textAlign: "center",
-    fontWeight: "500",
-  },
+
   listContainer: {
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -387,14 +387,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 4,
   },
-  
+
   customerName: {
     fontSize: 18,
     fontWeight: "700",
     color: "#2C3E50",
     marginRight: 8, // Add margin to separate from status badge
   },
-  
+
   priceContainer: {
     backgroundColor: "#E8F5E8",
     paddingHorizontal: 12,
@@ -547,11 +547,12 @@ const styles = StyleSheet.create({
     color: "#BDC3C7",
     textAlign: "center",
   },
-  
+
   categoryContainerWrapper: {
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
+    marginBottom: 10, // Add margin to push the list down
   },
   categoryContainer: {
     flexDirection: "row",

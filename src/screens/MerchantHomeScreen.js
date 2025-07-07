@@ -248,10 +248,7 @@ const MerchantHomeScreen = ({ soldBagsCount }) => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>🏪 Merchant Dashboard</Text>
-          <Text style={styles.headerSubtitle}>
-            Kelola pesanan Anda dengan mudah
-          </Text>
+          <Text style={styles.headerTitle}>Dasbor Merchant</Text>
         </View>
 
         <View style={styles.summaryRow}>
@@ -323,26 +320,17 @@ const styles = StyleSheet.create({
   },
   // --- Header ---
   header: {
-    paddingVertical: 24,
-    paddingHorizontal: SIZES.padding,
-    backgroundColor: COLORS.white,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    marginBottom: SIZES.padding,
-    ...SHADOWS.medium,
+    paddingTop: 20,
+    paddingBottom: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "#F8F9FA", // Match safe area background
   },
   headerTitle: {
-    ...FONTS.h1,
-    color: COLORS.title,
-    textAlign: "center",
-    marginBottom: 4,
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#2C3E50",
   },
-  headerSubtitle: {
-    ...FONTS.body2,
-    color: COLORS.darkGray,
-    textAlign: "center",
-    fontWeight: "500",
-  },
+
   // --- Summary Cards ---
   summaryRow: {
     flexDirection: "row",
