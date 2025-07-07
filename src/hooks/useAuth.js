@@ -5,7 +5,7 @@ import { useAuthContext } from "../context/AuthContext";
 
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { updateSellerProfileId } = useAuthContext();
+  const { updateSellerProfileId, isAuthenticated } = useAuthContext();
 
   const loginUser = async ({ username, password }) => {
     setIsLoading(true);
@@ -139,5 +139,6 @@ export const useAuth = () => {
     loginUser,
     registerUser,
     logoutUser,
+    isAuthenticated,
   };
 };

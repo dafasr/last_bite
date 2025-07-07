@@ -53,10 +53,7 @@ export default function LoginScreen({ navigation }) {
       return;
     }
     const result = await loginUser({ username, password });
-    if (result.success) {
-      // On successful login (for now, direct navigation)
-      navigation.navigate("MerchantHome");
-    } else {
+    if (!result.success) {
       Keyboard.dismiss();
       Toast.show({
         type: ALERT_TYPE.DANGER,

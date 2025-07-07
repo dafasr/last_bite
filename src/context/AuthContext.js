@@ -38,8 +38,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const isAuthenticated = async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      return !!token;
+    } catch (error) {
+      console.error('Failed to check authentication status', error);
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ sellerProfileId, updateSellerProfileId, isLoading }}>
+    <AuthContext.Provider value={{ sellerProfileId, updateSellerProfileId, isLoading, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );
