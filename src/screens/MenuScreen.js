@@ -26,7 +26,6 @@ const MenuScreen = ({ navigation }) => {
     try {
       const response = await getMenuItems();
       setSurpriseBags(response.data.data);
-      
     } catch (error) {
       console.error("Failed to fetch menu items:", error);
       Dialog.show({
@@ -151,7 +150,9 @@ const MenuScreen = ({ navigation }) => {
         <FlatList
           data={surpriseBags}
           renderItem={renderItem}
-          keyExtractor={(item, index) => item.id != null ? String(item.id) : String(index)}
+          keyExtractor={(item, index) =>
+            item.id != null ? String(item.id) : String(index)
+          }
           numColumns={2}
           columnWrapperStyle={styles.row}
           contentContainerStyle={styles.listContainer}
@@ -169,17 +170,17 @@ const MenuScreen = ({ navigation }) => {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         />
-        <TouchableOpacity style={styles.addButton} onPress={handleAddBag}>
-          <Text style={styles.addButtonText}>Tambah Menu</Text>
-        </TouchableOpacity>
       </View>
+      <TouchableOpacity style={styles.addButton} onPress={handleAddBag}>
+        <Text style={styles.addButtonText}>Tambah Menu</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#f5f5f5" },
-  container: { flex: 1 },
+  container: { flex: 1, overflow: "visible" },
   header: {
     paddingVertical: 30,
     paddingHorizontal: 20,
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
   },
-  
+
   bagItem: {
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
@@ -223,7 +224,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     width: "48%", // Approximately half the screen width minus some margin
   },
-    bagImage: {
+  bagImage: {
     width: "100%",
     height: 150,
     resizeMode: "cover",
@@ -269,9 +270,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#ECF0F1",
   },
-  
-  
-  
+
   priceContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -345,7 +344,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
-  
+
   buttonContainer: {
     flexDirection: "row",
     marginTop: 8,
@@ -376,7 +375,7 @@ const styles = StyleSheet.create({
   addButton: {
     backgroundColor: "#2ECC71",
     position: "absolute",
-    bottom: 0,
+    bottom: 80,
     left: 20,
     right: 20,
     padding: 15,
@@ -388,14 +387,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 5,
+    zIndex: 1000, // Ensure it's on top
   },
   addButtonText: {
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "bold",
   },
-  
-  
 });
 
 export default MenuScreen;
