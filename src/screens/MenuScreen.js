@@ -26,7 +26,7 @@ const MenuScreen = ({ navigation }) => {
     try {
       const response = await getMenuItems();
       setSurpriseBags(response.data.data);
-      console.log("Fetched surprise bag IDs:", response.data.data.map(bag => bag.id));
+      
     } catch (error) {
       console.error("Failed to fetch menu items:", error);
       Dialog.show({
@@ -204,6 +204,7 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: 10,
     flexGrow: 1,
+    paddingBottom: 80, // Add padding to make space for the button
   },
   row: {
     flex: 1,
@@ -374,8 +375,10 @@ const styles = StyleSheet.create({
   },
   addButton: {
     backgroundColor: "#2ECC71",
-    marginHorizontal: 20,
-    marginVertical: 10,
+    position: "absolute",
+    bottom: 0,
+    left: 20,
+    right: 20,
     padding: 15,
     borderRadius: 8,
     alignItems: "center",

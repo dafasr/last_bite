@@ -14,6 +14,7 @@ import { MenuProvider } from "../context/MenuContext";
 import { useOrders } from "../hooks";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import { View } from "react-native";
 
 const Tab = createBottomTabNavigator();
 const MenuStack = createStackNavigator();
@@ -128,21 +129,27 @@ const MerchantTabNavigator = () => {
 
             return <Ionicons name={iconName} size={size} color={color} />;
           },
-          tabBarActiveTintColor: "#2ECC71",
-          tabBarInactiveTintColor: "#7F8C8D",
+          tabBarActiveTintColor: "#2ECC71", // Vibrant green for active tabs
+          tabBarInactiveTintColor: "#7F8C8D", // Muted grey for inactive tabs
           tabBarStyle: {
             backgroundColor: "#FFFFFF",
             borderTopWidth: 0,
-            elevation: 10,
+            elevation: 15, // Increased elevation for a more pronounced shadow
             shadowColor: "#000",
-            shadowOffset: { width: 0, height: 5 },
+            shadowOffset: { width: 0, height: -5 }, // Shadow pointing upwards
             shadowOpacity: 0.1,
             shadowRadius: 10,
-            height: 60,
-            paddingBottom: 5,
-            paddingTop: 5,
+            height: 70, // Slightly taller tab bar
+            paddingBottom: 10, // More padding at the bottom
+            paddingTop: 10, // More padding at the top
+            borderTopLeftRadius: 20, // Rounded top corners
+            borderTopRightRadius: 20,
+            position: "absolute", // Position absolutely to allow rounded corners
+            bottom: 0,
+            left: 0,
+            right: 0,
           },
-          tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
+          tabBarLabelStyle: { fontSize: 13, fontWeight: "700", marginTop: 2 }, // Slightly larger and bolder labels
           tabBarItemStyle: { marginVertical: 5 },
           headerShown: false,
         })}

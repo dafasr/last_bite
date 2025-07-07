@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { AlertPrompt } from "react-native-alert-prompt";
+import Modal from "react-native-modal";
+import { TextInput } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   View,
@@ -39,17 +40,18 @@ const ListScreen = ({ onUpdateStatus }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [isPromptVisible, setIsPromptVisible] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
   const [currentOrderId, setCurrentOrderId] = useState(null);
   
 
   const handleCompleteOrder = useCallback((orderId) => {
     setCurrentOrderId(orderId);
-    setIsPromptVisible(true);
+    setModalVisible(true);
   }, []);
 
-  const handleVerificationSubmit = useCallback(async (verificationCode) => {
-    setIsPromptVisible(false);
+  const handleModalSubmit = useCallback(async () => {
+    setModalVisible(false);
     if (!currentOrderId) return;
 
     try {
@@ -71,11 +73,13 @@ const ListScreen = ({ onUpdateStatus }) => {
       });
     }
     setCurrentOrderId(null);
-  }, [currentOrderId, fetchOrders]);
+    setVerificationCode("");
+  }, [currentOrderId, verificationCode, fetchOrders]);
 
-  const handleVerificationCancel = useCallback(() => {
-    setIsPromptVisible(false);
+  const handleModalCancel = useCallback(() => {
+    setModalVisible(false);
     setCurrentOrderId(null);
+    setVerificationCode("");
   }, []);
 
   const handleUpdateStatus = useCallback(async (orderId, newStatus) => {
@@ -198,14 +202,7 @@ const ListScreen = ({ onUpdateStatus }) => {
               <Text style={styles.actionButtonText}>✅ Selesai</Text>
             </TouchableOpacity>
           )}
-          {item.status !== "COMPLETED" && item.status !== "CANCELLED" && (
-            <TouchableOpacity
-              style={[styles.actionButton, styles.rejectButton]}
-              onPress={() => handleUpdateStatus(item.orderId, "CANCELLED")}
-            >
-              <Text style={styles.actionButtonText}>❌ Batalkan</Text>
-            </TouchableOpacity>
-          )}
+          
         </View>
       </View>
     );
@@ -298,16 +295,28 @@ const ListScreen = ({ onUpdateStatus }) => {
           />
         </View>
       )}
-      <AlertPrompt
-        visible={isPromptVisible}
-        title="Verifikasi Selesai"
-        placeholder="Kode Verifikasi"
-        onCancel={handleVerificationCancel}
-        onSubmit={handleVerificationSubmit}
-        submitButtonText="Selesaikan"
-        cancelButtonText="Batal"
-        closePrompt={handleVerificationCancel}
-      />
+
+      <Modal isVisible={isModalVisible} onBackdropPress={handleModalCancel}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Verifikasi Selesai</Text>
+          <Text style={styles.modalText}>Masukkan kode verifikasi untuk menyelesaikan pesanan ini:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Kode Verifikasi"
+            value={verificationCode}
+            onChangeText={setVerificationCode}
+            keyboardType="numeric"
+          />
+          <View style={styles.modalButtonContainer}>
+            <TouchableOpacity style={styles.modalButtonCancel} onPress={handleModalCancel}>
+              <Text style={styles.modalButtonText}>Batal</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalButtonSubmit} onPress={handleModalSubmit}>
+              <Text style={styles.modalButtonText}>Selesaikan</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -590,6 +599,58 @@ const styles = StyleSheet.create({
   statusText: {
     color: "#FFFFFF",
     fontSize: 12,
+    fontWeight: "bold",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+    borderColor: "rgba(0, 0, 0, 0.1)",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  input: {
+    width: "100%",
+    height: 40,
+    borderColor: "gray",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+  },
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+  },
+  modalButtonCancel: {
+    backgroundColor: "#E74C3C",
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    marginRight: 10,
+    alignItems: "center",
+  },
+  modalButtonSubmit: {
+    backgroundColor: "#2ECC71",
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    marginLeft: 10,
+    alignItems: "center",
+  },
+  modalButtonText: {
+    color: "white",
     fontWeight: "bold",
   },
 });
