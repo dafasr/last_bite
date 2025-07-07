@@ -39,6 +39,10 @@ export const uploadImage = (formData) => {
   });
 };
 
+export const uploadBase64Image = (base64String) => {
+  return apiClient.post("/upload", { file: base64String });
+};
+
 export const getSellerProfile = (id) => {
   return apiClient.get(`/sellers/${id}`);
 };

@@ -1,4 +1,10 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   View,
@@ -10,16 +16,38 @@ import {
   Image,
   RefreshControl,
   ScrollView,
+  Animated,
+  Easing,
 } from "react-native";
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import { useMenu } from "../context/MenuContext";
 import { getMenuItems } from "../api/apiClient";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 const MenuScreen = ({ navigation }) => {
   const { surpriseBags, setSurpriseBags, toggleAvailability, deleteBag } =
     useMenu();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const lastScrollY = useRef(0);
+  const [fabVisible, setFabVisible] = useState(true);
+
+  const fabAnimation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fabAnimation, {
+      toValue: fabVisible ? 0 : 1,
+      duration: 300,
+      easing: Easing.inOut(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+  }, [fabVisible]);
+
+  const fabTranslateY = fabAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 200], // Move button out of view
+  });
 
   const fetchMenuItems = useCallback(async () => {
     setLoading(true);
@@ -143,9 +171,6 @@ const MenuScreen = ({ navigation }) => {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Daftar Menu</Text>
-          <Text style={styles.headerSubtitle}>
-            Kelola menu Anda dengan mudah
-          </Text>
         </View>
         <FlatList
           data={surpriseBags}
@@ -169,11 +194,39 @@ const MenuScreen = ({ navigation }) => {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            {
+              useNativeDriver: false,
+              listener: (event) => {
+                const currentScrollY = event.nativeEvent.contentOffset.y;
+                if (
+                  currentScrollY > lastScrollY.current &&
+                  currentScrollY > 100
+                ) {
+                  if (fabVisible) setFabVisible(false);
+                } else {
+                  if (!fabVisible) setFabVisible(true);
+                }
+                lastScrollY.current = currentScrollY;
+              },
+            }
+          )}
+          scrollEventThrottle={16}
         />
       </View>
-      <TouchableOpacity style={styles.addButton} onPress={handleAddBag}>
-        <Text style={styles.addButtonText}>Tambah Menu</Text>
-      </TouchableOpacity>
+      <Animated.View
+        style={[
+          styles.addButton,
+          {
+            transform: [{ translateY: fabTranslateY }],
+          },
+        ]}
+      >
+        <TouchableOpacity onPress={handleAddBag}>
+          <Ionicons name="add" size={32} color="#FFFFFF" />
+        </TouchableOpacity>
+      </Animated.View>
     </SafeAreaView>
   );
 };
@@ -182,30 +235,20 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#f5f5f5" },
   container: { flex: 1, overflow: "visible" },
   header: {
-    paddingVertical: 30,
+    paddingTop: 20,
+    paddingBottom: 10,
     paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    justifyContent: "center",
+    backgroundColor: "#f5f5f5", // Match safe area background
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: "800",
+    fontSize: 24,
+    fontWeight: "bold",
     color: "#2C3E50",
-    textAlign: "center",
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: "#7F8C8D",
-    textAlign: "center",
-    fontWeight: "500",
   },
   listContainer: {
     padding: 10,
     flexGrow: 1,
-    paddingBottom: 80, // Add padding to make space for the button
+    paddingBottom: 110, // Increased padding to clear the FAB and tab navigator
   },
   row: {
     flex: 1,
@@ -218,47 +261,48 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
     elevation: 4,
     overflow: "hidden",
-    width: "48%", // Approximately half the screen width minus some margin
+    width: "48%",
   },
   bagImage: {
     width: "100%",
-    height: 150,
+    height: 120, // Reduced height
     resizeMode: "cover",
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
   },
   bagContent: {
-    padding: 20,
+    padding: 12, // Reduced padding
   },
   bagName: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 15, // Reduced font size
+    fontWeight: "600",
     color: "#333",
+    marginBottom: 8, // Added margin bottom for spacing
   },
   orderItemsContainer: {
-    marginBottom: 16,
-    backgroundColor: "#F8F9FA",
-    padding: 16,
-    borderRadius: 12,
+    marginBottom: 8, // Reduced margin
+    backgroundColor: "#F0F2F5",
+    padding: 8, // Reduced padding
+    borderRadius: 6,
   },
   orderItemsTitle: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 13, // Reduced font size
+    fontWeight: "600",
     color: "#2C3E50",
-    marginBottom: 12,
+    marginBottom: 6,
   },
   orderItemText: {
-    fontSize: 14,
+    fontSize: 12, // Reduced font size
     color: "#2C3E50",
-    fontWeight: "500",
+    fontWeight: "400",
     flex: 1,
   },
   orderItemPrice: {
-    fontSize: 14,
+    fontSize: 13, // Reduced font size
     color: "#7F8C8D",
     fontWeight: "600",
   },
@@ -266,103 +310,103 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: 6, // Reduced padding
     borderBottomWidth: 1,
     borderBottomColor: "#ECF0F1",
   },
 
   priceContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
+    alignItems: "baseline",
+    marginBottom: 8, // Reduced margin
   },
   originalPrice: {
-    fontSize: 13,
-    color: "#E74C3C",
+    fontSize: 12, // Reduced font size
+    color: "#7F8C8D",
     textDecorationLine: "line-through",
-    marginRight: 8,
+    marginRight: 5,
   },
   discountedPrice: {
-    fontSize: 16,
+    fontSize: 16, // Reduced font size
     fontWeight: "bold",
     color: "#2ECC71",
   },
   availabilityContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
-    backgroundColor: "#f9f9f9",
-    padding: 8,
+    marginBottom: 6, // Reduced margin
+    backgroundColor: "#F0F2F5",
+    padding: 6, // Reduced padding
     borderRadius: 5,
   },
   availabilityLabel: {
-    fontSize: 12,
+    fontSize: 10, // Reduced font size
     color: "#7F8C8D",
-    fontWeight: "600",
-    marginRight: 5,
+    fontWeight: "500",
+    marginRight: 4,
   },
   availabilityTime: {
-    fontSize: 13,
-    fontWeight: "bold",
+    fontSize: 11, // Reduced font size
+    fontWeight: "600",
     color: "#333",
   },
   quantityContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
-    backgroundColor: "#f9f9f9",
-    padding: 8,
+    marginBottom: 6, // Reduced margin
+    backgroundColor: "#F0F2F5",
+    padding: 6, // Reduced padding
     borderRadius: 5,
   },
   quantityLabel: {
-    fontSize: 12,
+    fontSize: 10, // Reduced font size
     color: "#7F8C8D",
-    fontWeight: "600",
-    marginRight: 5,
+    fontWeight: "500",
+    marginRight: 4,
   },
   quantityText: {
-    fontSize: 13,
-    fontWeight: "bold",
+    fontSize: 11, // Reduced font size
+    fontWeight: "600",
     color: "#333",
   },
   statusInfoContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
-    backgroundColor: "#f9f9f9",
-    padding: 8,
+    marginBottom: 8, // Reduced margin
+    backgroundColor: "#F0F2F5",
+    padding: 6, // Reduced padding
     borderRadius: 5,
   },
   statusInfoLabel: {
-    fontSize: 12,
+    fontSize: 10, // Reduced font size
     color: "#7F8C8D",
-    fontWeight: "600",
-    marginRight: 5,
+    fontWeight: "500",
+    marginRight: 4,
   },
   statusInfoText: {
-    fontSize: 13,
-    fontWeight: "bold",
+    fontSize: 11, // Reduced font size
+    fontWeight: "600",
     color: "#333",
   },
 
   buttonContainer: {
     flexDirection: "row",
-    marginTop: 8,
+    marginTop: 6, // Reduced margin
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 6, // Reduced padding
+    borderRadius: 6,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.18,
+    shadowRadius: 2,
+    elevation: 3,
   },
   actionButtonText: {
     color: "#FFFFFF",
-    fontSize: 14,
+    fontSize: 12, // Reduced font size
     fontWeight: "bold",
   },
   editButton: {
@@ -375,24 +419,24 @@ const styles = StyleSheet.create({
   addButton: {
     backgroundColor: "#2ECC71",
     position: "absolute",
-    bottom: 80,
-    left: 20,
-    right: 20,
-    padding: 15,
-    borderRadius: 8,
+    bottom: 120, // Adjust position to be clearly in the corner
+    right: 25,
+    width: 56, // Smaller width
+    height: 56, // Smaller height
+    borderRadius: 28, // half of width/height to make it a circle
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 5,
-    zIndex: 1000, // Ensure it's on top
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
   },
   addButtonText: {
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "bold",
+    letterSpacing: 0.5, // Add some letter spacing
   },
 });
 

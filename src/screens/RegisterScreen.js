@@ -8,6 +8,10 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
+  Animated, // Import Animated
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { useAuth } from "../hooks";
@@ -15,6 +19,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Location from 'expo-location';
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from 'expo-file-system'; // Import FileSystem
+import { uploadImage } from "../api/apiClient"; // Import uploadImage
 
 const RegisterScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -41,45 +47,27 @@ const RegisterScreen = ({ navigation }) => {
   const [image, setImage] = useState(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  
   const { isLoading, registerUser } = useAuth();
 
-  // Cloudinary configuration (REPLACE WITH YOUR ACTUAL VALUES)
-  const CLOUD_NAME = 'YOUR_CLOUD_NAME'; 
-  const UPLOAD_PRESET = 'YOUR_UPLOAD_PRESET';
+  // Animated values
+  const fadeAnim = useState(new Animated.Value(0))[0]; // Initial value for opacity: 0
+  const slideAnim = useState(new Animated.Value(50))[0]; // Initial value for slide: 50 (from bottom)
 
-  const uploadImageToCloudinary = async (imageUri) => {
-    const formData = new FormData();
-    formData.append('file', {
-      uri: imageUri,
-      type: 'image/jpeg', // Adjust type if needed
-      name: 'upload.jpg',
-    });
-    formData.append('upload_preset', UPLOAD_PRESET);
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000, // 1 second
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 1000, // 1 second
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
 
-    try {
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-        {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-      const data = await response.json();
-      if (data.secure_url) {
-        return data.secure_url;
-      } else {
-        throw new Error('Cloudinary upload failed: ' + (data.error ? data.error.message : 'Unknown error'));
-      }
-    } catch (error) {
-      console.error("Cloudinary upload error:", error);
-      throw error;
-    }
-  };
 
   useEffect(() => {
     setMapRegion({
@@ -199,7 +187,14 @@ const RegisterScreen = ({ navigation }) => {
     let finalStoreImageUrl = "";
     if (image) {
       try {
-        finalStoreImageUrl = await uploadImageToCloudinary(image.uri);
+        const formData = new FormData();
+        formData.append('file', {
+          uri: image.uri,
+          name: `photo_${Date.now()}.jpg`,
+          type: 'image/jpeg',
+        });
+        const response = await uploadImage(formData);
+        finalStoreImageUrl = response.data.url;
       } catch (error) {
         Dialog.show({
           type: ALERT_TYPE.DANGER,
@@ -257,223 +252,272 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Daftarkan Toko Anda</Text>
-        <Text style={styles.subtitle}>Isi detail di bawah untuk memulai</Text>
-
-        <View style={styles.formContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Nama Pengguna"
-            value={username}
-            onChangeText={(text) => {
-              setUsername(text);
-              if (errors.username) setErrors({ ...errors, username: null });
-            }}
-          />
-          {errors.username && (
-            <Text style={styles.errorText}>{errors.username}</Text>
-          )}
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              if (errors.email) setErrors({ ...errors, email: null });
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.inputWithEye}
-              placeholder="Kata Sandi"
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (errors.password) setErrors({ ...errors, password: null });
-              }}
-              secureTextEntry={!isPasswordVisible}
-            />
-            <TouchableOpacity
-              onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-              style={styles.eyeIcon}
-            >
-              <Ionicons
-                name={isPasswordVisible ? "eye" : "eye-off"}
-                size={24}
-                color="gray"
-              />
-            </TouchableOpacity>
-          </View>
-          {errors.password && (
-            <Text style={styles.errorText}>{errors.password}</Text>
-          )}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.inputWithEye}
-              placeholder="Konfirmasi Kata Sandi"
-              value={confirmPassword}
-              onChangeText={(text) => {
-                setConfirmPassword(text);
-                if (errors.confirmPassword)
-                  setErrors({ ...errors, confirmPassword: null });
-              }}
-              secureTextEntry={!isConfirmPasswordVisible}
-            />
-            <TouchableOpacity
-              onPress={() =>
-                setIsConfirmPasswordVisible(!isConfirmPasswordVisible)
-              }
-              style={styles.eyeIcon}
-            >
-              <Ionicons
-                name={isConfirmPasswordVisible ? "eye" : "eye-off"}
-                size={24}
-                color="gray"
-              />
-            </TouchableOpacity>
-          </View>
-          {errors.confirmPassword && (
-            <Text style={styles.errorText}>{errors.confirmPassword}</Text>
-          )}
-          <TextInput
-            style={styles.input}
-            placeholder="Nama Lengkap"
-            value={fullName}
-            onChangeText={(text) => {
-              setFullName(text);
-              if (errors.fullName) setErrors({ ...errors, fullName: null });
-            }}
-          />
-          {errors.fullName && (
-            <Text style={styles.errorText}>{errors.fullName}</Text>
-          )}
-          <TextInput
-            style={styles.input}
-            placeholder="Nomor Telepon"
-            value={phoneNumber}
-            onChangeText={(text) => {
-              setPhoneNumber(text);
-              if (errors.phoneNumber)
-                setErrors({ ...errors, phoneNumber: null });
-            }}
-            keyboardType="phone-pad"
-          />
-          {errors.phoneNumber && (
-            <Text style={styles.errorText}>{errors.phoneNumber}</Text>
-          )}
-          <TextInput
-            style={styles.input}
-            placeholder="Nama Toko"
-            value={storeName}
-            onChangeText={(text) => {
-              setStoreName(text);
-              if (errors.storeName) setErrors({ ...errors, storeName: null });
-            }}
-          />
-          {errors.storeName && (
-            <Text style={styles.errorText}>{errors.storeName}</Text>
-          )}
-          <TextInput
-            style={styles.input}
-            placeholder="Deskripsi Toko"
-            value={storeDescription}
-            onChangeText={(text) => {
-              setStoreDescription(text);
-              if (errors.storeDescription)
-                setErrors({ ...errors, storeDescription: null });
-            }}
-          />
-          {errors.storeDescription && (
-            <Text style={styles.errorText}>{errors.storeDescription}</Text>
-          )}
-
-          <Text style={styles.photoLabel}>Foto Toko</Text>
-          <TouchableOpacity
-            style={styles.outlineButton}
-            onPress={handleChoosePhoto}
-            disabled={isUploadingImage}
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoidingContainer}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <Animated.View
+            style={[
+              { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+            ]}
           >
-            {isUploadingImage ? (
-              <ActivityIndicator color="#3498DB" />
-            ) : (
-              <Text style={styles.outlineButtonText}>Pilih Foto Toko</Text>
+            <Text style={styles.title}>Daftarkan Toko Anda</Text>
+            <Text style={styles.subtitle}>Isi detail di bawah untuk memulai</Text>
+          </Animated.View>
+
+          <Animated.View
+            style={[
+              styles.formContainer,
+              { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+            ]}
+          >
+            <TextInput
+              style={styles.input}
+              placeholder="Nama Pengguna"
+              placeholderTextColor="#888"
+              value={username}
+              onChangeText={(text) => {
+                setUsername(text);
+                if (errors.username) setErrors({ ...errors, username: null });
+              }}
+            />
+            {errors.username && (
+              <Text style={styles.errorText}>{errors.username}</Text>
             )}
-          </TouchableOpacity>
-          {image && (
-            <View style={styles.imagePreviewContainer}>
-              <Image source={{ uri: image.uri }} style={styles.imagePreview} />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#888"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (errors.email) setErrors({ ...errors, email: null });
+              }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            {errors.email && (
+              <Text style={styles.errorText}>{errors.email}</Text>
+            )}
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.inputWithEye}
+                placeholder="Kata Sandi"
+                placeholderTextColor="#888"
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (errors.password) setErrors({ ...errors, password: null });
+                }}
+                secureTextEntry={!isPasswordVisible}
+              />
+              <TouchableOpacity
+                onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                style={styles.eyeIcon}
+              >
+                <Ionicons
+                  name={isPasswordVisible ? "eye" : "eye-off"}
+                  size={20}
+                  color="#888"
+                />
+              </TouchableOpacity>
             </View>
-          )}
-
-          <Text style={styles.mapLabel}>
-            Pilih Lokasi di Peta (Latitude: {latitude.toFixed(4)}, Longitude:{" "}
-            {longitude.toFixed(4)})
-          </Text>
-          <TouchableOpacity style={styles.locationButton} onPress={getCurrentLocation} disabled={isLocating}>
-            {isLocating ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.locationButtonText}>Gunakan Lokasi Saat Ini</Text>
+            {errors.password && (
+              <Text style={styles.errorText}>{errors.password}</Text>
             )}
-          </TouchableOpacity>
-          <MapView
-            style={styles.map}
-            region={mapRegion}
-            onPress={handleMapPress}
-          >
-            <Marker coordinate={{ latitude: latitude, longitude: longitude }} />
-          </MapView>
-          <TextInput
-            style={styles.input}
-            placeholder="Detail Alamat"
-            value={address}
-            onChangeText={(text) => {
-              setAddress(text);
-              if (errors.address) setErrors({ ...errors, address: null });
-            }}
-          />
-          {errors.address && (
-            <Text style={styles.errorText}>{errors.address}</Text>
-          )}
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.inputWithEye}
+                placeholder="Konfirmasi Kata Sandi"
+                placeholderTextColor="#888"
+                value={confirmPassword}
+                onChangeText={(text) => {
+                  setConfirmPassword(text);
+                  if (errors.confirmPassword)
+                    setErrors({ ...errors, confirmPassword: null });
+                }}
+                secureTextEntry={!isConfirmPasswordVisible}
+              />
+              <TouchableOpacity
+                onPress={() =>
+                  setIsConfirmPasswordVisible(!isConfirmPasswordVisible)
+                }
+                style={styles.eyeIcon}
+              >
+                <Ionicons
+                  name={isConfirmPasswordVisible ? "eye" : "eye-off"}
+                  size={20}
+                  color="#888"
+                />
+              </TouchableOpacity>
+            </View>
+            {errors.confirmPassword && (
+              <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+            )}
+            <TextInput
+              style={styles.input}
+              placeholder="Nama Lengkap"
+              placeholderTextColor="#888"
+              value={fullName}
+              onChangeText={(text) => {
+                setFullName(text);
+                if (errors.fullName) setErrors({ ...errors, fullName: null });
+              }}
+            />
+            {errors.fullName && (
+              <Text style={styles.errorText}>{errors.fullName}</Text>
+            )}
+            <TextInput
+              style={styles.input}
+              placeholder="Nomor Telepon"
+              placeholderTextColor="#888"
+              value={phoneNumber}
+              onChangeText={(text) => {
+                setPhoneNumber(text);
+                if (errors.phoneNumber)
+                  setErrors({ ...errors, phoneNumber: null });
+              }}
+              keyboardType="phone-pad"
+            />
+            {errors.phoneNumber && (
+              <Text style={styles.errorText}>{errors.phoneNumber}</Text>
+            )}
+            <TextInput
+              style={styles.input}
+              placeholder="Nama Toko"
+              placeholderTextColor="#888"
+              value={storeName}
+              onChangeText={(text) => {
+                setStoreName(text);
+                if (errors.storeName) setErrors({ ...errors, storeName: null });
+              }}
+            />
+            {errors.storeName && (
+              <Text style={styles.errorText}>{errors.storeName}</Text>
+            )}
+            <TextInput
+              style={styles.input}
+              placeholder="Deskripsi Toko"
+              placeholderTextColor="#888"
+              value={storeDescription}
+              onChangeText={(text) => {
+                setStoreDescription(text);
+                if (errors.storeDescription)
+                  setErrors({ ...errors, storeDescription: null });
+              }}
+            />
+            {errors.storeDescription && (
+              <Text style={styles.errorText}>{errors.storeDescription}</Text>
+            )}
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleRegister}
-            disabled={isLoading}
-          >
-            <Text style={styles.buttonText}>
-              {isLoading ? "Mendaftar..." : "Daftar"}
+            <Text style={styles.photoLabel}>Foto Toko</Text>
+            <TouchableOpacity
+              style={styles.outlineButton}
+              onPress={handleChoosePhoto}
+              disabled={isUploadingImage}
+            >
+              {isUploadingImage ? (
+                <ActivityIndicator color="#007BFF" />
+              ) : (
+                <Text style={styles.outlineButtonText}>Pilih Foto Toko</Text>
+              )}
+            </TouchableOpacity>
+            {image && (
+              <View style={styles.imagePreviewContainer}>
+                <Image
+                  source={{ uri: image.uri }}
+                  style={styles.imagePreview}
+                />
+              </View>
+            )}
+
+            <Text style={styles.mapLabel}>
+              Pilih Lokasi di Peta (Latitude: {latitude.toFixed(4)}, Longitude:{" "}
+              {longitude.toFixed(4)})
             </Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              style={styles.locationButton}
+              onPress={getCurrentLocation}
+              disabled={isLocating}
+            >
+              {isLocating ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.locationButtonText}>
+                  Gunakan Lokasi Saat Ini
+                </Text>
+              )}
+            </TouchableOpacity>
+            <MapView
+              style={styles.map}
+              region={mapRegion}
+              onPress={handleMapPress}
+            >
+              <Marker
+                coordinate={{ latitude: latitude, longitude: longitude }}
+              />
+            </MapView>
+            <TextInput
+              style={styles.input}
+              placeholder="Detail Alamat"
+              placeholderTextColor="#888"
+              value={address}
+              onChangeText={(text) => {
+                setAddress(text);
+                if (errors.address) setErrors({ ...errors, address: null });
+              }}
+            />
+            {errors.address && (
+              <Text style={styles.errorText}>{errors.address}</Text>
+            )}
 
-        <View style={styles.loginContainer}>
-          <Text style={styles.loginText}>Sudah punya akun? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-            <Text style={styles.loginLink}>Masuk sekarang</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-      
-    </View>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleRegister}
+              disabled={isLoading}
+            >
+              <Text style={styles.buttonText}>
+                {isLoading ? "Mendaftar..." : "Daftar"}
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+
+          <Animated.View
+            style={[
+              styles.loginContainer,
+              { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+            ]}
+          >
+            <Text style={styles.loginText}>Sudah punya akun? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+              <Text style={styles.loginLink}>Masuk sekarang</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F0F2F5", // Warna latar belakang lebih terang
+  },
+  keyboardAvoidingContainer: {
+    flex: 1,
+  },
   container: {
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#F0F2F5",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 50,
-    paddingHorizontal: 20,
+    paddingVertical: 30, // Padding vertikal disesuaikan
+    paddingHorizontal: 25, // Padding horizontal lebih besar
   },
   title: {
-    fontSize: 26,
+    fontSize: 28, // Ukuran font lebih besar
     fontWeight: "bold",
     color: "#333",
     marginBottom: 10,
@@ -481,31 +525,28 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: "#7F8C8D",
-    marginBottom: 30,
+    marginBottom: 20, // Margin bawah disesuaikan
   },
   formContainer: {
     width: "100%",
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
+    backgroundColor: "#FFFFFF", // Latar belakang putih bersih
+    padding: 25, // Padding lebih besar
+    borderRadius: 15, // Sudut lebih membulat
+    borderWidth: 1, // Tambahkan border tipis
+    borderColor: "#E0E0E0", // Warna border abu-abu terang
+    marginBottom: 20, // Margin bawah untuk form container
   },
   input: {
     width: "100%",
     height: 50,
-    backgroundColor: "#f7f7f7",
+    backgroundColor: "#F8F8F8", // Latar belakang input lebih terang
     borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#E0E0E0", // Border input lebih terang
+    color: "#333",
+    fontSize: 16,
   },
   label: {
     fontSize: 16,
@@ -525,15 +566,22 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 10,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
   },
   locationButton: {
     width: "100%",
     paddingVertical: 12,
-    backgroundColor: "#3498DB", // Blue color
+    backgroundColor: "#007BFF", // Warna biru modern
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
     marginBottom: 15,
+    shadowColor: "#007BFF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
   },
   locationButtonText: {
     color: "#FFFFFF",
@@ -543,50 +591,60 @@ const styles = StyleSheet.create({
 
   button: {
     width: "100%",
-    height: 50,
-    backgroundColor: "#2ECC71",
+    height: 55, // Tinggi tombol lebih besar
+    backgroundColor: "#28A745", // Warna hijau modern
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
+    shadowColor: "#28A745",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
   },
   buttonText: {
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "bold",
+    letterSpacing: 0.5,
   },
   loginContainer: {
     flexDirection: "row",
-    marginTop: 30,
+    marginTop: 20, // Margin atas disesuaikan
     justifyContent: "center",
+    alignItems: "center",
   },
   loginText: {
-    fontSize: 14,
-    color: "#7F8C8D",
+    fontSize: 15, // Ukuran font sedikit lebih besar
+    color: "#6C757D", // Warna abu-abu gelap
   },
   loginLink: {
-    fontSize: 14,
-    color: "#FF6B35",
+    fontSize: 15, // Ukuran font sedikit lebih besar
+    color: "#007BFF", // Warna biru modern
     fontWeight: "bold",
   },
   errorText: {
-    color: "red",
+    color: "#DC3545", // Warna merah yang lebih lembut
     marginBottom: 10,
     marginLeft: 5,
+    fontSize: 13,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
     height: 50,
-    backgroundColor: "#f7f7f7",
+    backgroundColor: "#F8F8F8",
     borderRadius: 10,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#E0E0E0",
   },
   inputWithEye: {
     flex: 1,
     paddingHorizontal: 15,
+    color: "#333",
+    fontSize: 16,
   },
   eyeIcon: {
     paddingHorizontal: 15,
@@ -599,27 +657,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#3498DB",
+    borderColor: "#007BFF", // Warna border biru modern
     marginBottom: 20,
-    shadowColor: "#000",
+    shadowColor: "#007BFF",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
   },
   outlineButtonText: {
-    color: "#3498DB",
+    color: "#007BFF", // Warna teks biru modern
     fontSize: 16,
     fontWeight: "bold",
   },
   imagePreviewContainer: {
     alignItems: "center",
     marginBottom: 20,
-    backgroundColor: "#f7f7f7",
+    backgroundColor: "#F8F8F8",
     borderRadius: 10,
     padding: 10,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#E0E0E0",
   },
   imagePreview: {
     width: 200,

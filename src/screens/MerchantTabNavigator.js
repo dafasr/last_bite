@@ -14,6 +14,7 @@ import { MenuProvider } from "../context/MenuContext";
 import { useOrders } from "../hooks";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View } from "react-native";
 
 const Tab = createBottomTabNavigator();
@@ -27,6 +28,8 @@ const MerchantTabNavigator = () => {
     handleRejectOrder: originalHandleRejectOrder,
     handleUpdateOrderStatus: originalHandleUpdateOrderStatus,
   } = useOrders();
+  const insets = useSafeAreaInsets();
+
 
   const handleAcceptOrder = async (orderId) => {
     await originalHandleAcceptOrder(orderId);
@@ -139,8 +142,8 @@ const MerchantTabNavigator = () => {
             shadowOffset: { width: 0, height: -5 }, // Shadow pointing upwards
             shadowOpacity: 0.1,
             shadowRadius: 10,
-            height: 70, // Slightly taller tab bar
-            paddingBottom: 10, // More padding at the bottom
+            height: 70 + insets.bottom, // Slightly taller tab bar
+            paddingBottom: 10 + insets.bottom, // More padding at the bottom
             paddingTop: 10, // More padding at the top
             borderTopLeftRadius: 20, // Rounded top corners
             borderTopRightRadius: 20,

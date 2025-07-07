@@ -17,9 +17,7 @@ export const MenuProvider = ({ children }) => {
 
   const updateBag = async (id, updatedData) => {
     try {
-      console.log(updatedData);
       const response = await updateMenuItem(id, updatedData);
-      console.log(response.data);
       setSurpriseBags((prevBags) =>
         prevBags.map((bag) =>
           bag.id === id ? { ...bag, ...response.data } : bag
