@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   Dimensions,
+  Animated,
+  Easing,
 } from "react-native";
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import apiClient from "../api/apiClient";
@@ -87,7 +89,177 @@ const SHADOWS = {
     elevation: 8,
   },
 };
-// --- END OF THEME ---
+
+// Animation Hook
+const useAnimation = (initialValue = 0) => {
+  const animatedValue = useRef(new Animated.Value(initialValue)).current;
+
+  const animate = useCallback(
+    (toValue, duration = 300, easing = Easing.out(Easing.quad)) => {
+      Animated.timing(animatedValue, {
+        toValue,
+        duration,
+        easing,
+        useNativeDriver: true,
+      }).start();
+    },
+    [animatedValue]
+  );
+
+  return [animatedValue, animate];
+};
+
+// Animated Components
+const AnimatedCard = ({ children, delay = 0, style }) => {
+  const [scaleAnim] = useAnimation(0.95);
+  const [opacityAnim] = useAnimation(0);
+  const [translateYAnim] = useAnimation(20);
+
+  useEffect(() => {
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 400,
+          easing: Easing.out(Easing.back(1.1)),
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateYAnim, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, delay);
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        style,
+        {
+          transform: [{ scale: scaleAnim }, { translateY: translateYAnim }],
+          opacity: opacityAnim,
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+};
+
+const AnimatedButton = ({ onPress, style, children, ...props }) => {
+  const [scaleAnim] = useAnimation(1);
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: 300,
+      friction: 4,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <TouchableOpacity
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={onPress}
+      activeOpacity={1}
+      {...props}
+    >
+      <Animated.View
+        style={[
+          style,
+          {
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        {children}
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
+
+const PulseAnimation = ({ children, style }) => {
+  const [pulseAnim] = useAnimation(1);
+
+  useEffect(() => {
+    const startPulse = () => {
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.05,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]).start(() => startPulse());
+    };
+
+    startPulse();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        style,
+        {
+          transform: [{ scale: pulseAnim }],
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+};
+
+const CountUpAnimation = ({ value, duration = 1000, style, ...props }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+  const animatedValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    animatedValue.addListener(({ value: animValue }) => {
+      setDisplayValue(Math.floor(animValue));
+    });
+
+    Animated.timing(animatedValue, {
+      toValue: value,
+      duration,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: false,
+    }).start();
+
+    return () => {
+      animatedValue.removeAllListeners();
+    };
+  }, [value]);
+
+  return (
+    <Text style={style} {...props}>
+      {typeof value === "number" && value > 1000
+        ? `Rp ${displayValue.toLocaleString("id-ID")}`
+        : displayValue.toString()}
+    </Text>
+  );
+};
 
 const MerchantHomeScreen = () => {
   const [balance, setBalance] = useState(0);
@@ -95,6 +267,29 @@ const MerchantHomeScreen = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [incomingOrders, setIncomingOrders] = useState([]);
+
+  // Animation refs
+  const [headerAnim] = useAnimation(0);
+  const [summaryAnim] = useAnimation(0);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+
+  useEffect(() => {
+    // Start entrance animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -180,105 +375,147 @@ const MerchantHomeScreen = () => {
     }
   };
 
-  const renderOrderItem = ({ item }) => (
-    <View style={styles.orderItem}>
+  const renderOrderItem = ({ item, index }) => (
+    <AnimatedCard delay={index * 100} style={styles.orderItem}>
       <View style={styles.orderItemHeader}>
         <View style={styles.customerInfoContainer}>
           <Text style={styles.customerName}>{item.customerName}</Text>
           <Text style={styles.orderIdText}>Order ID: {item.orderId}</Text>
         </View>
-        <View style={styles.priceContainer}>
+        <PulseAnimation style={styles.priceContainer}>
           <Text style={styles.orderPrice}>
             Rp {item.totalAmount?.toLocaleString("id-ID")}
           </Text>
-        </View>
+        </PulseAnimation>
       </View>
 
       <View style={styles.orderItemsContainer}>
         <Text style={styles.orderItemsTitle}>📦 Order Items:</Text>
-        {item.orderItems?.map((orderItem, index) => (
-          <View key={`${item.id}-${index}`} style={styles.orderItemRow}>
+        {item.orderItems?.map((orderItem, orderIndex) => (
+          <AnimatedCard
+            key={`${item.id}-${orderIndex}`}
+            delay={orderIndex * 50}
+            style={styles.orderItemRow}
+          >
             <Text style={styles.orderItemText}>
               {orderItem.quantity}x {orderItem.menuItemName}
             </Text>
             <Text style={styles.orderItemPrice}>
               Rp {orderItem.pricePerItem?.toLocaleString("id-ID")}
             </Text>
-          </View>
+          </AnimatedCard>
         ))}
       </View>
 
       {item.payment && (
-        <View style={styles.paymentContainer}>
+        <AnimatedCard delay={200} style={styles.paymentContainer}>
           <Text style={styles.paymentLabel}>💳 Payment Status:</Text>
           <View style={styles.paymentStatusBadge}>
             <Text style={styles.paymentStatusText}>{item.payment.status}</Text>
           </View>
-        </View>
+        </AnimatedCard>
       )}
 
-      <View style={styles.noteContainer}>
+      <AnimatedCard delay={250} style={styles.noteContainer}>
         <Text style={styles.noteLabel}>📝 Catatan Pembeli:</Text>
         <Text style={styles.noteText}>{item.notes || "Tidak ada catatan"}</Text>
-      </View>
+      </AnimatedCard>
 
-      <View style={styles.actionContainer}>
-        <TouchableOpacity
+      <AnimatedCard delay={300} style={styles.actionContainer}>
+        <AnimatedButton
           style={[styles.actionButton, styles.rejectButton]}
           onPress={() => handleReject(item.id)}
-          activeOpacity={0.8}
         >
           <Text style={styles.actionButtonText}>❌ Tolak</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </AnimatedButton>
+        <AnimatedButton
           style={[styles.actionButton, styles.acceptButton]}
           onPress={() => handleAccept(item.id)}
-          activeOpacity={0.8}
         >
           <Text style={styles.actionButtonText}>✅ Terima</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        </AnimatedButton>
+      </AnimatedCard>
+    </AnimatedCard>
   );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <PulseAnimation>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </PulseAnimation>
+        <Text style={styles.loadingText}>Loading dashboard...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
+      <Animated.View
+        style={[
+          styles.container,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}
+      >
+        {/* Animated Header */}
+        <AnimatedCard style={styles.header}>
           <Text style={styles.headerTitle}>Dasbor Merchant</Text>
-        </View>
+          <View style={styles.headerUnderline} />
+        </AnimatedCard>
 
+        {/* Animated Summary Cards */}
         <View style={styles.summaryRow}>
-          <View style={[styles.summaryCardBase, styles.balanceCard]}>
-            <Text style={styles.cardIcon}>💰</Text>
+          <AnimatedCard
+            delay={200}
+            style={[styles.summaryCardBase, styles.balanceCard]}
+          >
+            <PulseAnimation>
+              <Text style={styles.cardIcon}>💰</Text>
+            </PulseAnimation>
             <Text style={styles.cardLabel}>Saldo Anda</Text>
-            <Text style={styles.balanceAmount}>
-              Rp {balance.toLocaleString("id-ID")}
-            </Text>
-            <TouchableOpacity
+            <CountUpAnimation
+              value={balance}
+              style={styles.balanceAmount}
+              duration={1500}
+            />
+            <AnimatedButton
               style={styles.withdrawButton}
               onPress={handleWithdraw}
-              activeOpacity={0.8}
             >
               <Text style={styles.withdrawButtonText}>💸 Tarik Saldo</Text>
-            </TouchableOpacity>
-          </View>
+            </AnimatedButton>
+          </AnimatedCard>
 
-          <View style={[styles.summaryCardBase, styles.soldCard]}>
-            <Text style={styles.cardIcon}>📊</Text>
-            <Text style={styles.cardLabel}>Tas Terjual</Text>
-            <Text style={styles.soldAmount}>{soldBagsCount}</Text>
+          <AnimatedCard
+            delay={400}
+            style={[styles.summaryCardBase, styles.soldCard]}
+          >
+            <PulseAnimation>
+              <Text style={styles.cardIcon}>📊</Text>
+            </PulseAnimation>
+            <Text style={styles.cardLabel}>Menu Terjual</Text>
+            <CountUpAnimation
+              value={soldBagsCount}
+              style={styles.soldAmount}
+              duration={1200}
+            />
             <Text style={styles.soldSubtext}>Total penjualan</Text>
-          </View>
+          </AnimatedCard>
         </View>
 
-        <View style={styles.sectionHeader}>
+        {/* Animated Section Header */}
+        <AnimatedCard delay={600} style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>📋 Pesanan Masuk</Text>
           <Text style={styles.sectionSubtitle}>
             {incomingOrders.length} pesanan menunggu konfirmasi
           </Text>
-        </View>
+          <View style={styles.sectionIndicator} />
+        </AnimatedCard>
 
+        {/* Animated Order List */}
         <FlatList
           data={incomingOrders}
           renderItem={renderOrderItem}
@@ -288,24 +525,26 @@ const MerchantHomeScreen = () => {
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>📭</Text>
+            <AnimatedCard delay={800} style={styles.emptyContainer}>
+              <PulseAnimation>
+                <Text style={styles.emptyIcon}>📭</Text>
+              </PulseAnimation>
               <Text style={styles.emptyText}>Tidak ada pesanan baru</Text>
               <Text style={styles.emptySubtext}>
                 Pesanan akan muncul di sini
               </Text>
-            </View>
+            </AnimatedCard>
           }
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         />
-      </View>
+      </Animated.View>
     </SafeAreaView>
   );
 };
 
-// --- REFACTORED STYLESHEET ---
+// --- ENHANCED STYLESHEET WITH ANIMATIONS ---
 const styles = StyleSheet.create({
   // --- Base ---
   safeArea: {
@@ -315,20 +554,42 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  // --- Header ---
-  header: {
-    paddingTop: 20,
-    paddingBottom: 10,
-    paddingHorizontal: 20,
-    backgroundColor: "#F8F9FA", // Match safe area background
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.background,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#2C3E50",
+  loadingText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: COLORS.darkGray,
+    fontWeight: "500",
   },
 
-  // --- Summary Cards ---
+  // --- Enhanced Header ---
+  header: {
+    paddingTop: 30,
+    paddingBottom: 25,
+    paddingHorizontal: 20,
+    backgroundColor: COLORS.background,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray2,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: COLORS.title,
+    marginBottom: 8,
+  },
+  headerUnderline: {
+    width: 60,
+    height: 4,
+    backgroundColor: COLORS.primary,
+    borderRadius: 2,
+  },
+
+  // --- Enhanced Summary Cards ---
   summaryRow: {
     flexDirection: "row",
     marginHorizontal: SIZES.padding,
@@ -340,115 +601,148 @@ const styles = StyleSheet.create({
     padding: SIZES.padding,
     borderRadius: 20,
     ...SHADOWS.dark,
+    shadowOpacity: 0.1,
+    shadowRadius: 15,
+    elevation: 8,
   },
   balanceCard: {
     flex: 1.2,
-    borderLeftWidth: 4,
+    borderLeftWidth: 5,
     borderLeftColor: COLORS.primary,
+    backgroundColor: "#FAFBFC",
   },
   soldCard: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    borderLeftWidth: 4,
+    borderLeftWidth: 5,
     borderLeftColor: COLORS.secondary,
+    backgroundColor: "#FAFBFC",
   },
   cardIcon: {
     fontSize: 24,
-    marginBottom: SIZES.base,
+    marginBottom: SIZES.base - 2,
+    textAlign: "center",
   },
   cardLabel: {
     ...FONTS.cardLabel,
-    marginBottom: 4,
+    marginBottom: 2,
+    fontSize: 11,
   },
   balanceAmount: {
-    ...FONTS.h2,
-    fontSize: 24, // Custom size
+    ...FONTS.h4,
+    fontSize: 18,
     fontWeight: "800",
     color: COLORS.primary,
-    marginBottom: 16,
+    marginBottom: 10,
   },
   soldAmount: {
-    ...FONTS.h1,
-    fontSize: 32, // Custom size
+    ...FONTS.h3,
+    fontSize: 24,
+    fontWeight: "900",
     color: COLORS.secondary,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   soldSubtext: {
     ...FONTS.body4,
     color: COLORS.gray,
+    fontSize: 11,
   },
   withdrawButton: {
     backgroundColor: COLORS.primary,
-    paddingVertical: SIZES.radius,
-    paddingHorizontal: 16,
-    borderRadius: SIZES.radius,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     alignSelf: "flex-start",
+    ...SHADOWS.medium,
     shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.3,
+    elevation: 6,
   },
   withdrawButtonText: {
-    ...FONTS.body3,
+    ...FONTS.body4,
     color: COLORS.white,
-    fontSize: SIZES.body3,
+    fontSize: 11,
+    fontWeight: "700",
   },
-  // --- Section Header ---
+
+  // --- Enhanced Section Header ---
   sectionHeader: {
     marginHorizontal: SIZES.padding,
-    marginBottom: 16,
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.lightGray2,
+    position: "relative",
   },
   sectionTitle: {
     ...FONTS.h2,
     color: COLORS.title,
-    marginBottom: 4,
+    marginBottom: 6,
+    fontSize: 24,
   },
   sectionSubtitle: {
     ...FONTS.body2,
     color: COLORS.darkGray,
+    fontSize: 15,
   },
-  // --- List ---
+  sectionIndicator: {
+    position: "absolute",
+    bottom: -2,
+    left: 0,
+    width: 40,
+    height: 2,
+    backgroundColor: COLORS.primary,
+    borderRadius: 1,
+  },
+
+  // --- Enhanced List ---
   listContainer: {
     paddingHorizontal: SIZES.padding,
-    paddingBottom: SIZES.padding,
+    paddingBottom: SIZES.padding + 10,
   },
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 60,
+    paddingVertical: 80,
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    ...SHADOWS.light,
   },
   emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
+    fontSize: 64,
+    marginBottom: 20,
   },
   emptyText: {
     fontSize: SIZES.h3,
-    fontWeight: "600",
+    fontWeight: "700",
     color: COLORS.darkGray,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   emptySubtext: {
     ...FONTS.body2,
     color: COLORS.gray,
     textAlign: "center",
   },
-  // --- Order Item Card ---
+
+  // --- Enhanced Order Item Card ---
   orderItem: {
     backgroundColor: COLORS.card,
-    padding: SIZES.padding,
-    borderRadius: 16,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.danger,
-    ...SHADOWS.light,
+    padding: SIZES.padding + 5,
+    borderRadius: 20,
+    marginBottom: 20,
+    borderLeftWidth: 5,
+    borderLeftColor: COLORS.warning,
+    ...SHADOWS.medium,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 6,
   },
   orderItemHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   customerInfoContainer: {
     flex: 1,
@@ -457,38 +751,45 @@ const styles = StyleSheet.create({
   customerName: {
     ...FONTS.h3,
     color: COLORS.title,
-    marginBottom: 4,
+    marginBottom: 6,
+    fontSize: 19,
   },
   orderIdText: {
     ...FONTS.body2,
     color: COLORS.darkGray,
+    fontSize: 13,
   },
   priceContainer: {
     backgroundColor: COLORS.priceBg,
-    paddingHorizontal: SIZES.radius,
-    paddingVertical: SIZES.base,
-    borderRadius: SIZES.base,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    ...SHADOWS.light,
   },
   orderPrice: {
     ...FONTS.h4,
     color: COLORS.primary,
+    fontWeight: "800",
+    fontSize: 16,
   },
   orderItemsContainer: {
-    marginBottom: 16,
+    marginBottom: 18,
     backgroundColor: COLORS.lightGray,
-    padding: 16,
-    borderRadius: SIZES.radius,
+    padding: 18,
+    borderRadius: 16,
+    ...SHADOWS.light,
   },
   orderItemsTitle: {
     ...FONTS.h4,
     color: COLORS.title,
-    marginBottom: SIZES.radius,
+    marginBottom: 12,
+    fontSize: 16,
   },
   orderItemRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: SIZES.base,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGray2,
   },
@@ -500,77 +801,87 @@ const styles = StyleSheet.create({
   orderItemPrice: {
     ...FONTS.body2,
     color: COLORS.darkGray,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   paymentContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 18,
     backgroundColor: COLORS.paymentBg,
-    padding: SIZES.radius,
-    borderRadius: SIZES.base,
+    padding: 16,
+    borderRadius: 12,
+    ...SHADOWS.light,
   },
   paymentLabel: {
     ...FONTS.body2,
-    fontWeight: "600",
+    fontWeight: "700",
     color: COLORS.title,
   },
   paymentStatusBadge: {
     backgroundColor: COLORS.primary,
-    paddingHorizontal: SIZES.radius,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 20,
+    ...SHADOWS.light,
   },
   paymentStatusText: {
     ...FONTS.body3,
-    fontSize: SIZES.body3,
+    fontSize: 12,
     color: COLORS.white,
+    fontWeight: "700",
   },
   noteContainer: {
-    marginBottom: SIZES.padding,
+    marginBottom: 20,
     backgroundColor: COLORS.noteBg,
-    padding: 16,
-    borderRadius: SIZES.radius,
+    padding: 18,
+    borderRadius: 12,
     borderLeftWidth: 4,
     borderLeftColor: COLORS.warning,
+    ...SHADOWS.light,
   },
   noteLabel: {
     ...FONTS.h4,
-    fontSize: SIZES.body2,
+    fontSize: 14,
     color: COLORS.title,
-    marginBottom: SIZES.base,
+    marginBottom: 8,
   },
   noteText: {
     ...FONTS.body2,
     color: COLORS.darkGray,
-    lineHeight: 20,
+    lineHeight: 22,
     fontStyle: "italic",
   },
-  // --- Actions ---
+
+  // --- Enhanced Actions ---
   actionContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: SIZES.radius,
+    gap: 15,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: SIZES.radius,
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: "center",
-    ...SHADOWS.light,
-    elevation: 3,
+    ...SHADOWS.medium,
+    elevation: 5,
   },
   rejectButton: {
     backgroundColor: COLORS.danger,
+    shadowColor: COLORS.danger,
+    shadowOpacity: 0.3,
   },
   acceptButton: {
     backgroundColor: COLORS.primary,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.3,
   },
   actionButtonText: {
     ...FONTS.body3,
-    fontSize: SIZES.font,
+    fontSize: 15,
     color: COLORS.white,
+    fontWeight: "700",
   },
 });
 

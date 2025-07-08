@@ -116,7 +116,8 @@ const MenuScreen = ({ navigation }) => {
           style={[
             styles.statusContainer,
             {
-              backgroundColor: item.status === "AVAILABLE" ? "#2ECC71" : "rgba(0, 0, 0, 0.6)",
+              backgroundColor:
+                item.status === "AVAILABLE" ? "#2ECC71" : "rgba(0, 0, 0, 0.6)",
             },
           ]}
         >
@@ -145,7 +146,8 @@ const MenuScreen = ({ navigation }) => {
             {item.displayStartTime
               ? item.displayStartTime.slice(11, 16)
               : "N/A"}{" "}
-            s/d {item.displayEndTime ? item.displayEndTime.slice(11, 16) : "N/A"}
+            s/d{" "}
+            {item.displayEndTime ? item.displayEndTime.slice(11, 16) : "N/A"}
           </Text>
         </View>
 
@@ -281,7 +283,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 10,
   },
   statusContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 8,
     left: 8,
     paddingHorizontal: 8,
@@ -289,9 +291,9 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   statusText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   bagContent: {
     padding: 12, // Reduced padding
