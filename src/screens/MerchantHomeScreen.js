@@ -11,7 +11,7 @@ import {
   Dimensions,
 } from "react-native";
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
-import apiClient, { getSellerProfile } from "../api/apiClient";
+import apiClient from "../api/apiClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // --- THEME CONSTANTS ---
@@ -89,8 +89,9 @@ const SHADOWS = {
 };
 // --- END OF THEME ---
 
-const MerchantHomeScreen = ({ soldBagsCount }) => {
+const MerchantHomeScreen = () => {
   const [balance, setBalance] = useState(0);
+  const [soldBagsCount, setSoldBagsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [incomingOrders, setIncomingOrders] = useState([]);
@@ -98,29 +99,25 @@ const MerchantHomeScreen = ({ soldBagsCount }) => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const userResponse = await apiClient.get("/users/me");
-      const userId = userResponse.data?.data?.id;
-
-      if (userId) {
-        const sellerResponse = await getSellerProfile(userId);
-        if (sellerResponse.data?.data?.balance !== undefined) {
-          setBalance(sellerResponse.data.data.balance);
-        }
-
-        const ordersResponse = await apiClient.get("/orders/seller/me");
-        const paidOrders = ordersResponse.data.data.filter(
-          (order) => order.status === "PAID"
-        );
-        setIncomingOrders(paidOrders);
+      const sellerResponse = await apiClient.get("/sellers/me");
+      if (sellerResponse.data?.data) {
+        setBalance(sellerResponse.data.data.balance || 0);
+        setSoldBagsCount(sellerResponse.data.data.totalOrders || 0);
       } else {
-        console.warn("User ID not found from /users/me");
+        console.warn("Seller data not found from /sellers/me");
         Dialog.show({
           type: ALERT_TYPE.WARNING,
           title: "Warning",
-          textBody: "Could not retrieve user ID. Please log in again.",
+          textBody: "Could not retrieve seller data. Please log in again.",
           button: "Close",
         });
       }
+
+      const ordersResponse = await apiClient.get("/orders/seller/me");
+      const paidOrders = ordersResponse.data.data.filter(
+        (order) => order.status === "PAID"
+      );
+      setIncomingOrders(paidOrders);
     } catch (error) {
       console.error("Error fetching data:", error);
       Dialog.show({
@@ -270,7 +267,7 @@ const MerchantHomeScreen = ({ soldBagsCount }) => {
           <View style={[styles.summaryCardBase, styles.soldCard]}>
             <Text style={styles.cardIcon}>📊</Text>
             <Text style={styles.cardLabel}>Tas Terjual</Text>
-            <Text style={styles.soldAmount}>{soldBagsCount || 0}</Text>
+            <Text style={styles.soldAmount}>{soldBagsCount}</Text>
             <Text style={styles.soldSubtext}>Total penjualan</Text>
           </View>
         </View>
