@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Animated,
+  Easing,
 } from "react-native";
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import { useAuthContext } from "../context/AuthContext";
@@ -26,6 +28,25 @@ const ProfileScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const profileImageScale = useRef(new Animated.Value(0)).current;
+  const profileImageRotate = useRef(new Animated.Value(0)).current;
+  const menuItemsAnim = useRef(new Animated.Value(0)).current;
+  const starsAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Create animated values for each menu item
+  const menuAnimations = useRef(
+    Array.from({ length: 5 }, () => ({
+      scale: new Animated.Value(0.8),
+      opacity: new Animated.Value(0),
+      translateX: new Animated.Value(30),
+    }))
+  ).current;
 
   const fetchSellerProfile = useCallback(async () => {
     if (!sellerProfileId) {
@@ -64,6 +85,122 @@ const ProfileScreen = ({ navigation }) => {
     }
   }, [sellerProfileId]);
 
+  // Start animations when component mounts
+  const startAnimations = useCallback(() => {
+    // Main container animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 800,
+        easing: Easing.out(Easing.back(1.1)),
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Profile image animations
+    Animated.sequence([
+      Animated.timing(profileImageScale, {
+        toValue: 1,
+        duration: 600,
+        easing: Easing.out(Easing.back(1.2)),
+        useNativeDriver: true,
+      }),
+      Animated.timing(profileImageRotate, {
+        toValue: 1,
+        duration: 800,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Stars animation
+    Animated.spring(starsAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+
+    // Menu items staggered animation
+    const menuAnimationSequence = menuAnimations.map((anim, index) =>
+      Animated.timing(anim.opacity, {
+        toValue: 1,
+        duration: 600,
+        delay: index * 150,
+        useNativeDriver: true,
+      })
+    );
+
+    const menuScaleSequence = menuAnimations.map((anim, index) =>
+      Animated.timing(anim.scale, {
+        toValue: 1,
+        duration: 600,
+        delay: index * 150,
+        easing: Easing.out(Easing.back(1.1)),
+        useNativeDriver: true,
+      })
+    );
+
+    const menuTranslateSequence = menuAnimations.map((anim, index) =>
+      Animated.timing(anim.translateX, {
+        toValue: 0,
+        duration: 600,
+        delay: index * 150,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      })
+    );
+
+    Animated.parallel([
+      ...menuAnimationSequence,
+      ...menuScaleSequence,
+      ...menuTranslateSequence,
+    ]).start();
+
+    // Pulse animation for rating
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  // Reset animations
+  const resetAnimations = useCallback(() => {
+    fadeAnim.setValue(0);
+    slideAnim.setValue(50);
+    scaleAnim.setValue(0.8);
+    profileImageScale.setValue(0);
+    profileImageRotate.setValue(0);
+    starsAnim.setValue(0);
+    pulseAnim.setValue(1);
+    menuAnimations.forEach((anim) => {
+      anim.opacity.setValue(0);
+      anim.scale.setValue(0.8);
+      anim.translateX.setValue(30);
+    });
+  }, []);
+
   useFocusEffect(
     React.useCallback(() => {
       if (!isAuthLoading) {
@@ -72,11 +209,18 @@ const ProfileScreen = ({ navigation }) => {
     }, [isAuthLoading, fetchSellerProfile])
   );
 
+  useEffect(() => {
+    if (merchantProfile && !isLoading) {
+      startAnimations();
+    }
+  }, [merchantProfile, isLoading, startAnimations]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    resetAnimations();
     await fetchSellerProfile();
     setRefreshing(false);
-  }, [fetchSellerProfile]);
+  }, [fetchSellerProfile, resetAnimations]);
 
   const handleUpdateStore = (updatedData) => {
     setMerchantProfile((prevProfile) => ({
@@ -130,6 +274,24 @@ const ProfileScreen = ({ navigation }) => {
     });
   };
 
+  // Animated menu item press handler
+  const handleMenuItemPress = (callback, index) => {
+    Animated.sequence([
+      Animated.timing(menuAnimations[index].scale, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(menuAnimations[index].scale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      callback();
+    });
+  };
+
   if (isLoading || isAuthLoading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
@@ -161,6 +323,11 @@ const ProfileScreen = ({ navigation }) => {
     );
   }
 
+  const profileImageRotateInterpolate = profileImageRotate.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -171,57 +338,89 @@ const ProfileScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         {/* Enhanced Header with Gradient Effect */}
-        <View style={styles.header}>
+        <Animated.View
+          style={[
+            styles.header,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
           {/* <View style={styles.headerOverlay} />
           <Text style={styles.headerTitle}>My Profile</Text> */}
-        </View>
+        </Animated.View>
 
         {/* Enhanced Profile Card */}
-        <View style={styles.profileContainer}>
+        <Animated.View
+          style={[
+            styles.profileContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }, { translateY: slideAnim }],
+            },
+          ]}
+        >
           <View style={styles.profileImageContainer}>
-            <Image
+            <Animated.Image
               source={{
                 uri:
                   merchantProfile.storeImageUrl ||
                   "https://via.placeholder.com/150",
               }}
-              style={styles.profileImage}
+              style={[
+                styles.profileImage,
+                {
+                  transform: [
+                    { scale: profileImageScale },
+                    { rotate: profileImageRotateInterpolate },
+                  ],
+                },
+              ]}
             />
             <View style={styles.profileImageBorder} />
           </View>
 
-          <Text style={styles.storeName}>{merchantProfile.storeName}</Text>
+          <Animated.Text
+            style={[
+              styles.storeName,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            {merchantProfile.storeName}
+          </Animated.Text>
 
-          <View style={styles.ratingContainer}>
+          <Animated.View
+            style={[
+              styles.ratingContainer,
+              {
+                opacity: starsAnim,
+                transform: [{ scale: pulseAnim }, { translateY: slideAnim }],
+              },
+            ]}
+          >
             <View style={styles.starContainer}>
               <Text style={styles.starIcon}>⭐</Text>
               <Text style={styles.ratingText}>
                 {merchantProfile.averageRating?.toFixed(1) || "N/A"}
               </Text>
             </View>
-          </View>
-
-          {/* Profile Stats */}
-          {/* <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>4.8</Text>
-              <Text style={styles.statLabel}>Rating</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>150+</Text>
-              <Text style={styles.statLabel}>Orders</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>2.5K</Text>
-              <Text style={styles.statLabel}>Views</Text>
-            </View>
-          </View> */}
-        </View>
+          </Animated.View>
+        </Animated.View>
 
         {/* Enhanced Description Card */}
-        <View style={styles.card}>
+        <Animated.View
+          style={[
+            styles.card,
+            {
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }, { translateY: slideAnim }],
+            },
+          ]}
+        >
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Store Description</Text>
             <View style={styles.cardTitleUnderline} />
@@ -229,87 +428,183 @@ const ProfileScreen = ({ navigation }) => {
           <Text style={styles.description}>
             {merchantProfile.storeDescription}
           </Text>
-        </View>
+        </Animated.View>
 
         {/* Enhanced Menu Container */}
-        <View style={styles.menuContainer}>
+        <Animated.View
+          style={[
+            styles.menuContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
           <View style={styles.menuHeader}>
             <Text style={styles.menuHeaderTitle}>Settings</Text>
           </View>
 
-          <TouchableOpacity style={styles.menuItem} onPress={handleEditStore}>
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: "#2ECC71" }]}>
-                <Text style={styles.menuIconText}>🏪</Text>
-              </View>
-              <Text style={styles.menuItemText}>Edit Store Information</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => navigation.navigate("EditUserInformation")}
+          <Animated.View
+            style={[
+              styles.menuItem,
+              {
+                opacity: menuAnimations[0].opacity,
+                transform: [
+                  { scale: menuAnimations[0].scale },
+                  { translateX: menuAnimations[0].translateX },
+                ],
+              },
+            ]}
           >
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: "#3498DB" }]}>
-                <Text style={styles.menuIconText}>👤</Text>
+            <TouchableOpacity
+              style={styles.menuItemTouchable}
+              onPress={() => handleMenuItemPress(handleEditStore, 0)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.menuIcon, { backgroundColor: "#2ECC71" }]}>
+                  <Text style={styles.menuIconText}>🏪</Text>
+                </View>
+                <Text style={styles.menuItemText}>Edit Store Information</Text>
               </View>
-              <Text style={styles.menuItemText}>Edit User Information</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
+              <Text style={styles.menuItemArrow}>›</Text>
+            </TouchableOpacity>
+          </Animated.View>
 
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={handleChangePassword}
+          <Animated.View
+            style={[
+              styles.menuItem,
+              {
+                opacity: menuAnimations[1].opacity,
+                transform: [
+                  { scale: menuAnimations[1].scale },
+                  { translateX: menuAnimations[1].translateX },
+                ],
+              },
+            ]}
           >
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: "#9B59B6" }]}>
-                <Text style={styles.menuIconText}>🔐</Text>
+            <TouchableOpacity
+              style={styles.menuItemTouchable}
+              onPress={() =>
+                handleMenuItemPress(
+                  () => navigation.navigate("EditUserInformation"),
+                  1
+                )
+              }
+              activeOpacity={0.8}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.menuIcon, { backgroundColor: "#3498DB" }]}>
+                  <Text style={styles.menuIconText}>👤</Text>
+                </View>
+                <Text style={styles.menuItemText}>Edit User Information</Text>
               </View>
-              <Text style={styles.menuItemText}>Change Password</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
+              <Text style={styles.menuItemArrow}>›</Text>
+            </TouchableOpacity>
+          </Animated.View>
 
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={handleHelpAndFeedback}
+          <Animated.View
+            style={[
+              styles.menuItem,
+              {
+                opacity: menuAnimations[2].opacity,
+                transform: [
+                  { scale: menuAnimations[2].scale },
+                  { translateX: menuAnimations[2].translateX },
+                ],
+              },
+            ]}
           >
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: "#F39C12" }]}>
-                <Text style={styles.menuIconText}>💬</Text>
+            <TouchableOpacity
+              style={styles.menuItemTouchable}
+              onPress={() => handleMenuItemPress(handleChangePassword, 2)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.menuIcon, { backgroundColor: "#9B59B6" }]}>
+                  <Text style={styles.menuIconText}>🔐</Text>
+                </View>
+                <Text style={styles.menuItemText}>Change Password</Text>
               </View>
-              <Text style={styles.menuItemText}>Help & Feedback</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
+              <Text style={styles.menuItemArrow}>›</Text>
+            </TouchableOpacity>
+          </Animated.View>
 
-          <TouchableOpacity
-            style={[styles.menuItem, styles.lastMenuItem]}
-            onPress={handleOfficialWebsite}
+          <Animated.View
+            style={[
+              styles.menuItem,
+              {
+                opacity: menuAnimations[3].opacity,
+                transform: [
+                  { scale: menuAnimations[3].scale },
+                  { translateX: menuAnimations[3].translateX },
+                ],
+              },
+            ]}
           >
-            <View style={styles.menuItemLeft}>
-              <View style={[styles.menuIcon, { backgroundColor: "#E67E22" }]}>
-                <Text style={styles.menuIconText}>ℹ️</Text>
+            <TouchableOpacity
+              style={styles.menuItemTouchable}
+              onPress={() => handleMenuItemPress(handleHelpAndFeedback, 3)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.menuIcon, { backgroundColor: "#F39C12" }]}>
+                  <Text style={styles.menuIconText}>💬</Text>
+                </View>
+                <Text style={styles.menuItemText}>Help & Feedback</Text>
               </View>
-              <Text style={styles.menuItemText}>About Us</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
+              <Text style={styles.menuItemArrow}>›</Text>
+            </TouchableOpacity>
+          </Animated.View>
+
+          <Animated.View
+            style={[
+              styles.menuItem,
+              styles.lastMenuItem,
+              {
+                opacity: menuAnimations[4].opacity,
+                transform: [
+                  { scale: menuAnimations[4].scale },
+                  { translateX: menuAnimations[4].translateX },
+                ],
+              },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.menuItemTouchable}
+              onPress={() => handleMenuItemPress(handleOfficialWebsite, 4)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.menuIcon, { backgroundColor: "#E67E22" }]}>
+                  <Text style={styles.menuIconText}>ℹ️</Text>
+                </View>
+                <Text style={styles.menuItemText}>About Us</Text>
+              </View>
+              <Text style={styles.menuItemArrow}>›</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </Animated.View>
 
         {/* Enhanced Logout Button */}
-        <View style={styles.actionsContainer}>
+        <Animated.View
+          style={[
+            styles.actionsContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }, { translateY: slideAnim }],
+            },
+          ]}
+        >
           <TouchableOpacity
             style={[styles.actionButton, styles.logoutButton]}
             onPress={handleLogout}
+            activeOpacity={0.8}
           >
             <Text style={styles.logoutIcon}>🚪</Text>
             <Text style={styles.actionButtonText}>Logout</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -517,13 +812,15 @@ const styles = StyleSheet.create({
     color: "#2c3e50",
   },
   menuItem: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  menuItemTouchable: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 20,
     paddingHorizontal: 25,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
   },
   lastMenuItem: {
     borderBottomWidth: 0,
