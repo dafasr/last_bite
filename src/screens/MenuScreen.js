@@ -103,22 +103,25 @@ const MenuScreen = ({ navigation }) => {
 
   const renderItem = ({ item }) => (
     <View style={styles.bagItem}>
-      <Image
-        style={styles.bagImage}
-        source={{
-          uri:
-            item.imageUrl ||
-            "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?w=500&q=80",
-        }}
-      />
-      <View style={styles.bagContent}>
-        <Text style={styles.bagName}>{item.name}</Text>
-
-        <View style={styles.orderItemsContainer}>
-          <Text style={styles.orderItemsTitle}>📦 Kemungkinan isi:</Text>
-          <Text style={styles.orderItemText}>{item.description}</Text>
+      <View>
+        <Image
+          style={styles.bagImage}
+          source={{
+            uri:
+              item.imageUrl ||
+              "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?w=500&q=80",
+          }}
+        />
+        <View
+          style={[
+            styles.statusContainer,
+            {
+              backgroundColor: item.status === "AVAILABLE" ? "#2ECC71" : "rgba(0, 0, 0, 0.6)",
+            },
+          ]}
+        >
+          <Text style={styles.statusText}>{item.status.replace("_", " ")}</Text>
         </View>
-
         <View style={styles.priceContainer}>
           <Text style={styles.originalPrice}>
             Rp {item.originalPrice.toLocaleString("id-ID")}
@@ -126,6 +129,14 @@ const MenuScreen = ({ navigation }) => {
           <Text style={styles.discountedPrice}>
             Rp {item.discountedPrice.toLocaleString("id-ID")}
           </Text>
+        </View>
+      </View>
+      <View style={styles.bagContent}>
+        <Text style={styles.bagName}>{item.name}</Text>
+
+        <View style={styles.orderItemsContainer}>
+          <Text style={styles.orderItemsTitle}>📦 Kemungkinan isi:</Text>
+          <Text style={styles.orderItemText}>{item.description}</Text>
         </View>
 
         <View style={styles.availabilityContainer}>
@@ -141,11 +152,6 @@ const MenuScreen = ({ navigation }) => {
         <View style={styles.quantityContainer}>
           <Text style={styles.quantityLabel}>Kuantitas:</Text>
           <Text style={styles.quantityText}>{item.quantityAvailable}</Text>
-        </View>
-
-        <View style={styles.statusInfoContainer}>
-          <Text style={styles.statusInfoLabel}>Status:</Text>
-          <Text style={styles.statusInfoText}>{item.status}</Text>
         </View>
 
         <View style={styles.buttonContainer}>
@@ -274,6 +280,19 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
   },
+  statusContainer: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 5,
+  },
+  statusText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   bagContent: {
     padding: 12, // Reduced padding
   },
@@ -316,21 +335,25 @@ const styles = StyleSheet.create({
   },
 
   priceContainer: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    marginBottom: 8, // Reduced margin
-    flexWrap: 'wrap', // Allow price to wrap if needed
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 5,
+    flexDirection: "column",
+    alignItems: "flex-end",
   },
   originalPrice: {
     fontSize: 12, // Reduced font size
-    color: "#7F8C8D",
+    color: "#FFFFFF",
     textDecorationLine: "line-through",
-    marginRight: 5,
   },
   discountedPrice: {
     fontSize: 16, // Reduced font size
     fontWeight: "bold",
-    color: "#2ECC71",
+    color: "#FFFFFF",
   },
   availabilityContainer: {
     flexDirection: "column", // Change to column
@@ -442,6 +465,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     letterSpacing: 0.5, // Add some letter spacing
+  },
+  statusContainer: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 5,
+  },
+  statusText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });
 
