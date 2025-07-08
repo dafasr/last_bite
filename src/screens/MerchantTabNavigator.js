@@ -120,9 +120,9 @@ const MerchantTabNavigator = () => {
           tabBarIcon: ({ focused, color, size }) => {
             let iconName;
 
-            if (route.name === "Home") {
+            if (route.name === "Dasbor") {
               iconName = focused ? "home" : "home-outline";
-            } else if (route.name === "List") {
+            } else if (route.name === "Pesanan") {
               iconName = focused ? "list" : "list-outline";
             } else if (route.name === "Menu") {
               iconName = focused ? "restaurant" : "restaurant-outline";
@@ -157,7 +157,7 @@ const MerchantTabNavigator = () => {
           headerShown: false,
         })}
       >
-        <Tab.Screen name="Home">
+        <Tab.Screen name="Dasbor">
           {(props) => (
             <MerchantHomeScreen
               {...props}
@@ -168,7 +168,7 @@ const MerchantTabNavigator = () => {
             />
           )}
         </Tab.Screen>
-        <Tab.Screen name="List">
+        <Tab.Screen name="Pesanan">
           {(props) => (
             <ListScreen
               {...props}
