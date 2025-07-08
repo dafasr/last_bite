@@ -5,7 +5,7 @@ import { useAuthContext } from "../context/AuthContext";
 
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { updateSellerProfileId, isAuthenticated } = useAuthContext();
+  const { updateSellerProfileId, logout } = useAuthContext();
 
   const loginUser = async ({ username, password }) => {
     setIsLoading(true);
@@ -129,8 +129,7 @@ export const useAuth = () => {
 
   const logoutUser = async () => {
     setIsLoading(true);
-    await AsyncStorage.removeItem("userToken");
-    // Anda mungkin ingin menambahkan logika lain di sini, seperti membersihkan state global
+    await logout();
     setIsLoading(false);
   };
 
@@ -139,6 +138,5 @@ export const useAuth = () => {
     loginUser,
     registerUser,
     logoutUser,
-    isAuthenticated,
   };
 };

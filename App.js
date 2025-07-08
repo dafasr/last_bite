@@ -15,7 +15,7 @@ import { ActivityIndicator, View } from "react-native";
 const Stack = createStackNavigator();
 
 function AppNavigator() {
-  const { sellerProfileId, isLoading } = useAuthContext();
+  const { isAuthenticated, isLoading } = useAuthContext();
 
   if (isLoading) {
     return (
@@ -33,7 +33,7 @@ function AppNavigator() {
           headerShown: false,
         }}
       >
-        {sellerProfileId ? (
+        {isAuthenticated ? (
           <Stack.Screen
             name="MerchantHome"
             component={MerchantTabNavigator}

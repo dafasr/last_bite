@@ -12,14 +12,12 @@ import {
   RefreshControl,
 } from "react-native";
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
-import { useAuth } from "../hooks";
 import { useAuthContext } from "../context/AuthContext";
 import { getSellerProfile } from "../api/apiClient";
 import { useFocusEffect } from "@react-navigation/native";
 
 const ProfileScreen = ({ navigation }) => {
-  const { logoutUser } = useAuth();
-  const { sellerProfileId, isLoading: isAuthLoading } = useAuthContext();
+  const { sellerProfileId, isLoading: isAuthLoading, logout } = useAuthContext();
   const [merchantProfile, setMerchantProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -121,8 +119,7 @@ const ProfileScreen = ({ navigation }) => {
       button: "Keluar",
       onPressButton: async () => {
         Dialog.hide();
-        await logoutUser();
-        navigation.navigate("Login");
+        await logout();
       },
       showCancelButton: true,
       cancelButton: "Batal",

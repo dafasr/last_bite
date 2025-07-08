@@ -5,23 +5,29 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [sellerProfileId, setSellerProfileId] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadSellerProfileId = async () => {
+    const bootstrapAsync = async () => {
+      let userToken;
+      let profileId;
       try {
-        const storedId = await AsyncStorage.getItem('sellerProfileId');
-        if (storedId) {
-          setSellerProfileId(storedId);
-        }
-      } catch (error) {
-        console.error('Failed to load sellerProfileId from AsyncStorage', error);
-      } finally {
-        setIsLoading(false);
+        userToken = await AsyncStorage.getItem('userToken');
+        profileId = await AsyncStorage.getItem('sellerProfileId');
+      } catch (e) {
+        console.error('Restoring token failed', e);
       }
+
+      if (userToken && profileId) {
+        setSellerProfileId(profileId);
+        setIsAuthenticated(true);
+      }
+      
+      setIsLoading(false);
     };
 
-    loadSellerProfileId();
+    bootstrapAsync();
   }, []);
 
   const updateSellerProfileId = async (id) => {
@@ -29,27 +35,30 @@ export const AuthProvider = ({ children }) => {
       if (id) {
         await AsyncStorage.setItem('sellerProfileId', id);
         setSellerProfileId(id);
+        setIsAuthenticated(true);
       } else {
         await AsyncStorage.removeItem('sellerProfileId');
         setSellerProfileId(null);
+        setIsAuthenticated(false);
       }
     } catch (error) {
       console.error('Failed to save sellerProfileId to AsyncStorage', error);
     }
   };
 
-  const isAuthenticated = async () => {
+  const logout = async () => {
     try {
-      const token = await AsyncStorage.getItem('userToken');
-      return !!token;
+      await AsyncStorage.removeItem('userToken');
+      await AsyncStorage.removeItem('sellerProfileId');
+      setSellerProfileId(null);
+      setIsAuthenticated(false);
     } catch (error) {
-      console.error('Failed to check authentication status', error);
-      return false;
+      console.error('Failed to logout', error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ sellerProfileId, updateSellerProfileId, isLoading, isAuthenticated }}>
+    <AuthContext.Provider value={{ sellerProfileId, isAuthenticated, isLoading, updateSellerProfileId, logout }}>
       {children}
     </AuthContext.Provider>
   );
