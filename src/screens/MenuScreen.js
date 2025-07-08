@@ -24,6 +24,144 @@ import { useMenu } from "../context/MenuContext";
 import { getMenuItems } from "../api/apiClient";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
+// --- THEME CONSTANTS ---
+const COLORS = {
+  primary: "#27AE60", // Green
+  secondary: "#3498DB", // Blue
+  danger: "#E74C3C", // Red
+  warning: "#F39C12", // Yellow
+  white: "#FFFFFF",
+  black: "#000000",
+  lightGray: "#F8F9FA",
+  lightGray2: "#ECF0F1",
+  gray: "#BDC3C7",
+  darkGray: "#7F8C8D",
+  title: "#2C3E50",
+  text: "#2C3E50",
+  background: "#F8F9FA",
+  card: "#FFFFFF",
+  priceBg: "#E8F5E8",
+  paymentBg: "#EBF3FD",
+  noteBg: "#FFF9E6",
+};
+
+const SIZES = {
+  base: 8,
+  font: 14,
+  radius: 12,
+  padding: 20,
+  h1: 28,
+  h2: 22,
+  h3: 18,
+  h4: 16,
+  body2: 14,
+  body3: 12,
+  body4: 11,
+};
+
+const FONTS = {
+  h1: { fontSize: SIZES.h1, fontWeight: "800" },
+  h2: { fontSize: SIZES.h2, fontWeight: "700" },
+  h3: { fontSize: SIZES.h3, fontWeight: "700" },
+  h4: { fontSize: SIZES.h4, fontWeight: "700" },
+  body2: { fontSize: SIZES.body2, fontWeight: "500" },
+  body3: { fontSize: SIZES.body3, fontWeight: "700" },
+  body4: { fontSize: SIZES.body4, fontWeight: "500" },
+  cardLabel: {
+    fontSize: SIZES.body2,
+    color: COLORS.darkGray,
+    fontWeight: "600",
+  },
+};
+
+const SHADOWS = {
+  light: {
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  medium: {
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  dark: {
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+};
+
+// Animation Hook
+const useAnimation = (initialValue = 0) => {
+  const animatedValue = useRef(new Animated.Value(initialValue)).current;
+
+  const animate = useCallback(
+    (toValue, duration = 300, easing = Easing.out(Easing.quad)) => {
+      Animated.timing(animatedValue, {
+        toValue,
+        duration,
+        easing,
+        useNativeDriver: true,
+      }).start();
+    },
+    [animatedValue]
+  );
+
+  return [animatedValue, animate];
+};
+
+// Animated Components
+const AnimatedCard = ({ children, delay = 0, style }) => {
+  const [scaleAnim] = useAnimation(0.95);
+  const [opacityAnim] = useAnimation(0);
+  const [translateYAnim] = useAnimation(20);
+
+  useEffect(() => {
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 400,
+          easing: Easing.out(Easing.back(1.1)),
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateYAnim, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, delay);
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        style,
+        {
+          transform: [{ scale: scaleAnim }, { translateY: translateYAnim }],
+          opacity: opacityAnim,
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+};
+
 const MenuScreen = ({ navigation }) => {
   const { surpriseBags, setSurpriseBags, toggleAvailability, deleteBag } =
     useMenu();
@@ -102,7 +240,7 @@ const MenuScreen = ({ navigation }) => {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.bagItem}>
+    <AnimatedCard style={styles.bagItem}>
       <View>
         <Image
           style={styles.bagImage}
@@ -171,15 +309,17 @@ const MenuScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </AnimatedCard>
   );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <View style={styles.header}>
+        {/* Animated Header */}
+        <AnimatedCard style={styles.header}>
           <Text style={styles.headerTitle}>Daftar Menu</Text>
-        </View>
+          <View style={styles.headerUnderline} />
+        </AnimatedCard>
         <FlatList
           data={surpriseBags}
           renderItem={renderItem}
@@ -191,13 +331,13 @@ const MenuScreen = ({ navigation }) => {
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
+            <AnimatedCard delay={800} style={styles.emptyContainer}>
               <Text style={styles.emptyIcon}>📭</Text>
               <Text style={styles.emptyText}>Tidak ada menu</Text>
               <Text style={styles.emptySubtext}>
                 Menu Anda akan muncul di sini
               </Text>
-            </View>
+            </AnimatedCard>
           }
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -240,18 +380,53 @@ const MenuScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#f5f5f5" },
-  container: { flex: 1, overflow: "visible" },
+  // --- Base ---
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  container: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.background,
+  },
+  loadingText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: COLORS.darkGray,
+    fontWeight: "500",
+  },
+
+  // --- Enhanced Header ---
   header: {
-    paddingTop: 20,
-    paddingBottom: 10,
+    paddingTop: 30,
+    paddingBottom: 25,
     paddingHorizontal: 20,
-    backgroundColor: "#f5f5f5", // Match safe area background
+    backgroundColor: COLORS.background,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray2,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#2C3E50",
+    fontSize: 28,
+    fontWeight: "900",
+    color: COLORS.title,
+    marginBottom: 8,
+  },
+  headerUnderline: {
+    width: 60,
+    height: 4,
+    backgroundColor: COLORS.primary,
+    borderRadius: 2,
+  },
+  headerUnderline: {
+    width: 60,
+    height: 4,
+    backgroundColor: COLORS.primary,
+    borderRadius: 2,
   },
   listContainer: {
     padding: 10,
@@ -264,12 +439,11 @@ const styles = StyleSheet.create({
   },
 
   bagItem: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.card,
     borderRadius: 10,
     marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    ...SHADOWS.medium,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 4,
     overflow: "hidden",
@@ -279,8 +453,8 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 120, // Reduced height
     resizeMode: "cover",
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+    borderTopLeftRadius: SIZES.radius,
+    borderTopRightRadius: SIZES.radius,
   },
   statusContainer: {
     position: "absolute",
