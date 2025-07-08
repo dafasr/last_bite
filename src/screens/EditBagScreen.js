@@ -172,179 +172,177 @@ const EditBagScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      <ScrollView
         style={styles.container}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Edit Surprise Bag</Text>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Edit Surprise Bag</Text>
+        </View>
+
+        <View style={styles.formContainer}>
+          <Text style={styles.label}>Nama Bag</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="cth: Paket Roti Spesial"
+            value={name}
+            onChangeText={setName}
+          />
+
+          <Text style={styles.label}>Deskripsi (Kemungkinan Isi)</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="cth: Roti Coklat, Roti Keju, Donat"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+          />
+
+          <Text style={styles.label}>Foto</Text>
+          <TouchableOpacity
+            style={styles.outlineButton}
+            onPress={handleChoosePhoto}
+          >
+            <Text style={styles.outlineButtonText}>Pilih Foto Baru</Text>
+          </TouchableOpacity>
+          <View style={styles.imagePreviewContainer}>
+            <Image
+              source={{ uri: image ? image.uri : imageUrl }}
+              style={styles.imagePreview}
+            />
           </View>
 
-          <View style={styles.formContainer}>
-            <Text style={styles.label}>Nama Bag</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="cth: Paket Roti Spesial"
-              value={name}
-              onChangeText={setName}
-            />
-
-            <Text style={styles.label}>Deskripsi (Kemungkinan Isi)</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="cth: Roti Coklat, Roti Keju, Donat"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-            />
-
-            <Text style={styles.label}>Foto</Text>
-            <TouchableOpacity
-              style={styles.outlineButton}
-              onPress={handleChoosePhoto}
-            >
-              <Text style={styles.outlineButtonText}>Pilih Foto Baru</Text>
-            </TouchableOpacity>
-            <View style={styles.imagePreviewContainer}>
-              <Image
-                source={{ uri: image ? image.uri : imageUrl }}
-                style={styles.imagePreview}
+          <View style={styles.priceRow}>
+            <View style={styles.priceInputContainer}>
+              <Text style={styles.label}>Harga Asli (Rp)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="50000"
+                value={originalPrice}
+                onChangeText={setOriginalPrice}
+                keyboardType="numeric"
               />
             </View>
-
-            <View style={styles.priceRow}>
-              <View style={styles.priceInputContainer}>
-                <Text style={styles.label}>Harga Asli (Rp)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="50000"
-                  value={originalPrice}
-                  onChangeText={setOriginalPrice}
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={styles.priceInputContainer}>
-                <Text style={styles.label}>Harga Diskon (Rp)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="25000"
-                  value={discountedPrice}
-                  onChangeText={setDiscountedPrice}
-                  keyboardType="numeric"
-                />
-              </View>
+            <View style={styles.priceInputContainer}>
+              <Text style={styles.label}>Harga Diskon (Rp)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="25000"
+                value={discountedPrice}
+                onChangeText={setDiscountedPrice}
+                keyboardType="numeric"
+              />
             </View>
-
-            <View style={styles.priceRow}>
-              <View style={styles.priceInputContainer}>
-                <Text style={styles.label}>Tersedia Dari (Jam)</Text>
-                <TouchableOpacity
-                  style={styles.timeInput}
-                  onPress={() => setStartTimePickerVisible(true)}
-                >
-                  <Text
-                    style={
-                      displayStartTime
-                        ? styles.timeText
-                        : styles.placeholderText
-                    }
-                  >
-                    {displayStartTime
-                      ? displayStartTime.slice(11, 16)
-                      : "Pilih Jam"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.priceInputContainer}>
-                <Text style={styles.label}>Tersedia Sampai (Jam)</Text>
-                <TouchableOpacity
-                  style={styles.timeInput}
-                  onPress={() => setEndTimePickerVisible(true)}
-                >
-                  <Text
-                    style={
-                      displayEndTime ? styles.timeText : styles.placeholderText
-                    }
-                  >
-                    {displayEndTime
-                      ? displayEndTime.slice(11, 16)
-                      : "Pilih Jam"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <TimerPickerModal
-              visible={isStartTimePickerVisible}
-              setIsVisible={setStartTimePickerVisible}
-              onConfirm={(pickedDuration) => {
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, "0");
-                const day = String(now.getDate()).padStart(2, "0");
-                const hours = String(pickedDuration.hours).padStart(2, "0");
-                const minutes = String(pickedDuration.minutes).padStart(2, "0");
-                const seconds = String(pickedDuration.seconds).padStart(2, "0");
-                setDisplayStartTime(
-                  `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
-                );
-                setStartTimePickerVisible(false);
-              }}
-              modalTitle="Pilih Jam Mulai"
-              onCancel={() => setStartTimePickerVisible(false)}
-              closeOnOverlayPress
-            />
-
-            <TimerPickerModal
-              visible={isEndTimePickerVisible}
-              setIsVisible={setEndTimePickerVisible}
-              onConfirm={(pickedDuration) => {
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, "0");
-                const day = String(now.getDate()).padStart(2, "0");
-                const hours = String(pickedDuration.hours).padStart(2, "0");
-                const minutes = String(pickedDuration.minutes).padStart(2, "0");
-                const seconds = String(pickedDuration.seconds).padStart(2, "0");
-                setDisplayEndTime(
-                  `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
-                );
-                setEndTimePickerVisible(false);
-              }}
-              modalTitle="Pilih Jam Selesai"
-              onCancel={() => setEndTimePickerVisible(false)}
-              closeOnOverlayPress
-            />
-
-            <Text style={styles.label}>Kuantitas</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="10"
-              value={quantityAvailable}
-              onChangeText={setQuantityAvailable}
-              keyboardType="numeric"
-            />
-
-            
-
-            <TouchableOpacity
-              style={[
-                styles.button,
-                (!isChanged || loading) && styles.buttonDisabled,
-              ]}
-              onPress={handleSave}
-              disabled={!isChanged || loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.buttonText}>Simpan Perubahan</Text>
-              )}
-            </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+          <View style={styles.priceRow}>
+            <View style={styles.priceInputContainer}>
+              <Text style={styles.label}>Tersedia Dari (Jam)</Text>
+              <TouchableOpacity
+                style={styles.timeInput}
+                onPress={() => setStartTimePickerVisible(true)}
+              >
+                <Text
+                  style={
+                    displayStartTime
+                      ? styles.timeText
+                      : styles.placeholderText
+                  }
+                >
+                  {displayStartTime
+                    ? displayStartTime.slice(11, 16)
+                    : "Pilih Jam"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.priceInputContainer}>
+              <Text style={styles.label}>Tersedia Sampai (Jam)</Text>
+              <TouchableOpacity
+                style={styles.timeInput}
+                onPress={() => setEndTimePickerVisible(true)}
+              >
+                <Text
+                  style={
+                    displayEndTime ? styles.timeText : styles.placeholderText
+                  }
+                >
+                  {displayEndTime
+                    ? displayEndTime.slice(11, 16)
+                    : "Pilih Jam"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <TimerPickerModal
+            visible={isStartTimePickerVisible}
+            setIsVisible={setStartTimePickerVisible}
+            onConfirm={(pickedDuration) => {
+              const now = new Date();
+              const year = now.getFullYear();
+              const month = String(now.getMonth() + 1).padStart(2, "0");
+              const day = String(now.getDate()).padStart(2, "0");
+              const hours = String(pickedDuration.hours).padStart(2, "0");
+              const minutes = String(pickedDuration.minutes).padStart(2, "0");
+              const seconds = String(pickedDuration.seconds).padStart(2, "0");
+              setDisplayStartTime(
+                `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+              );
+              setStartTimePickerVisible(false);
+            }}
+            modalTitle="Pilih Jam Mulai"
+            onCancel={() => setStartTimePickerVisible(false)}
+            closeOnOverlayPress
+          />
+
+          <TimerPickerModal
+            visible={isEndTimePickerVisible}
+            setIsVisible={setEndTimePickerVisible}
+            onConfirm={(pickedDuration) => {
+              const now = new Date();
+              const year = now.getFullYear();
+              const month = String(now.getMonth() + 1).padStart(2, "0");
+              const day = String(now.getDate()).padStart(2, "0");
+              const hours = String(pickedDuration.hours).padStart(2, "0");
+              const minutes = String(pickedDuration.minutes).padStart(2, "0");
+              const seconds = String(pickedDuration.seconds).padStart(2, "0");
+              setDisplayEndTime(
+                `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+              );
+              setEndTimePickerVisible(false);
+            }}
+            modalTitle="Pilih Jam Selesai"
+            onCancel={() => setEndTimePickerVisible(false)}
+            closeOnOverlayPress
+          />
+
+          <Text style={styles.label}>Kuantitas</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="10"
+            value={quantityAvailable}
+            onChangeText={setQuantityAvailable}
+            keyboardType="numeric"
+          />
+
+          
+
+          <TouchableOpacity
+            style={[
+              styles.button,
+              (!isChanged || loading) && styles.buttonDisabled,
+            ]}
+            onPress={handleSave}
+            disabled={!isChanged || loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>Simpan Perubahan</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -381,6 +379,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 5,
+    paddingBottom: 100, // Added padding to lift content
   },
   label: {
     fontSize: 16,
