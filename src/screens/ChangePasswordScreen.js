@@ -60,7 +60,7 @@ const ChangePasswordScreen = ({ navigation }) => {
       });
       navigation.goBack(); // Go back to the previous screen (ProfileScreen)
     } catch (err) {
-      console.error("Failed to change password:", err);
+      console.error("Gagal mengubah kata sandi:", err);
       Toast.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",
@@ -75,33 +75,35 @@ const ChangePasswordScreen = ({ navigation }) => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Change Password</Text>
+          <Text style={styles.headerTitle}>Ubah Kata Sandi</Text>
         </View>
 
         <View style={styles.formContainer}>
-          <Text style={styles.label}>Old Password</Text>
+          <Text style={styles.label}>Kata Sandi Lama</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter old password"
+            placeholder="Masukkan kata sandi lama"
             secureTextEntry
             value={oldPassword}
             onChangeText={setOldPassword}
           />
 
-          <Text style={styles.label}>New Password</Text>
+          <Text style={styles.label}>Kata Sandi Baru</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter new password"
+            placeholder="Masukkan kata sandi baru"
             secureTextEntry
             value={newPassword}
             onChangeText={setNewPassword}
           />
-          {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+          {passwordError ? (
+            <Text style={styles.errorText}>{passwordError}</Text>
+          ) : null}
 
-          <Text style={styles.label}>Confirm New Password</Text>
+          <Text style={styles.label}>Konfirmasi Kata Sandi Baru</Text>
           <TextInput
             style={styles.input}
-            placeholder="Confirm new password"
+            placeholder="Konfirmasi Kata Sandi Baru"
             secureTextEntry
             value={confirmNewPassword}
             onChangeText={setConfirmNewPassword}
@@ -111,7 +113,7 @@ const ChangePasswordScreen = ({ navigation }) => {
             style={styles.submitButton}
             onPress={handleSubmitChangePassword}
           >
-            <Text style={styles.submitButtonText}>Change Password</Text>
+            <Text style={styles.submitButtonText}>Ubah Kata Sandi</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

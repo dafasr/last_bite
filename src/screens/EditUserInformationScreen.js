@@ -1,7 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import apiClient from '../api/apiClient';
-import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ActivityIndicator,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
+import apiClient from "../api/apiClient";
+import { ALERT_TYPE, Toast } from "react-native-alert-notification";
 
 const EditUserInformationScreen = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
@@ -12,16 +21,16 @@ const EditUserInformationScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await apiClient.get('/users/me');
+        const response = await apiClient.get("/users/me");
         setUserData(response.data.data);
       } catch (err) {
         console.error("Failed to fetch user data:", err);
         setError("Failed to load user data. Please try again.");
         Dialog.show({
           type: ALERT_TYPE.DANGER,
-          title: 'Error',
-          textBody: 'Gagal memuat data pengguna. Silakan coba lagi.',
-          button: 'Tutup',
+          title: "Error",
+          textBody: "Gagal memuat data pengguna. Silakan coba lagi.",
+          button: "Tutup",
         });
       } finally {
         setIsLoading(false);
@@ -40,20 +49,22 @@ const EditUserInformationScreen = ({ navigation }) => {
         email: userData.email,
         phoneNumber: userData.phoneNumber,
       };
-      await apiClient.put('/users/me', payload);
+      await apiClient.put("/users/me", payload);
       Toast.show({
         type: ALERT_TYPE.SUCCESS,
-        title: 'Sukses',
-        textBody: 'Informasi pengguna berhasil diperbarui.',
+        title: "Sukses",
+        textBody: "Informasi pengguna berhasil diperbarui.",
       });
-      navigation.navigate('ProfileScreen');
+      navigation.navigate("ProfileScreen");
     } catch (err) {
       console.error("Failed to update user data:", err);
       Dialog.show({
         type: ALERT_TYPE.DANGER,
-        title: 'Error',
-        textBody: err.response?.data?.message || 'Gagal memperbarui informasi pengguna. Silakan coba lagi.',
-        button: 'Tutup',
+        title: "Error",
+        textBody:
+          err.response?.data?.message ||
+          "Gagal memperbarui informasi pengguna. Silakan coba lagi.",
+        button: "Tutup",
       });
     } finally {
       setIsSaving(false);
@@ -88,7 +99,7 @@ const EditUserInformationScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Edit User Information</Text>
+        <Text style={styles.title}>Edit Informasi Pengguna</Text>
 
         <View style={styles.formContainer}>
           <Text style={styles.label}>Username</Text>
@@ -102,7 +113,9 @@ const EditUserInformationScreen = ({ navigation }) => {
           <TextInput
             style={styles.input}
             value={userData.fullName}
-            onChangeText={(text) => setUserData({ ...userData, fullName: text })}
+            onChangeText={(text) =>
+              setUserData({ ...userData, fullName: text })
+            }
           />
 
           <Text style={styles.label}>Email</Text>
@@ -117,7 +130,9 @@ const EditUserInformationScreen = ({ navigation }) => {
           <TextInput
             style={styles.input}
             value={userData.phoneNumber}
-            onChangeText={(text) => setUserData({ ...userData, phoneNumber: text })}
+            onChangeText={(text) =>
+              setUserData({ ...userData, phoneNumber: text })
+            }
             keyboardType="phone-pad"
           />
 
@@ -141,17 +156,17 @@ const EditUserInformationScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 20,
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
   },
   loadingContainer: {
@@ -197,7 +212,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 3,
-    width: '100%',
+    width: "100%",
   },
   label: {
     fontSize: 16,

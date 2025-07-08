@@ -12,7 +12,7 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
-import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import { useMenu } from "../context/MenuContext";
 import { useAuthContext } from "../context/AuthContext";
 import apiClient, { uploadImage } from "../api/apiClient";
@@ -43,9 +43,9 @@ const AddBagScreen = ({ navigation }) => {
         if (status !== "granted") {
           Dialog.show({
             type: ALERT_TYPE.WARNING,
-            title: 'Peringatan',
-            textBody: 'Kami memerlukan izin galeri untuk memilih gambar.',
-            button: 'Tutup',
+            title: "Peringatan",
+            textBody: "Kami memerlukan izin galeri untuk memilih gambar.",
+            button: "Tutup",
           });
         }
       }
@@ -72,9 +72,9 @@ const AddBagScreen = ({ navigation }) => {
     if (!sellerProfileId) {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
-        title: 'Error',
-        textBody: 'Seller profile ID not found. Please log in again.',
-        button: 'Tutup',
+        title: "Error",
+        textBody: "Seller profile ID not found. Please log in again.",
+        button: "Tutup",
       });
       setLoading(false);
       return;
@@ -91,9 +91,9 @@ const AddBagScreen = ({ navigation }) => {
     ) {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
-        title: 'Error',
-        textBody: 'Harap isi semua field yang wajib diisi dan pilih gambar.',
-        button: 'Tutup',
+        title: "Error",
+        textBody: "Harap isi semua field yang wajib diisi dan pilih gambar.",
+        button: "Tutup",
       });
       setLoading(false);
       return;
@@ -114,9 +114,9 @@ const AddBagScreen = ({ navigation }) => {
       if (!imageUrl) {
         Dialog.show({
           type: ALERT_TYPE.DANGER,
-          title: 'Error',
-          textBody: 'Gagal mengunggah gambar. URL tidak ditemukan.',
-          button: 'Tutup',
+          title: "Error",
+          textBody: "Gagal mengunggah gambar. URL tidak ditemukan.",
+          button: "Tutup",
         });
         setLoading(false);
         return;
@@ -141,30 +141,31 @@ const AddBagScreen = ({ navigation }) => {
       if (response.status === 201) {
         Dialog.show({
           type: ALERT_TYPE.SUCCESS,
-          title: 'Sukses',
-          textBody: 'Surprise Bag berhasil ditambahkan!',
-          button: 'OK',
-        onPressButton: () => {
-          Dialog.hide();
-          navigation.goBack();
-        },
-      });
+          title: "Sukses",
+          textBody: "Menu berhasil ditambahkan!",
+          button: "OK",
+          onPressButton: () => {
+            Dialog.hide();
+            navigation.goBack();
+          },
+        });
       } else {
         Dialog.show({
           type: ALERT_TYPE.DANGER,
-          title: 'Error',
-          textBody: 'Gagal menambahkan Surprise Bag. Silakan coba lagi.',
-          button: 'Tutup',
+          title: "Error",
+          textBody: "Gagal menambahkan Menu. Silakan coba lagi.",
+          button: "Tutup",
         });
       }
     } catch (error) {
       console.error("Failed to add menu item:", error);
       Dialog.show({
         type: ALERT_TYPE.DANGER,
-        title: 'Error',
-        textBody: error.response?.data?.message ||
-          'Terjadi kesalahan saat menambahkan Surprise Bag.',
-        button: 'Tutup',
+        title: "Error",
+        textBody:
+          error.response?.data?.message ||
+          "Terjadi kesalahan saat menambahkan Menu.",
+        button: "Tutup",
       });
     } finally {
       setLoading(false);
@@ -179,7 +180,7 @@ const AddBagScreen = ({ navigation }) => {
       >
         <ScrollView>
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Tambah Surprise Bag Baru</Text>
+            <Text style={styles.headerTitle}>Tambah Menu Baru</Text>
           </View>
 
           <View style={styles.formContainer}>
@@ -358,7 +359,7 @@ const AddBagScreen = ({ navigation }) => {
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.buttonText}>Simpan Surprise Bag</Text>
+                <Text style={styles.buttonText}>Simpan Menu</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -375,6 +376,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    paddingBottom: 100,
   },
   header: {
     paddingVertical: 30,

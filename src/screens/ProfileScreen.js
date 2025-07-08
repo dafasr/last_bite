@@ -12,6 +12,7 @@ import {
   RefreshControl,
   Animated,
   Easing,
+  BackHandler,
 } from "react-native";
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import { useAuthContext } from "../context/AuthContext";
@@ -206,8 +207,17 @@ const ProfileScreen = ({ navigation }) => {
       if (!isAuthLoading) {
         fetchSellerProfile();
       }
+      const onBackPress = () => {
+        return false;
+      };
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
+      return () => backHandler.remove();
     }, [isAuthLoading, fetchSellerProfile])
   );
+  ("");
 
   useEffect(() => {
     if (merchantProfile && !isLoading) {
@@ -465,7 +475,7 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={[styles.menuIcon, { backgroundColor: "#2ECC71" }]}>
                   <Text style={styles.menuIconText}>🏪</Text>
                 </View>
-                <Text style={styles.menuItemText}>Edit Store Information</Text>
+                <Text style={styles.menuItemText}>Edit Informasi Toko</Text>
               </View>
               <Text style={styles.menuItemArrow}>›</Text>
             </TouchableOpacity>
@@ -497,7 +507,7 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={[styles.menuIcon, { backgroundColor: "#3498DB" }]}>
                   <Text style={styles.menuIconText}>👤</Text>
                 </View>
-                <Text style={styles.menuItemText}>Edit User Information</Text>
+                <Text style={styles.menuItemText}>Edit Informasi Pengguna</Text>
               </View>
               <Text style={styles.menuItemArrow}>›</Text>
             </TouchableOpacity>
@@ -524,7 +534,7 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={[styles.menuIcon, { backgroundColor: "#9B59B6" }]}>
                   <Text style={styles.menuIconText}>🔐</Text>
                 </View>
-                <Text style={styles.menuItemText}>Change Password</Text>
+                <Text style={styles.menuItemText}>Ubah Kata Sandi</Text>
               </View>
               <Text style={styles.menuItemArrow}>›</Text>
             </TouchableOpacity>

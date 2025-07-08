@@ -462,7 +462,7 @@ const MerchantHomeScreen = () => {
       >
         {/* Animated Header */}
         <AnimatedCard style={styles.header}>
-          <Text style={styles.headerTitle}>Dasbor Merchant</Text>
+          <Text style={styles.headerTitle}>Dasbor Partner</Text>
           <View style={styles.headerUnderline} />
         </AnimatedCard>
 

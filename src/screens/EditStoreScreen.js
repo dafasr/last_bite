@@ -11,7 +11,7 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
-import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { getSellerProfile, updateSellerProfile } from "../api/apiClient";
@@ -21,8 +21,7 @@ const EditStoreScreen = ({ navigation, route }) => {
   const { sellerProfileId } = useAuthContext();
   const sellerId = sellerProfileId;
 
-  useEffect(() => {
-  }, [sellerId, loading]);
+  useEffect(() => {}, [sellerId, loading]);
 
   const [storeName, setStoreName] = useState("");
   const [description, setDescription] = useState("");
@@ -63,13 +62,14 @@ const EditStoreScreen = ({ navigation, route }) => {
             longitudeDelta: 0.0421,
           });
         } else {
-          let { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
+          let { status: locationStatus } =
+            await Location.requestForegroundPermissionsAsync();
           if (locationStatus !== "granted") {
             Dialog.show({
               type: ALERT_TYPE.WARNING,
-              title: 'Izin Ditolak',
-              textBody: 'Akses lokasi diperlukan untuk mengatur lokasi toko.',
-              button: 'Tutup',
+              title: "Izin Ditolak",
+              textBody: "Akses lokasi diperlukan untuk mengatur lokasi toko.",
+              button: "Tutup",
             });
             setLoading(false);
             return;
@@ -85,9 +85,10 @@ const EditStoreScreen = ({ navigation, route }) => {
       } catch (error) {
         Dialog.show({
           type: ALERT_TYPE.DANGER,
-          title: 'Error',
-          textBody: 'Gagal mengambil profil penjual. Silakan periksa koneksi jaringan Anda atau coba lagi nanti.',
-          button: 'Tutup',
+          title: "Error",
+          textBody:
+            "Gagal mengambil profil penjual. Silakan periksa koneksi jaringan Anda atau coba lagi nanti.",
+          button: "Tutup",
         });
       } finally {
         setLoading(false);
@@ -114,9 +115,9 @@ const EditStoreScreen = ({ navigation, route }) => {
     if (!sellerId) {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
-        title: 'Error',
-        textBody: 'ID Penjual tidak ditemukan.',
-        button: 'Tutup',
+        title: "Error",
+        textBody: "ID Penjual tidak ditemukan.",
+        button: "Tutup",
       });
       return;
     }
@@ -134,9 +135,9 @@ const EditStoreScreen = ({ navigation, route }) => {
       await updateSellerProfile(sellerId, updatedData);
       Dialog.show({
         type: ALERT_TYPE.SUCCESS,
-        title: 'Sukses',
-        textBody: 'Informasi toko berhasil diperbarui!',
-        button: 'OK',
+        title: "Sukses",
+        textBody: "Informasi toko berhasil diperbarui!",
+        button: "OK",
         onPressButton: () => {
           Dialog.hide(); // Explicitly hide the dialog
           navigation.goBack();
@@ -146,9 +147,9 @@ const EditStoreScreen = ({ navigation, route }) => {
       console.error("Failed to update seller profile:", error);
       Dialog.show({
         type: ALERT_TYPE.DANGER,
-        title: 'Error',
-        textBody: 'Gagal memperbarui informasi toko.',
-        button: 'Tutup',
+        title: "Error",
+        textBody: "Gagal memperbarui informasi toko.",
+        button: "Tutup",
       });
     }
   };
@@ -165,38 +166,28 @@ const EditStoreScreen = ({ navigation, route }) => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Edit Store Information</Text>
+          <Text style={styles.headerTitle}>Edit Informasi Toko</Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Store Name</Text>
+            <Text style={styles.label}>Nama Toko</Text>
             <TextInput
               style={styles.input}
               value={storeName}
               onChangeText={setStoreName}
-              placeholder="Enter your store name"
+              placeholder="Masukkan nama toko Anda"
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Description</Text>
+            <Text style={styles.label}>Keterangan</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={description}
               onChangeText={setDescription}
-              placeholder="Tell us about your store"
+              placeholder="Ceritakan kepada kami tentang toko Anda"
               multiline
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Address</Text>
-            <TextInput
-              style={styles.input}
-              value={address}
-              onChangeText={setAddress}
-              placeholder="Enter your store address"
             />
           </View>
 
@@ -206,12 +197,18 @@ const EditStoreScreen = ({ navigation, route }) => {
               style={styles.input}
               value={storeImageUrl}
               onChangeText={setStoreImageUrl}
-              placeholder="Enter store image URL"
+              placeholder="Masukkan URL gambar toko"
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Store Location (Tap on map to select)</Text>
+            <Text style={styles.label}>
+              Lokasi Toko (Ketuk pada peta untuk memilih)
+            </Text>
+            <Text style={styles.coordinatesText}>
+              Latitude: {latitude ? latitude.toFixed(6) : "N/A"}, Longitude:{" "}
+              {longitude ? longitude.toFixed(6) : "N/A"}
+            </Text>
             {mapRegion && (
               <MapView
                 style={styles.map}
@@ -223,10 +220,16 @@ const EditStoreScreen = ({ navigation, route }) => {
                 )}
               </MapView>
             )}
-            <Text style={styles.coordinatesText}>
-              Latitude: {latitude ? latitude.toFixed(6) : "N/A"}, Longitude:{" "}
-              {longitude ? longitude.toFixed(6) : "N/A"}
-            </Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Detail Alamat</Text>
+              <TextInput
+                style={styles.input}
+                value={address}
+                onChangeText={setAddress}
+                placeholder="Masukkan detail alamat toko Anda"
+              />
+            </View>
           </View>
         </View>
 
@@ -256,7 +259,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flexGrow: 1,
-    paddingBottom: 20,
+    paddingBottom: 50,
   },
   header: {
     paddingVertical: 30,

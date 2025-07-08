@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import MerchantHomeScreen from "./MerchantHomeScreen";
@@ -15,7 +15,7 @@ import { useOrders } from "../hooks";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { View } from "react-native";
+import { View, BackHandler } from "react-native";
 
 const Tab = createBottomTabNavigator();
 const MenuStack = createStackNavigator();
@@ -29,6 +29,19 @@ const MerchantTabNavigator = () => {
     handleUpdateOrderStatus: originalHandleUpdateOrderStatus,
   } = useOrders();
   const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    const backAction = () => {
+      return true; // Menunjukkan bahwa event sudah ditangani
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, []);
 
 
   const handleAcceptOrder = async (orderId) => {

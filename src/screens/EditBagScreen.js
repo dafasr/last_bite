@@ -12,7 +12,7 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
-import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import { useMenu } from "../context/MenuContext";
 import { useAuthContext } from "../context/AuthContext";
 import apiClient, { uploadImage } from "../api/apiClient";
@@ -35,7 +35,6 @@ const EditBagScreen = ({ navigation, route }) => {
   const [quantityAvailable, setQuantityAvailable] = useState("");
   const [displayStartTime, setDisplayStartTime] = useState("");
   const [displayEndTime, setDisplayEndTime] = useState("");
-  
 
   // UI state
   const [isStartTimePickerVisible, setStartTimePickerVisible] = useState(false);
@@ -54,7 +53,6 @@ const EditBagScreen = ({ navigation, route }) => {
       setQuantityAvailable(String(bag.quantityAvailable || ""));
       setDisplayStartTime(bag.displayStartTime || "");
       setDisplayEndTime(bag.displayEndTime || "");
-      
     }
   }, [bag]);
 
@@ -70,7 +68,6 @@ const EditBagScreen = ({ navigation, route }) => {
       String(bag.quantityAvailable) !== quantityAvailable ||
       bag.displayStartTime !== displayStartTime ||
       bag.displayEndTime !== displayEndTime ||
-      
       image !== null; // A new image has been selected
 
     setIsChanged(hasChanged);
@@ -122,9 +119,9 @@ const EditBagScreen = ({ navigation, route }) => {
         if (!finalImageUrl) {
           Dialog.show({
             type: ALERT_TYPE.DANGER,
-            title: 'Error',
-            textBody: 'Gagal mengunggah gambar. URL tidak ditemukan.',
-            button: 'Tutup',
+            title: "Error",
+            textBody: "Gagal mengunggah gambar. URL tidak ditemukan.",
+            button: "Tutup",
           });
           setLoading(false);
           return;
@@ -142,15 +139,14 @@ const EditBagScreen = ({ navigation, route }) => {
         quantityAvailable: parseInt(quantityAvailable, 10),
         displayStartTime,
         displayEndTime,
-    
       };
 
       const responseUpdate = await updateBag(bag.id, payload);
       Dialog.show({
         type: ALERT_TYPE.SUCCESS,
-        title: 'Sukses',
-        textBody: 'Surprise Bag berhasil diperbarui!',
-        button: 'OK',
+        title: "Sukses",
+        textBody: "Menu berhasil diperbarui!",
+        button: "OK",
         onPressButton: () => {
           Dialog.hide();
           navigation.navigate("MenuList");
@@ -160,10 +156,11 @@ const EditBagScreen = ({ navigation, route }) => {
       console.error("Failed to update menu item:", error);
       Dialog.show({
         type: ALERT_TYPE.DANGER,
-        title: 'Error',
-        textBody: error.response?.data?.message ||
-          'Terjadi kesalahan saat memperbarui Surprise Bag.',
-        button: 'Tutup',
+        title: "Error",
+        textBody:
+          error.response?.data?.message ||
+          "Terjadi kesalahan saat memperbarui Menu.",
+        button: "Tutup",
       });
     } finally {
       setLoading(false);
@@ -172,16 +169,13 @@ const EditBagScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        style={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Edit Surprise Bag</Text>
+          <Text style={styles.headerTitle}>Edit Menu</Text>
         </View>
 
         <View style={styles.formContainer}>
-          <Text style={styles.label}>Nama Bag</Text>
+          <Text style={styles.label}>Nama Menu</Text>
           <TextInput
             style={styles.input}
             placeholder="cth: Paket Roti Spesial"
@@ -244,9 +238,7 @@ const EditBagScreen = ({ navigation, route }) => {
               >
                 <Text
                   style={
-                    displayStartTime
-                      ? styles.timeText
-                      : styles.placeholderText
+                    displayStartTime ? styles.timeText : styles.placeholderText
                   }
                 >
                   {displayStartTime
@@ -266,9 +258,7 @@ const EditBagScreen = ({ navigation, route }) => {
                     displayEndTime ? styles.timeText : styles.placeholderText
                   }
                 >
-                  {displayEndTime
-                    ? displayEndTime.slice(11, 16)
-                    : "Pilih Jam"}
+                  {displayEndTime ? displayEndTime.slice(11, 16) : "Pilih Jam"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -325,8 +315,6 @@ const EditBagScreen = ({ navigation, route }) => {
             keyboardType="numeric"
           />
 
-          
-
           <TouchableOpacity
             style={[
               styles.button,
@@ -354,6 +342,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+    marginBottom: 100,
   },
   header: {
     paddingVertical: 30,
@@ -379,7 +368,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 5,
-    paddingBottom: 100, // Added padding to lift content
+    paddingBottom: 20, // Added padding to lift content
   },
   label: {
     fontSize: 16,

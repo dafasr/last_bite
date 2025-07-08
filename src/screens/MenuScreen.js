@@ -20,8 +20,8 @@ import {
   Easing,
 } from "react-native";
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
-import { useMenu } from "../context/MenuContext";
-import { getMenuItems } from "../api/apiClient";
+import { useMenu } from "../context/MenuContext"; // Pastikan path ini benar
+import { getMenuItems } from "../api/apiClient"; // Pastikan path ini benar
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 // --- THEME CONSTANTS ---
@@ -217,11 +217,8 @@ const MenuScreen = ({ navigation }) => {
     setRefreshing(false);
   }, [fetchMenuItems]);
 
-  // Placeholder untuk fungsi edit
-  // Mengarahkan ke layar EditBag dan mengirimkan data 'bag' yang dipilih
   const handleEdit = (bag) => navigation.navigate("EditBag", { bag });
 
-  // Placeholder untuk fungsi tambah
   const handleAddBag = () => navigation.navigate("AddBag");
 
   const handleDelete = (bagId, bagName) => {
@@ -315,7 +312,6 @@ const MenuScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Animated Header */}
         <AnimatedCard style={styles.header}>
           <Text style={styles.headerTitle}>Daftar Menu</Text>
           <View style={styles.headerUnderline} />
@@ -380,7 +376,6 @@ const MenuScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  // --- Base ---
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -400,8 +395,6 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     fontWeight: "500",
   },
-
-  // --- Enhanced Header ---
   header: {
     paddingTop: 30,
     paddingBottom: 25,
@@ -422,22 +415,35 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderRadius: 2,
   },
-  headerUnderline: {
-    width: 60,
-    height: 4,
-    backgroundColor: COLORS.primary,
-    borderRadius: 2,
-  },
   listContainer: {
     padding: 10,
     flexGrow: 1,
-    paddingBottom: 110, // Increased padding to clear the FAB and tab navigator
+    paddingBottom: 110,
   },
   row: {
     flex: 1,
     justifyContent: "space-between",
   },
-
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 50,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: COLORS.darkGray,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: COLORS.gray,
+    marginTop: 8,
+  },
   bagItem: {
     backgroundColor: COLORS.card,
     borderRadius: 10,
@@ -451,7 +457,7 @@ const styles = StyleSheet.create({
   },
   bagImage: {
     width: "100%",
-    height: 120, // Reduced height
+    height: 120,
     resizeMode: "cover",
     borderTopLeftRadius: SIZES.radius,
     borderTopRightRadius: SIZES.radius,
@@ -470,46 +476,32 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   bagContent: {
-    padding: 12, // Reduced padding
+    padding: 12,
   },
   bagName: {
-    fontSize: 15, // Reduced font size
+    fontSize: 15,
     fontWeight: "600",
     color: "#333",
-    marginBottom: 8, // Added margin bottom for spacing
+    marginBottom: 8,
   },
   orderItemsContainer: {
-    marginBottom: 8, // Reduced margin
+    marginBottom: 8,
     backgroundColor: "#F0F2F5",
-    padding: 8, // Reduced padding
+    padding: 8,
     borderRadius: 6,
   },
   orderItemsTitle: {
-    fontSize: 13, // Reduced font size
+    fontSize: 13,
     fontWeight: "600",
     color: "#2C3E50",
     marginBottom: 6,
   },
   orderItemText: {
-    fontSize: 12, // Reduced font size
+    fontSize: 12,
     color: "#2C3E50",
     fontWeight: "400",
-    flex: 1, // Allow text to wrap
+    flex: 1,
   },
-  orderItemPrice: {
-    fontSize: 13, // Reduced font size
-    color: "#7F8C8D",
-    fontWeight: "600",
-  },
-  orderItemRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 6, // Reduced padding
-    borderBottomWidth: 1,
-    borderBottomColor: "#ECF0F1",
-  },
-
   priceContainer: {
     position: "absolute",
     bottom: 8,
@@ -522,18 +514,18 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   originalPrice: {
-    fontSize: 12, // Reduced font size
+    fontSize: 12,
     color: "#FFFFFF",
     textDecorationLine: "line-through",
   },
   discountedPrice: {
-    fontSize: 16, // Reduced font size
+    fontSize: 16,
     fontWeight: "bold",
     color: "#FFFFFF",
   },
   availabilityContainer: {
-    flexDirection: "column", // Change to column
-    alignItems: "flex-start", // Align items to the start
+    flexDirection: "column",
+    alignItems: "flex-start",
     marginBottom: 6,
     backgroundColor: "#F0F2F5",
     padding: 6,
@@ -543,63 +535,41 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#7F8C8D",
     fontWeight: "500",
-    // marginRight: 4, // No longer needed
   },
   availabilityTime: {
     fontSize: 11,
     fontWeight: "600",
     color: "#333",
     flex: 1,
-    marginTop: 2, // Add a small top margin for spacing
+    marginTop: 2,
   },
   quantityContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 6, // Reduced margin
+    marginBottom: 6,
     backgroundColor: "#F0F2F5",
-    padding: 6, // Reduced padding
+    padding: 6,
     borderRadius: 5,
   },
   quantityLabel: {
-    fontSize: 10, // Reduced font size
+    fontSize: 10,
     color: "#7F8C8D",
     fontWeight: "500",
     marginRight: 4,
   },
   quantityText: {
-    fontSize: 11, // Reduced font size
+    fontSize: 11,
     fontWeight: "600",
     color: "#333",
-    flex: 1, // Allow text to wrap
+    flex: 1,
   },
-  statusInfoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8, // Reduced margin
-    backgroundColor: "#F0F2F5",
-    padding: 6, // Reduced padding
-    borderRadius: 5,
-  },
-  statusInfoLabel: {
-    fontSize: 10, // Reduced font size
-    color: "#7F8C8D",
-    fontWeight: "500",
-    marginRight: 4,
-  },
-  statusInfoText: {
-    fontSize: 11, // Reduced font size
-    fontWeight: "600",
-    color: "#333",
-    flex: 1, // Allow text to wrap
-  },
-
   buttonContainer: {
     flexDirection: "row",
-    marginTop: 6, // Reduced margin
+    marginTop: 6,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 6, // Reduced padding
+    paddingVertical: 6,
     borderRadius: 6,
     alignItems: "center",
     shadowColor: "#000",
@@ -610,7 +580,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: "#FFFFFF",
-    fontSize: 12, // Reduced font size
+    fontSize: 12,
     fontWeight: "bold",
   },
   editButton: {
@@ -618,42 +588,19 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   deleteButton: {
-    backgroundColor: "#E74C3C", // Red
+    backgroundColor: "#E74C3C",
   },
   addButton: {
     backgroundColor: "#2ECC71",
     position: "absolute",
-    bottom: 120, // Adjust position to be clearly in the corner
+    bottom: 120,
     right: 25,
-    width: 56, // Smaller width
-    height: 56, // Smaller height
-    borderRadius: 28, // half of width/height to make it a circle
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 8,
-  },
-  addButtonText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
-    letterSpacing: 0.5, // Add some letter spacing
-  },
-  statusContainer: {
-    position: "absolute",
-    top: 8,
-    left: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 5,
-  },
-  statusText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "bold",
+    ...SHADOWS.dark,
   },
 });
 

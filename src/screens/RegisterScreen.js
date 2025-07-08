@@ -8,17 +8,17 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
-  Animated, // Import Animated
+  Animated,
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+
 import MapView, { Marker } from "react-native-maps";
 import { useAuth } from "../hooks";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Location from "expo-location";
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
-import * as ImagePicker from "expo-image-picker";
 
 const RegisterScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -30,6 +30,7 @@ const RegisterScreen = ({ navigation }) => {
   const [storeName, setStoreName] = useState("");
   const [storeDescription, setStoreDescription] = useState("");
   const [address, setAddress] = useState("");
+  const [storeImageUrl, setStoreImageUrl] = useState("");
   const [latitude, setLatitude] = useState(-6.2);
   const [longitude, setLongitude] = useState(106.816666);
   const [errors, setErrors] = useState({});
@@ -43,8 +44,6 @@ const RegisterScreen = ({ navigation }) => {
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
-  const [image, setImage] = useState(null);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const { isLoading, registerUser } = useAuth();
 
@@ -66,46 +65,6 @@ const RegisterScreen = ({ navigation }) => {
       }),
     ]).start();
   }, [fadeAnim, slideAnim]);
-
-  // Cloudinary configuration (REPLACE WITH YOUR ACTUAL VALUES)
-  const CLOUD_NAME = "YOUR_CLOUD_NAME";
-  const UPLOAD_PRESET = "YOUR_UPLOAD_PRESET";
-
-  const uploadImageToCloudinary = async (imageUri) => {
-    const formData = new FormData();
-    formData.append("file", {
-      uri: imageUri,
-      type: "image/jpeg", // Adjust type if needed
-      name: "upload.jpg",
-    });
-    formData.append("upload_preset", UPLOAD_PRESET);
-
-    try {
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      const data = await response.json();
-      if (data.secure_url) {
-        return data.secure_url;
-      } else {
-        throw new Error(
-          "Cloudinary upload failed: " +
-            (data.error ? data.error.message : "Unknown error")
-        );
-      }
-    } catch (error) {
-      console.error("Cloudinary upload error:", error);
-      throw error;
-    }
-  };
 
   useEffect(() => {
     setMapRegion({
@@ -163,27 +122,14 @@ const RegisterScreen = ({ navigation }) => {
     }
   };
 
-  const handleChoosePhoto = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0]);
-    }
-  };
-
   const validate = () => {
     const newErrors = {};
     if (!username) {
-      newErrors.username = "Nama pengguna wajib diisi.";
+      newErrors.username = "Username wajib diisi.";
     } else if (username.length < 3) {
-      newErrors.username = "Nama pengguna minimal 3 karakter.";
+      newErrors.username = "Username minimal 3 karakter.";
     } else if (!/^[a-zA-Z0-9]+$/.test(username)) {
-      newErrors.username = "Nama pengguna hanya boleh berisi huruf dan angka.";
+      newErrors.username = "Username hanya boleh berisi huruf dan angka.";
     }
     if (!email) newErrors.email = "Email wajib diisi.";
     else if (!/\S+@\S+\.\S+/.test(email))
@@ -221,24 +167,6 @@ const RegisterScreen = ({ navigation }) => {
   const handleRegister = async () => {
     if (!validate()) return;
 
-    setIsUploadingImage(true);
-    let finalStoreImageUrl = "";
-    if (image) {
-      try {
-        finalStoreImageUrl = await uploadImageToCloudinary(image.uri);
-      } catch (error) {
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "Error",
-          textBody: "Gagal mengunggah gambar toko.",
-          button: "Tutup",
-        });
-        setIsUploadingImage(false);
-        return;
-      }
-    }
-    setIsUploadingImage(false);
-
     const result = await registerUser({
       username,
       email,
@@ -251,7 +179,7 @@ const RegisterScreen = ({ navigation }) => {
       longitude,
       address,
       status: "INACTIVE",
-      storeImageUrl: finalStoreImageUrl,
+      storeImageUrl,
     });
 
     if (!result.success) {
@@ -308,7 +236,7 @@ const RegisterScreen = ({ navigation }) => {
           >
             <TextInput
               style={styles.input}
-              placeholder="Nama Pengguna"
+              placeholder="Username"
               placeholderTextColor="#888"
               value={username}
               onChangeText={(text) => {
@@ -445,31 +373,15 @@ const RegisterScreen = ({ navigation }) => {
               <Text style={styles.errorText}>{errors.storeDescription}</Text>
             )}
 
-            <Text style={styles.photoLabel}>Foto Toko</Text>
-            <TouchableOpacity
-              style={styles.outlineButton}
-              onPress={handleChoosePhoto}
-              disabled={isUploadingImage}
-            >
-              {isUploadingImage ? (
-                <ActivityIndicator color="#007BFF" />
-              ) : (
-                <Text style={styles.outlineButtonText}>Pilih Foto Toko</Text>
-              )}
-            </TouchableOpacity>
-            {image && (
-              <View style={styles.imagePreviewContainer}>
-                <Image
-                  source={{ uri: image.uri }}
-                  style={styles.imagePreview}
-                />
-              </View>
-            )}
+            <Text style={styles.photoLabel}>URL Foto Toko</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="URL Foto Toko"
+              placeholderTextColor="#888"
+              value={storeImageUrl}
+              onChangeText={(text) => setStoreImageUrl(text)}
+            />
 
-            <Text style={styles.mapLabel}>
-              Pilih Lokasi di Peta (Latitude: {latitude.toFixed(4)}, Longitude:{" "}
-              {longitude.toFixed(4)})
-            </Text>
             <TouchableOpacity
               style={styles.locationButton}
               onPress={getCurrentLocation}
@@ -483,6 +395,10 @@ const RegisterScreen = ({ navigation }) => {
                 </Text>
               )}
             </TouchableOpacity>
+            <Text style={styles.mapLabel}>
+              Pilih Lokasi di Peta (Latitude: {latitude.toFixed(4)}, Longitude:{" "}
+              {longitude.toFixed(4)})
+            </Text>
             <MapView
               style={styles.map}
               region={mapRegion}
@@ -550,12 +466,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25, // Padding horizontal lebih besar
   },
   title: {
+    textAlign: "center",
     fontSize: 28, // Ukuran font lebih besar
     fontWeight: "bold",
     color: "#333",
     marginBottom: 10,
   },
   subtitle: {
+    textAlign: "center",
     fontSize: 16,
     color: "#7F8C8D",
     marginBottom: 20, // Margin bawah disesuaikan

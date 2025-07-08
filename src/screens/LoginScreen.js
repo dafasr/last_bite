@@ -133,7 +133,7 @@ export default function LoginScreen({ navigation }) {
               />
               <TextInput
                 style={styles.inputField}
-                placeholder="Password"
+                placeholder="Kata sandi"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -164,7 +164,7 @@ export default function LoginScreen({ navigation }) {
               disabled={isLoading}
             >
               <Text style={styles.loginButtonText}>
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? "Sedang masuk..." : "Masuk"}
               </Text>
             </TouchableOpacity>
           </Animated.View>
@@ -265,11 +265,11 @@ const styles = StyleSheet.create({
   loginButton: {
     width: "100%",
     height: 55, // Tinggi tombol lebih besar
-    backgroundColor: "#007BFF", // Warna biru modern
+    backgroundColor: "#28a745", // Warna hijau
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#007BFF", // Shadow untuk tombol
+    shadowColor: "#28a745", // Shadow untuk tombol
     shadowOffset: {
       width: 0,
       height: 4,
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     fontSize: 15, // Ukuran font sedikit lebih besar
-    color: "#007BFF", // Warna biru modern
+    color: "#28a745", // Warna hijau
     fontWeight: "bold",
   },
 });
