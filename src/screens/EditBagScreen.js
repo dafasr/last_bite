@@ -13,7 +13,7 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
-import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
+import { Alert } from "react-native";
 import { useMenu } from "../context/MenuContext";
 import { useAuthContext } from "../context/AuthContext";
 import apiClient, { uploadImage } from "../api/apiClient";
@@ -122,12 +122,11 @@ const EditBagScreen = ({ navigation, route }) => {
         finalImageUrl = imageResponse.data.url;
 
         if (!finalImageUrl) {
-          Dialog.show({
-            type: ALERT_TYPE.DANGER,
-            title: "Error",
-            textBody: "Gagal mengunggah gambar. URL tidak ditemukan.",
-            button: "Tutup",
-          });
+          Alert.alert(
+            "Error",
+            "Gagal mengunggah gambar. URL tidak ditemukan.",
+            [{ text: "Tutup" }]
+          );
           setLoading(false);
           return;
         }
@@ -150,26 +149,26 @@ const EditBagScreen = ({ navigation, route }) => {
       };
 
       const responseUpdate = await updateBag(bag.id, payload);
-      Dialog.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: "Sukses",
-        textBody: "Menu berhasil diperbarui!",
-        button: "OK",
-        onPressButton: () => {
-          Dialog.hide();
-          navigation.navigate("MenuList");
-        },
-      });
+      Alert.alert(
+        "Sukses",
+        "Menu berhasil diperbarui!",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              navigation.navigate("MenuList");
+            },
+          },
+        ]
+      );
     } catch (error) {
       console.error("Failed to update menu item:", error);
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody:
-          error.response?.data?.message ||
+      Alert.alert(
+        "Error",
+        error.response?.data?.message ||
           "Terjadi kesalahan saat memperbarui Menu.",
-        button: "Tutup",
-      });
+        [{ text: "Tutup" }]
+      );
     } finally {
       setLoading(false);
     }

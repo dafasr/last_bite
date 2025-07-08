@@ -11,6 +11,7 @@ import {
   Dimensions,
   Animated,
   Easing,
+  ScrollView, // Added ScrollView
 } from "react-native";
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import apiClient from "../api/apiClient";
@@ -451,95 +452,99 @@ const MerchantHomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Animated.View
-        style={[
-          styles.container,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
-        {/* Animated Header */}
-        <AnimatedCard style={styles.header}>
-          <Text style={styles.headerTitle}>Dasbor Partner</Text>
-          <View style={styles.headerUnderline} />
-        </AnimatedCard>
+        <Animated.View
+          style={[
+            styles.container,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          {/* Animated Header */}
+          <AnimatedCard style={styles.header}>
+            <Text style={styles.headerTitle}>Dasbor Partner</Text>
+            <View style={styles.headerUnderline} />
+          </AnimatedCard>
 
-        {/* Animated Summary Cards */}
-        <View style={styles.summaryRow}>
-          <AnimatedCard
-            delay={200}
-            style={[styles.summaryCardBase, styles.balanceCard]}
-          >
-            <PulseAnimation>
-              <Text style={styles.cardIcon}>💰</Text>
-            </PulseAnimation>
-            <Text style={styles.cardLabel}>Saldo Anda</Text>
-            <CountUpAnimation
-              value={balance}
-              style={styles.balanceAmount}
-              duration={1500}
-            />
-            <AnimatedButton
-              style={styles.withdrawButton}
-              onPress={handleWithdraw}
+          {/* Animated Summary Cards */}
+          <View style={styles.summaryRow}>
+            <AnimatedCard
+              delay={200}
+              style={[styles.summaryCardBase, styles.balanceCard]}
             >
-              <Text style={styles.withdrawButtonText}>💸 Tarik Saldo</Text>
-            </AnimatedButton>
-          </AnimatedCard>
-
-          <AnimatedCard
-            delay={400}
-            style={[styles.summaryCardBase, styles.soldCard]}
-          >
-            <PulseAnimation>
-              <Text style={styles.cardIcon}>📊</Text>
-            </PulseAnimation>
-            <Text style={styles.cardLabel}>Menu Terjual</Text>
-            <CountUpAnimation
-              value={soldBagsCount}
-              style={styles.soldAmount}
-              duration={1200}
-            />
-            <Text style={styles.soldSubtext}>Total penjualan</Text>
-          </AnimatedCard>
-        </View>
-
-        {/* Animated Section Header */}
-        <AnimatedCard delay={600} style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>📋 Pesanan Masuk</Text>
-          <Text style={styles.sectionSubtitle}>
-            {incomingOrders.length} pesanan menunggu konfirmasi
-          </Text>
-          <View style={styles.sectionIndicator} />
-        </AnimatedCard>
-
-        {/* Animated Order List */}
-        <FlatList
-          data={incomingOrders}
-          renderItem={renderOrderItem}
-          keyExtractor={(item, index) =>
-            item.id ? item.id.toString() : index.toString()
-          }
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <AnimatedCard delay={800} style={styles.emptyContainer}>
               <PulseAnimation>
-                <Text style={styles.emptyIcon}>📭</Text>
+                <Text style={styles.cardIcon}>💰</Text>
               </PulseAnimation>
-              <Text style={styles.emptyText}>Tidak ada pesanan baru</Text>
-              <Text style={styles.emptySubtext}>
-                Pesanan akan muncul di sini
-              </Text>
+              <Text style={styles.cardLabel}>Saldo Anda</Text>
+              <CountUpAnimation
+                value={balance}
+                style={styles.balanceAmount}
+                duration={1500}
+              />
+              <AnimatedButton
+                style={styles.withdrawButton}
+                onPress={handleWithdraw}
+              >
+                <Text style={styles.withdrawButtonText}>💸 Tarik Saldo</Text>
+              </AnimatedButton>
             </AnimatedCard>
-          }
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        />
-      </Animated.View>
+
+            <AnimatedCard
+              delay={400}
+              style={[styles.summaryCardBase, styles.soldCard]}
+            >
+              <PulseAnimation>
+                <Text style={styles.cardIcon}>📊</Text>
+              </PulseAnimation>
+              <Text style={styles.cardLabel}>Menu Terjual</Text>
+              <CountUpAnimation
+                value={soldBagsCount}
+                style={styles.soldAmount}
+                duration={1200}
+              />
+              <Text style={styles.soldSubtext}>Total penjualan</Text>
+            </AnimatedCard>
+          </View>
+
+          {/* Animated Section Header */}
+          <AnimatedCard delay={600} style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>📋 Pesanan Masuk</Text>
+            <Text style={styles.sectionSubtitle}>
+              {incomingOrders.length} pesanan menunggu konfirmasi
+            </Text>
+            <View style={styles.sectionIndicator} />
+          </AnimatedCard>
+
+          {/* Animated Order List */}
+          <FlatList
+            data={incomingOrders}
+            renderItem={renderOrderItem}
+            keyExtractor={(item, index) =>
+              item.id ? item.id.toString() : index.toString()
+            }
+            contentContainerStyle={styles.listContainer}
+            scrollEnabled={false} // Disable FlatList scrolling
+            ListEmptyComponent={
+              <AnimatedCard delay={800} style={styles.emptyContainer}>
+                <PulseAnimation>
+                  <Text style={styles.emptyIcon}>📭</Text>
+                </PulseAnimation>
+                <Text style={styles.emptyText}>Tidak ada pesanan baru</Text>
+                <Text style={styles.emptySubtext}>
+                  Pesanan akan muncul di sini
+                </Text>
+              </AnimatedCard>
+            }
+          />
+        </Animated.View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -550,6 +555,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
   },
   container: {
     flex: 1,

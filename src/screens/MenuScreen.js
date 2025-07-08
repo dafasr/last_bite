@@ -162,6 +162,47 @@ const AnimatedCard = ({ children, delay = 0, style }) => {
   );
 };
 
+const AnimatedMenuItem = ({ children, style }) => {
+  const scaleValue = useRef(new Animated.Value(0)).current;
+  const slideValue = useRef(new Animated.Value(50)).current;
+  const opacityValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleValue, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 7,
+      }),
+      Animated.timing(slideValue, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityValue, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        style,
+        {
+          transform: [{ scale: scaleValue }, { translateY: slideValue }],
+          opacity: opacityValue,
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+};
+
 const MenuScreen = ({ navigation }) => {
   const { surpriseBags, setSurpriseBags, toggleAvailability, deleteBag } =
     useMenu();
@@ -241,7 +282,7 @@ const MenuScreen = ({ navigation }) => {
   };
 
   const renderItem = ({ item }) => (
-    <AnimatedCard style={styles.bagItem}>
+    <AnimatedMenuItem style={styles.bagItem}>
       <View>
         <Image
           style={styles.bagImage}
@@ -310,7 +351,7 @@ const MenuScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
-    </AnimatedCard>
+    </AnimatedMenuItem>
   );
 
   return (
@@ -519,13 +560,13 @@ const styles = StyleSheet.create({
   },
   originalPrice: {
     fontSize: 12,
-    color: "#FFFFFF",
+    color: "#E74C3C", // Red color for original price
     textDecorationLine: "line-through",
   },
   discountedPrice: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "#2ECC71", // Green color for discounted price
   },
   availabilityContainer: {
     flexDirection: "column",

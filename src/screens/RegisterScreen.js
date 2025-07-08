@@ -20,7 +20,7 @@ import { useAuth } from "../hooks";
 import { uploadImage } from "../api/apiClient";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Location from "expo-location";
-import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
+import { Alert } from "react-native";
 
 const RegisterScreen = ({ navigation }) => {
   const scrollViewRef = useRef(null);
@@ -96,12 +96,11 @@ const RegisterScreen = ({ navigation }) => {
     if (status === "granted") {
       return true;
     } else {
-      Dialog.show({
-        type: ALERT_TYPE.WARNING,
-        title: "Izin Ditolak",
-        textBody: "Izin lokasi ditolak.",
-        button: "Tutup",
-      });
+      Alert.alert(
+        "Izin Ditolak",
+        "Izin lokasi ditolak.",
+        [{ text: "Tutup" }]
+      );
       return false;
     }
   };
@@ -127,12 +126,11 @@ const RegisterScreen = ({ navigation }) => {
         longitudeDelta: 0.005, // <-- Nilai kecil untuk zoom tinggi
       });
     } catch (error) {
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "Gagal mendapatkan lokasi saat ini. " + error.message,
-        button: "Tutup",
-      });
+      Alert.alert(
+        "Error",
+        "Gagal mendapatkan lokasi saat ini. " + error.message,
+        [{ text: "Tutup" }]
+      );
     } finally {
       setIsLocating(false);
     }
@@ -245,12 +243,11 @@ const RegisterScreen = ({ navigation }) => {
         imageUrl = imageResponse.data.url;
       } catch (error) {
         console.error("Error uploading image:", error); // Add this line for debugging
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "Error",
-          textBody: "Gagal mengunggah gambar toko. Detail: " + error.message, // Display error message
-          button: "Tutup",
-        });
+        Alert.alert(
+          "Error",
+          "Gagal mengunggah gambar toko. Detail: " + error.message,
+          [{ text: "Tutup" }]
+        );
         return;
       }
     }
@@ -271,23 +268,24 @@ const RegisterScreen = ({ navigation }) => {
     });
 
     if (!result.success) {
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: result.message,
-        button: "Tutup",
-      });
+      Alert.alert(
+        "Error",
+        result.message,
+        [{ text: "Tutup" }]
+      );
     } else {
-      Dialog.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: "Sukses",
-        textBody: "Registrasi berhasil! Silakan login.",
-        button: "OK",
-        onPressButton: () => {
-          Dialog.hide();
-          navigation.navigate("Login");
-        },
-      });
+      Alert.alert(
+        "Sukses",
+        "Registrasi berhasil! Silakan login.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              navigation.navigate("Login");
+            },
+          },
+        ]
+      );
     }
   };
 
