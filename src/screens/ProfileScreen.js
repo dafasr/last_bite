@@ -14,14 +14,12 @@ import {
   Easing,
   BackHandler,
 } from "react-native";
-import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import { useAuthContext } from "../context/AuthContext";
-import { getSellerProfile } from "../api/apiClient";
+import apiClient from "../api/apiClient";
 import { useFocusEffect } from "@react-navigation/native";
 
 const ProfileScreen = ({ navigation }) => {
   const {
-    sellerProfileId,
     isLoading: isAuthLoading,
     logout,
   } = useAuthContext();
@@ -50,21 +48,10 @@ const ProfileScreen = ({ navigation }) => {
   ).current;
 
   const fetchSellerProfile = useCallback(async () => {
-    if (!sellerProfileId) {
-      setIsLoading(false);
-      setError("Seller ID not found.");
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "ID Penjual tidak ditemukan.",
-        button: "Tutup",
-      });
-      return;
-    }
     setIsLoading(true);
     setError(null);
     try {
-      const response = await getSellerProfile(sellerProfileId);
+      const response = await apiClient.get("/sellers/me");
       const data = response.data.data;
       setMerchantProfile({
         storeName: data.storeName,
@@ -75,16 +62,15 @@ const ProfileScreen = ({ navigation }) => {
     } catch (err) {
       console.error("Failed to fetch seller profile:", err);
       setError("Failed to load profile. Please try again.");
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "Gagal memuat profil. Silakan coba lagi.",
-        button: "Tutup",
-      });
+      Alert.alert(
+        "Error",
+        "Gagal memuat profil. Silakan coba lagi.",
+        [{ text: "Tutup" }]
+      );
     } finally {
       setIsLoading(false);
     }
-  }, [sellerProfileId]);
+  }, []);
 
   // Start animations when component mounts
   const startAnimations = useCallback(() => {
@@ -215,9 +201,7 @@ const ProfileScreen = ({ navigation }) => {
         onBackPress
       );
       return () => backHandler.remove();
-    }, [isAuthLoading, fetchSellerProfile])
-  );
-  ("");
+    }, [isAuthLoading]));
 
   useEffect(() => {
     if (merchantProfile && !isLoading) {
@@ -252,36 +236,39 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleHelpAndFeedback = () => {
-    Dialog.show({
-      type: ALERT_TYPE.INFO,
-      title: "Bantuan & Masukan",
-      textBody: "Fitur untuk bantuan dan masukan sedang dalam pengembangan.",
-      button: "Tutup",
-    });
+    Alert.alert(
+      "Bantuan & Masukan",
+      "Fitur untuk bantuan dan masukan sedang dalam pengembangan.",
+      [{ text: "Tutup" }]
+    );
   };
 
   const handleOfficialWebsite = () => {
-    Dialog.show({
-      type: ALERT_TYPE.INFO,
-      title: "Tentang Kami",
-      textBody: "Tautan ke situs web resmi kami akan segera tersedia.",
-      button: "Tutup",
-    });
+    Alert.alert(
+      "Tentang Kami",
+      "Tautan ke situs web resmi kami akan segera tersedia.",
+      [{ text: "Tutup" }]
+    );
   };
 
-  const handleLogout = async () => {
-    Dialog.show({
-      type: ALERT_TYPE.WARNING,
-      title: "Logout",
-      textBody: "Apakah Anda yakin ingin keluar?",
-      button: "Keluar",
-      onPressButton: async () => {
-        Dialog.hide();
-        await logout();
-      },
-      showCancelButton: true,
-      cancelButton: "Batal",
-    });
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Apakah Anda yakin ingin keluar?",
+      [
+        {
+          text: "Batal",
+          style: "cancel",
+        },
+        {
+          text: "Keluar",
+          onPress: async () => {
+            await logout();
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   // Animated menu item press handler

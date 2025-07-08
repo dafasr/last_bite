@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useImagePicker, useTimePicker } from "../hooks";
 import {
   View,
   Text,
@@ -18,7 +19,6 @@ import { useAuthContext } from "../context/AuthContext";
 import apiClient, { uploadImage } from "../api/apiClient";
 import { Picker } from "@react-native-picker/picker";
 import { TimerPickerModal } from "react-native-timer-picker";
-import * as ImagePicker from "expo-image-picker";
 
 const EditBagScreen = ({ navigation, route }) => {
   const { bag } = route.params;
@@ -28,17 +28,32 @@ const EditBagScreen = ({ navigation, route }) => {
   // Form state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [image, setImage] = useState(null); // For new image asset
+  const { image, pickImage, setImage } = useImagePicker();
   const [imageUrl, setImageUrl] = useState(""); // For existing image URL
   const [originalPrice, setOriginalPrice] = useState("");
   const [discountedPrice, setDiscountedPrice] = useState("");
   const [quantityAvailable, setQuantityAvailable] = useState("");
-  const [displayStartTime, setDisplayStartTime] = useState("");
-  const [displayEndTime, setDisplayEndTime] = useState("");
 
-  // UI state
-  const [isStartTimePickerVisible, setStartTimePickerVisible] = useState(false);
-  const [isEndTimePickerVisible, setEndTimePickerVisible] = useState(false);
+  const {
+    displayTime: displayStartTime,
+    setPickerVisible: setStartTimePickerVisible,
+    isPickerVisible: isStartTimePickerVisible,
+    handleConfirm: handleConfirmStartTime,
+    initialHours: initialStartHours,
+    initialMinutes: initialStartMinutes,
+    initialSeconds: initialStartSeconds,
+    setDisplayTime: setDisplayStartTime,
+  } = useTimePicker();
+  const {
+    displayTime: displayEndTime,
+    setPickerVisible: setEndTimePickerVisible,
+    isPickerVisible: isEndTimePickerVisible,
+    handleConfirm: handleConfirmEndTime,
+    initialHours: initialEndHours,
+    initialMinutes: initialEndMinutes,
+    initialSeconds: initialEndSeconds,
+    setDisplayTime: setDisplayEndTime,
+  } = useTimePicker();
   const [loading, setLoading] = useState(false);
   const [isChanged, setIsChanged] = useState(false);
 
@@ -54,7 +69,7 @@ const EditBagScreen = ({ navigation, route }) => {
       setDisplayStartTime(bag.displayStartTime || "");
       setDisplayEndTime(bag.displayEndTime || "");
     }
-  }, [bag]);
+  }, [bag, setDisplayStartTime, setDisplayEndTime]);
 
   // Check for changes to enable/disable the save button
   useEffect(() => {
@@ -68,7 +83,8 @@ const EditBagScreen = ({ navigation, route }) => {
       String(bag.quantityAvailable) !== quantityAvailable ||
       bag.displayStartTime !== displayStartTime ||
       bag.displayEndTime !== displayEndTime ||
-      image !== null; // A new image has been selected
+      image !== null || // A new image has been selected
+      (image === null && bag.imageUrl !== imageUrl); // Image was removed
 
     setIsChanged(hasChanged);
   }, [
@@ -84,18 +100,7 @@ const EditBagScreen = ({ navigation, route }) => {
     bag,
   ]);
 
-  const handleChoosePhoto = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0]);
-    }
-  };
+  
 
   const handleSave = async () => {
     if (loading) return;
@@ -126,6 +131,9 @@ const EditBagScreen = ({ navigation, route }) => {
           setLoading(false);
           return;
         }
+      } else if (bag.imageUrl && !imageUrl) {
+        // If image was removed (imageUrl is empty but bag.imageUrl existed)
+        finalImageUrl = "";
       }
 
       // Step 2: Prepare payload and update the menu item
@@ -195,7 +203,7 @@ const EditBagScreen = ({ navigation, route }) => {
           <Text style={styles.label}>Foto</Text>
           <TouchableOpacity
             style={styles.outlineButton}
-            onPress={handleChoosePhoto}
+            onPress={pickImage}
           >
             <Text style={styles.outlineButtonText}>Pilih Foto Baru</Text>
           </TouchableOpacity>
@@ -267,43 +275,25 @@ const EditBagScreen = ({ navigation, route }) => {
           <TimerPickerModal
             visible={isStartTimePickerVisible}
             setIsVisible={setStartTimePickerVisible}
-            onConfirm={(pickedDuration) => {
-              const now = new Date();
-              const year = now.getFullYear();
-              const month = String(now.getMonth() + 1).padStart(2, "0");
-              const day = String(now.getDate()).padStart(2, "0");
-              const hours = String(pickedDuration.hours).padStart(2, "0");
-              const minutes = String(pickedDuration.minutes).padStart(2, "0");
-              const seconds = String(pickedDuration.seconds).padStart(2, "0");
-              setDisplayStartTime(
-                `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
-              );
-              setStartTimePickerVisible(false);
-            }}
+            onConfirm={handleConfirmStartTime}
             modalTitle="Pilih Jam Mulai"
             onCancel={() => setStartTimePickerVisible(false)}
             closeOnOverlayPress
+            initialHours={initialStartHours}
+            initialMinutes={initialStartMinutes}
+            initialSeconds={initialStartSeconds}
           />
 
           <TimerPickerModal
             visible={isEndTimePickerVisible}
             setIsVisible={setEndTimePickerVisible}
-            onConfirm={(pickedDuration) => {
-              const now = new Date();
-              const year = now.getFullYear();
-              const month = String(now.getMonth() + 1).padStart(2, "0");
-              const day = String(now.getDate()).padStart(2, "0");
-              const hours = String(pickedDuration.hours).padStart(2, "0");
-              const minutes = String(pickedDuration.minutes).padStart(2, "0");
-              const seconds = String(pickedDuration.seconds).padStart(2, "0");
-              setDisplayEndTime(
-                `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
-              );
-              setEndTimePickerVisible(false);
-            }}
+            onConfirm={handleConfirmEndTime}
             modalTitle="Pilih Jam Selesai"
             onCancel={() => setEndTimePickerVisible(false)}
             closeOnOverlayPress
+            initialHours={initialEndHours}
+            initialMinutes={initialEndMinutes}
+            initialSeconds={initialEndSeconds}
           />
 
           <Text style={styles.label}>Kuantitas</Text>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useImagePicker } from "../hooks";
 import {
   View,
   Text,
@@ -16,11 +17,22 @@ import {
 
 import MapView, { Marker } from "react-native-maps";
 import { useAuth } from "../hooks";
+import { uploadImage } from "../api/apiClient";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Location from "expo-location";
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 
 const RegisterScreen = ({ navigation }) => {
+  const scrollViewRef = useRef(null);
+  const usernameRef = useRef(null);
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
+  const confirmPasswordRef = useRef(null);
+  const fullNameRef = useRef(null);
+  const phoneNumberRef = useRef(null);
+  const storeNameRef = useRef(null);
+  const storeDescriptionRef = useRef(null);
+  const addressRef = useRef(null);
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -30,7 +42,11 @@ const RegisterScreen = ({ navigation }) => {
   const [storeName, setStoreName] = useState("");
   const [storeDescription, setStoreDescription] = useState("");
   const [address, setAddress] = useState("");
-  const [storeImageUrl, setStoreImageUrl] = useState("");
+  const {
+    image: storeImage,
+    pickImage: pickStoreImage,
+    setImage: setStoreImage,
+  } = useImagePicker();
   const [latitude, setLatitude] = useState(-6.2);
   const [longitude, setLongitude] = useState(106.816666);
   const [errors, setErrors] = useState({});
@@ -107,8 +123,8 @@ const RegisterScreen = ({ navigation }) => {
       setMapRegion({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
+        latitudeDelta: 0.01, // <-- Nilai kecil untuk zoom tinggi
+        longitudeDelta: 0.005, // <-- Nilai kecil untuk zoom tinggi
       });
     } catch (error) {
       Dialog.show({
@@ -161,11 +177,83 @@ const RegisterScreen = ({ navigation }) => {
     if (!address) newErrors.address = "Alamat wajib diisi.";
 
     setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      const firstErrorField = Object.keys(newErrors)[0];
+      let refToFocus = null;
+
+      switch (firstErrorField) {
+        case "username":
+          refToFocus = usernameRef;
+          break;
+        case "email":
+          refToFocus = emailRef;
+          break;
+        case "password":
+          refToFocus = passwordRef;
+          break;
+        case "confirmPassword":
+          refToFocus = confirmPasswordRef;
+          break;
+        case "fullName":
+          refToFocus = fullNameRef;
+          break;
+        case "phoneNumber":
+          refToFocus = phoneNumberRef;
+          break;
+        case "storeName":
+          refToFocus = storeNameRef;
+          break;
+        case "storeDescription":
+          refToFocus = storeDescriptionRef;
+          break;
+        case "address":
+          refToFocus = addressRef;
+          break;
+        default:
+          break;
+      }
+
+      if (refToFocus && refToFocus.current) {
+        setTimeout(() => {
+          refToFocus.current.measureLayout(
+            scrollViewRef.current.getInnerViewNode(),
+            (x, y, width, height) => {
+              scrollViewRef.current.scrollTo({ y: y, animated: true });
+            }
+          );
+        }, 100); // Small delay to ensure layout is updated
+      }
+    }
+
     return Object.keys(newErrors).length === 0;
   };
 
   const handleRegister = async () => {
     if (!validate()) return;
+
+    let imageUrl = "";
+    if (storeImage) {
+      try {
+        const imageFormData = new FormData();
+        imageFormData.append("file", {
+          uri: storeImage.uri,
+          type: storeImage.mimeType,
+          name: storeImage.fileName,
+        });
+        const imageResponse = await uploadImage(imageFormData);
+        imageUrl = imageResponse.data.url;
+      } catch (error) {
+        console.error("Error uploading image:", error); // Add this line for debugging
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Error",
+          textBody: "Gagal mengunggah gambar toko. Detail: " + error.message, // Display error message
+          button: "Tutup",
+        });
+        return;
+      }
+    }
 
     const result = await registerUser({
       username,
@@ -179,7 +267,7 @@ const RegisterScreen = ({ navigation }) => {
       longitude,
       address,
       status: "INACTIVE",
-      storeImageUrl,
+      storeImageUrl: imageUrl,
     });
 
     if (!result.success) {
@@ -216,7 +304,10 @@ const RegisterScreen = ({ navigation }) => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingContainer}
       >
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          ref={scrollViewRef}
+        >
           <Animated.View
             style={[
               { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
@@ -243,6 +334,7 @@ const RegisterScreen = ({ navigation }) => {
                 setUsername(text);
                 if (errors.username) setErrors({ ...errors, username: null });
               }}
+              ref={usernameRef}
             />
             {errors.username && (
               <Text style={styles.errorText}>{errors.username}</Text>
@@ -258,6 +350,7 @@ const RegisterScreen = ({ navigation }) => {
               }}
               keyboardType="email-address"
               autoCapitalize="none"
+              ref={emailRef}
             />
             {errors.email && (
               <Text style={styles.errorText}>{errors.email}</Text>
@@ -273,6 +366,7 @@ const RegisterScreen = ({ navigation }) => {
                   if (errors.password) setErrors({ ...errors, password: null });
                 }}
                 secureTextEntry={!isPasswordVisible}
+                ref={passwordRef}
               />
               <TouchableOpacity
                 onPress={() => setIsPasswordVisible(!isPasswordVisible)}
@@ -300,6 +394,7 @@ const RegisterScreen = ({ navigation }) => {
                     setErrors({ ...errors, confirmPassword: null });
                 }}
                 secureTextEntry={!isConfirmPasswordVisible}
+                ref={confirmPasswordRef}
               />
               <TouchableOpacity
                 onPress={() =>
@@ -326,6 +421,7 @@ const RegisterScreen = ({ navigation }) => {
                 setFullName(text);
                 if (errors.fullName) setErrors({ ...errors, fullName: null });
               }}
+              ref={fullNameRef}
             />
             {errors.fullName && (
               <Text style={styles.errorText}>{errors.fullName}</Text>
@@ -341,6 +437,7 @@ const RegisterScreen = ({ navigation }) => {
                   setErrors({ ...errors, phoneNumber: null });
               }}
               keyboardType="phone-pad"
+              ref={phoneNumberRef}
             />
             {errors.phoneNumber && (
               <Text style={styles.errorText}>{errors.phoneNumber}</Text>
@@ -354,6 +451,7 @@ const RegisterScreen = ({ navigation }) => {
                 setStoreName(text);
                 if (errors.storeName) setErrors({ ...errors, storeName: null });
               }}
+              ref={storeNameRef}
             />
             {errors.storeName && (
               <Text style={styles.errorText}>{errors.storeName}</Text>
@@ -368,19 +466,27 @@ const RegisterScreen = ({ navigation }) => {
                 if (errors.storeDescription)
                   setErrors({ ...errors, storeDescription: null });
               }}
+              ref={storeDescriptionRef}
             />
             {errors.storeDescription && (
               <Text style={styles.errorText}>{errors.storeDescription}</Text>
             )}
 
-            <Text style={styles.photoLabel}>URL Foto Toko</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="URL Foto Toko"
-              placeholderTextColor="#888"
-              value={storeImageUrl}
-              onChangeText={(text) => setStoreImageUrl(text)}
-            />
+            <Text style={styles.photoLabel}>Foto Toko</Text>
+            <TouchableOpacity
+              style={styles.outlineButton}
+              onPress={pickStoreImage}
+            >
+              <Text style={styles.outlineButtonText}>Pilih Foto Toko</Text>
+            </TouchableOpacity>
+            {storeImage && (
+              <View style={styles.imagePreviewContainer}>
+                <Image
+                  source={{ uri: storeImage.uri }}
+                  style={styles.imagePreview}
+                />
+              </View>
+            )}
 
             <TouchableOpacity
               style={styles.locationButton}
@@ -395,10 +501,10 @@ const RegisterScreen = ({ navigation }) => {
                 </Text>
               )}
             </TouchableOpacity>
-            <Text style={styles.mapLabel}>
+            {/* <Text style={styles.mapLabel}>
               Pilih Lokasi di Peta (Latitude: {latitude.toFixed(4)}, Longitude:{" "}
               {longitude.toFixed(4)})
-            </Text>
+            </Text> */}
             <MapView
               style={styles.map}
               region={mapRegion}
@@ -417,6 +523,7 @@ const RegisterScreen = ({ navigation }) => {
                 setAddress(text);
                 if (errors.address) setErrors({ ...errors, address: null });
               }}
+              ref={addressRef}
             />
             {errors.address && (
               <Text style={styles.errorText}>{errors.address}</Text>

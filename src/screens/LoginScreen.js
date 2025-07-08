@@ -14,14 +14,17 @@ import {
   Alert,
   Animated, // Import Animated
 } from "react-native";
+
 import { useAuth } from "../hooks";
-import { ALERT_TYPE, Toast } from "react-native-alert-notification";
+
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [loginError, setLoginError] = useState(null);
 
   const { isLoading, loginUser } = useAuth();
 
@@ -46,28 +49,20 @@ export default function LoginScreen({ navigation }) {
 
   const handleLogin = async () => {
     Keyboard.dismiss();
-    if (!username || !password) {
-      Alert.alert("Error", "Username dan password wajib diisi.", [
-        { text: "Tutup" },
-      ]);
+    const newErrors = {};
+    if (!username) newErrors.username = "Username wajib diisi.";
+    if (!password) newErrors.password = "Password wajib diisi.";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
+
+    setErrors({}); // Clear errors if validation passes
     const result = await loginUser({ username, password });
     if (!result.success) {
-      Keyboard.dismiss();
-      Toast.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "Username atau password salah.",
-      });
+      setLoginError("Username atau password salah.");
     }
-  };
-
-  const handleForgotPassword = () => {
-    Keyboard.dismiss();
-    Alert.alert("Informasi", "Fitur ini sedang dalam pengembangan.", [
-      { text: "Tutup" },
-    ]);
   };
 
   const handleRegister = () => {
@@ -119,11 +114,18 @@ export default function LoginScreen({ navigation }) {
                 style={styles.inputField}
                 placeholder="Username"
                 value={username}
-                onChangeText={setUsername}
+                onChangeText={(text) => {
+                  setUsername(text);
+                  if (errors.username) setErrors({ ...errors, username: null });
+                  setLoginError(null); // Clear general error on input change
+                }}
                 autoCapitalize="none"
                 placeholderTextColor="#888" // Warna placeholder
               />
             </View>
+            {errors.username && (
+              <Text style={styles.errorText}>{errors.username}</Text>
+            )}
             <View style={styles.inputContainer}>
               <Ionicons
                 name="lock-closed-outline"
@@ -135,7 +137,11 @@ export default function LoginScreen({ navigation }) {
                 style={styles.inputField}
                 placeholder="Kata sandi"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (errors.password) setErrors({ ...errors, password: null });
+                  setLoginError(null); // Clear general error on input change
+                }}
                 secureTextEntry={!showPassword}
                 placeholderTextColor="#888" // Warna placeholder
               />
@@ -150,13 +156,9 @@ export default function LoginScreen({ navigation }) {
                 />
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              style={styles.forgotPasswordContainer}
-              onPress={handleForgotPassword}
-            >
-              <Text style={styles.forgotPasswordText}>Lupa Password?</Text>
-            </TouchableOpacity>
+            {errors.password && (
+              <Text style={styles.errorText}>{errors.password}</Text>
+            )}
 
             <TouchableOpacity
               style={styles.loginButton}
@@ -167,6 +169,9 @@ export default function LoginScreen({ navigation }) {
                 {isLoading ? "Sedang masuk..." : "Masuk"}
               </Text>
             </TouchableOpacity>
+            {loginError && (
+              <Text style={styles.loginErrorText}>{loginError}</Text>
+            )}
           </Animated.View>
 
           {/* Link untuk Registrasi */}
@@ -208,7 +213,7 @@ const styles = StyleSheet.create({
     width: 200, // Ukuran logo lebih kecil
     height: 200, // Ukuran logo lebih kecil
     resizeMode: "contain",
-    marginBottom: 30, // Margin bawah lebih besar
+    marginBottom: 0, // Margin bawah lebih besar
   },
   formContainer: {
     width: "100%",
@@ -234,7 +239,7 @@ const styles = StyleSheet.create({
     height: 50,
     backgroundColor: "#F8F8F8", // Latar belakang input lebih terang
     borderRadius: 10,
-    marginBottom: 15,
+    marginBottom: 5,
     borderWidth: 1,
     borderColor: "#E0E0E0", // Border input lebih terang
     paddingHorizontal: 15,
@@ -252,16 +257,19 @@ const styles = StyleSheet.create({
   eyeIcon: {
     paddingHorizontal: 5,
   },
-  forgotPasswordContainer: {
-    width: "100%",
-    alignItems: "flex-end",
-    marginBottom: 20, // Margin bawah lebih besar
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginBottom: 10,
+    alignSelf: "flex-start",
   },
-  forgotPasswordText: {
-    color: "#6C757D", // Warna abu-abu gelap untuk teks lupa password
+  loginErrorText: {
+    color: "red",
     fontSize: 14,
-    fontWeight: "500", // Sedikit lebih tebal
+    marginTop: 10,
+    textAlign: "center",
   },
+
   loginButton: {
     width: "100%",
     height: 55, // Tinggi tombol lebih besar

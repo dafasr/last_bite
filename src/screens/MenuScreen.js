@@ -19,7 +19,7 @@ import {
   Animated,
   Easing,
 } from "react-native";
-import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
+
 import { useMenu } from "../context/MenuContext"; // Pastikan path ini benar
 import { getMenuItems } from "../api/apiClient"; // Pastikan path ini benar
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -194,12 +194,11 @@ const MenuScreen = ({ navigation }) => {
       setSurpriseBags(response.data.data);
     } catch (error) {
       console.error("Failed to fetch menu items:", error);
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "Gagal mengambil item menu.",
-        button: "Tutup",
-      });
+      Alert.alert(
+        "Error",
+        "Gagal mengambil item menu.",
+        [{ text: "Tutup" }]
+      );
     } finally {
       setLoading(false);
     }
@@ -222,18 +221,23 @@ const MenuScreen = ({ navigation }) => {
   const handleAddBag = () => navigation.navigate("AddBag");
 
   const handleDelete = (bagId, bagName) => {
-    Dialog.show({
-      type: ALERT_TYPE.WARNING,
-      title: "Hapus Menu",
-      textBody: `Apakah Anda yakin ingin menghapus "${bagName}"? Tindakan ini tidak dapat dibatalkan.`,
-      button: "Hapus",
-      onPressButton: () => {
-        deleteBag(bagId);
-        Dialog.hide();
-      },
-      showCancelButton: true,
-      cancelButton: "Batal",
-    });
+    Alert.alert(
+      "Hapus Menu",
+      `Apakah Anda yakin ingin menghapus "${bagName}"? Tindakan ini tidak dapat dibatalkan.`,
+      [
+        {
+          text: "Batal",
+          style: "cancel",
+        },
+        {
+          text: "Hapus",
+          onPress: () => {
+            deleteBag(bagId);
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   const renderItem = ({ item }) => (
@@ -390,7 +394,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   loadingText: {
-    marginTop: 20,
+    marginTop: 30,
     fontSize: 16,
     color: COLORS.darkGray,
     fontWeight: "500",

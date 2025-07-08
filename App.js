@@ -62,7 +62,7 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <AlertNotificationRoot style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <AlertNotificationRoot>
       <AuthProvider>
         <AppNavigator />
       </AuthProvider>

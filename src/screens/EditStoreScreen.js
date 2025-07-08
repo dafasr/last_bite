@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useImagePicker } from "../hooks";
 import {
+  Image,
   View,
   Text,
   StyleSheet,
@@ -11,32 +13,77 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
-import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
+import { Alert } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
-import { getSellerProfile, updateSellerProfile } from "../api/apiClient";
+import apiClient, { updateSellerProfile, uploadImage } from "../api/apiClient";
 import { useAuthContext } from "../context/AuthContext";
 
 const EditStoreScreen = ({ navigation, route }) => {
   const { sellerProfileId } = useAuthContext();
-  const sellerId = sellerProfileId;
-
-  useEffect(() => {}, [sellerId, loading]);
-
   const [storeName, setStoreName] = useState("");
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
-  const [storeImageUrl, setStoreImageUrl] = useState("");
+  const {
+    image: storeImage,
+    pickImage: pickStoreImage,
+    setImage: setStoreImage,
+  } = useImagePicker();
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
   const [mapRegion, setMapRegion] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+
+  const handleMapPress = (event) => {
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+    setLatitude(latitude);
+    setLongitude(longitude);
+    setMapRegion({
+      ...mapRegion,
+      latitude,
+      longitude,
+    });
+  };
+
+  const handleChooseCurrentLocation = async () => {
+    setIsLocating(true);
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Izin Ditolak",
+          "Akses lokasi diperlukan untuk mendapatkan lokasi saat ini.",
+          [{ text: "Tutup" }]
+        );
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setLatitude(location.coords.latitude);
+      setLongitude(location.coords.longitude);
+      setMapRegion({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      });
+    } catch (error) {
+      console.error("Failed to get current location:", error);
+      Alert.alert("Error", "Gagal mendapatkan lokasi saat ini.", [
+        { text: "Tutup" },
+      ]);
+    } finally {
+      setIsLocating(false);
+    }
+  };
 
   useEffect(() => {
     const fetchSellerProfile = async () => {
       try {
-        const response = await getSellerProfile(sellerId);
+        const response = await apiClient.get("/sellers/me");
         const {
           storeName,
           storeDescription: description,
@@ -51,7 +98,7 @@ const EditStoreScreen = ({ navigation, route }) => {
         setAddress(address);
         setLatitude(latitude);
         setLongitude(longitude);
-        setStoreImageUrl(storeImageUrl);
+        setStoreImage({ uri: storeImageUrl });
         setStatus(status);
 
         if (latitude && longitude) {
@@ -65,12 +112,11 @@ const EditStoreScreen = ({ navigation, route }) => {
           let { status: locationStatus } =
             await Location.requestForegroundPermissionsAsync();
           if (locationStatus !== "granted") {
-            Dialog.show({
-              type: ALERT_TYPE.WARNING,
-              title: "Izin Ditolak",
-              textBody: "Akses lokasi diperlukan untuk mengatur lokasi toko.",
-              button: "Tutup",
-            });
+            Alert.alert(
+              "Izin Ditolak",
+              "Akses lokasi diperlukan untuk mengatur lokasi toko.",
+              [{ text: "Tutup" }]
+            );
             setLoading(false);
             return;
           }
@@ -83,74 +129,60 @@ const EditStoreScreen = ({ navigation, route }) => {
           });
         }
       } catch (error) {
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "Error",
-          textBody:
-            "Gagal mengambil profil penjual. Silakan periksa koneksi jaringan Anda atau coba lagi nanti.",
-          button: "Tutup",
-        });
+        Alert.alert(
+          "Error",
+          "Gagal mengambil profil penjual. Silakan periksa koneksi jaringan Anda atau coba lagi nanti.",
+          [{ text: "Tutup" }]
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    if (sellerId) {
-      fetchSellerProfile();
-    }
-  }, [sellerId]);
-
-  const handleMapPress = (event) => {
-    const { latitude, longitude } = event.nativeEvent.coordinate;
-    setLatitude(latitude);
-    setLongitude(longitude);
-    setMapRegion({
-      ...mapRegion,
-      latitude,
-      longitude,
-    });
-  };
+    fetchSellerProfile();
+  }, []);
 
   const handleSave = async () => {
-    if (!sellerId) {
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "ID Penjual tidak ditemukan.",
-        button: "Tutup",
-      });
-      return;
-    }
-
+    setIsSaving(true);
     try {
+      let finalStoreImageUrl = storeImage ? storeImage.uri : "";
+
+      if (storeImage && storeImage.uri && !storeImage.uri.startsWith("http")) {
+        const imageFormData = new FormData();
+        imageFormData.append("file", {
+          uri: storeImage.uri,
+          type: storeImage.mimeType,
+          name: storeImage.fileName,
+        });
+        const imageResponse = await uploadImage(imageFormData);
+        finalStoreImageUrl = imageResponse.data.url;
+      }
+
       const updatedData = {
         storeName,
         storeDescription: description, // Use the local 'description' state for storeDescription
         address,
         latitude,
         longitude,
-        storeImageUrl,
+        storeImageUrl: finalStoreImageUrl,
         status: "ACTIVE", // Set status to ACTIVE, no UI needed
       };
-      await updateSellerProfile(sellerId, updatedData);
-      Dialog.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: "Sukses",
-        textBody: "Informasi toko berhasil diperbarui!",
-        button: "OK",
-        onPressButton: () => {
-          Dialog.hide(); // Explicitly hide the dialog
-          navigation.goBack();
+      await updateSellerProfile(sellerProfileId, updatedData);
+      Alert.alert("Sukses", "Informasi toko berhasil diperbarui!", [
+        {
+          text: "OK",
+          onPress: () => {
+            navigation.goBack();
+          },
         },
-      });
+      ]);
     } catch (error) {
       console.error("Failed to update seller profile:", error);
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "Gagal memperbarui informasi toko.",
-        button: "Tutup",
-      });
+      Alert.alert("Error", "Gagal memperbarui informasi toko.", [
+        { text: "Tutup" },
+      ]);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -192,23 +224,41 @@ const EditStoreScreen = ({ navigation, route }) => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Store Image URL</Text>
-            <TextInput
-              style={styles.input}
-              value={storeImageUrl}
-              onChangeText={setStoreImageUrl}
-              placeholder="Masukkan URL gambar toko"
-            />
+            <Text style={styles.label}>Foto Toko</Text>
+            <TouchableOpacity
+              style={styles.imagePickerButton}
+              onPress={pickStoreImage}
+            >
+              <Text style={styles.imagePickerButtonText}>Pilih Foto Toko</Text>
+            </TouchableOpacity>
+            {storeImage && storeImage.uri && storeImage.uri !== "" && (
+              <View style={styles.imagePreviewContainer}>
+                <Image
+                  source={{ uri: storeImage.uri }}
+                  style={styles.imagePreview}
+                />
+              </View>
+            )}
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>
               Lokasi Toko (Ketuk pada peta untuk memilih)
             </Text>
-            <Text style={styles.coordinatesText}>
-              Latitude: {latitude ? latitude.toFixed(6) : "N/A"}, Longitude:{" "}
-              {longitude ? longitude.toFixed(6) : "N/A"}
-            </Text>
+
+            <TouchableOpacity
+              style={styles.locationButton}
+              onPress={handleChooseCurrentLocation}
+              disabled={isLocating}
+            >
+              {isLocating ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.locationButtonText}>
+                  Pilih Lokasi Saat Ini
+                </Text>
+              )}
+            </TouchableOpacity>
             {mapRegion && (
               <MapView
                 style={styles.map}
@@ -237,8 +287,13 @@ const EditStoreScreen = ({ navigation, route }) => {
           <TouchableOpacity
             style={[styles.actionButton, styles.saveButton]}
             onPress={handleSave}
+            disabled={isSaving}
           >
-            <Text style={styles.actionButtonText}>Save Changes</Text>
+            {isSaving ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.actionButtonText}>Simpan Perubahan</Text>
+            )}
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, styles.cancelButton]}
@@ -307,11 +362,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
   },
-  coordinatesText: {
-    fontSize: 14,
-    color: "#555",
-    textAlign: "center",
-  },
   actionsContainer: {
     marginTop: 10,
     paddingHorizontal: 20,
@@ -331,6 +381,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   saveButton: {
+    marginTop: -50,
     backgroundColor: "#2ECC71", // Green
   },
   cancelButton: {
@@ -346,6 +397,58 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#f5f5f5",
+  },
+  imagePickerButton: {
+    backgroundColor: "#007bff",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  imagePickerButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  imagePreviewContainer: {
+    marginTop: 10,
+    alignItems: "center",
+  },
+  imagePreview: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    resizeMode: "cover",
+  },
+  locationButton: {
+    backgroundColor: "#007bff",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  locationButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -13,57 +13,41 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
-import { useMenu } from "../context/MenuContext";
 import { useAuthContext } from "../context/AuthContext";
 import apiClient, { uploadImage } from "../api/apiClient";
 import { Picker } from "@react-native-picker/picker";
 import { TimerPickerModal } from "react-native-timer-picker";
-import * as ImagePicker from "expo-image-picker";
+import { useImagePicker, useTimePicker } from "../hooks";
 
 const AddBagScreen = ({ navigation }) => {
   const { sellerProfileId } = useAuthContext();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [image, setImage] = useState(null);
   const [originalPrice, setOriginalPrice] = useState("");
   const [discountedPrice, setDiscountedPrice] = useState("");
   const [quantityAvailable, setQuantityAvailable] = useState("");
-  const [displayStartTime, setDisplayStartTime] = useState("");
-  const [displayEndTime, setDisplayEndTime] = useState("");
   const [status, setStatus] = useState("AVAILABLE");
-  const [isStartTimePickerVisible, setStartTimePickerVisible] = useState(false);
-  const [isEndTimePickerVisible, setEndTimePickerVisible] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      if (Platform.OS !== "web") {
-        const { status } =
-          await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== "granted") {
-          Dialog.show({
-            type: ALERT_TYPE.WARNING,
-            title: "Peringatan",
-            textBody: "Kami memerlukan izin galeri untuk memilih gambar.",
-            button: "Tutup",
-          });
-        }
-      }
-    })();
-  }, []);
-
-  const handleChoosePhoto = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0]);
-    }
-  };
+  const { image, pickImage, setImage } = useImagePicker();
+  const {
+    displayTime: displayStartTime,
+    setPickerVisible: setStartTimePickerVisible,
+    isPickerVisible: isStartTimePickerVisible,
+    handleConfirm: handleConfirmStartTime,
+    initialHours: initialStartHours,
+    initialMinutes: initialStartMinutes,
+    initialSeconds: initialStartSeconds,
+  } = useTimePicker();
+  const {
+    displayTime: displayEndTime,
+    setPickerVisible: setEndTimePickerVisible,
+    isPickerVisible: isEndTimePickerVisible,
+    handleConfirm: handleConfirmEndTime,
+    initialHours: initialEndHours,
+    initialMinutes: initialEndMinutes,
+    initialSeconds: initialEndSeconds,
+  } = useTimePicker();
 
   const handleSave = async () => {
     if (loading) return;
@@ -204,7 +188,7 @@ const AddBagScreen = ({ navigation }) => {
             <Text style={styles.label}>Foto</Text>
             <TouchableOpacity
               style={styles.outlineButton}
-              onPress={handleChoosePhoto}
+              onPress={pickImage}
             >
               <Text style={styles.outlineButtonText}>Pilih Foto</Text>
             </TouchableOpacity>
@@ -278,55 +262,25 @@ const AddBagScreen = ({ navigation }) => {
             <TimerPickerModal
               visible={isStartTimePickerVisible}
               setIsVisible={setStartTimePickerVisible}
-              onConfirm={(pickedDuration) => {
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, "0");
-                const day = String(now.getDate()).padStart(2, "0");
-                const hours = String(pickedDuration.hours).padStart(2, "0");
-                const minutes = String(pickedDuration.minutes).padStart(2, "0");
-                const seconds = String(pickedDuration.seconds).padStart(2, "0");
-                setDisplayStartTime(
-                  `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
-                );
-                setStartTimePickerVisible(false);
-              }}
+              onConfirm={handleConfirmStartTime}
               modalTitle="Pilih Jam Mulai"
               onCancel={() => setStartTimePickerVisible(false)}
               closeOnOverlayPress
-              initialHours={parseInt(displayStartTime.split(":")[0] || "0", 10)}
-              initialMinutes={parseInt(
-                displayStartTime.split(":")[1] || "0",
-                10
-              )}
-              initialSeconds={parseInt(
-                displayStartTime.split(":")[2] || "0",
-                10
-              )}
+              initialHours={initialStartHours}
+              initialMinutes={initialStartMinutes}
+              initialSeconds={initialStartSeconds}
             />
 
             <TimerPickerModal
               visible={isEndTimePickerVisible}
               setIsVisible={setEndTimePickerVisible}
-              onConfirm={(pickedDuration) => {
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, "0");
-                const day = String(now.getDate()).padStart(2, "0");
-                const hours = String(pickedDuration.hours).padStart(2, "0");
-                const minutes = String(pickedDuration.minutes).padStart(2, "0");
-                const seconds = String(pickedDuration.seconds).padStart(2, "0");
-                setDisplayEndTime(
-                  `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
-                );
-                setEndTimePickerVisible(false);
-              }}
+              onConfirm={handleConfirmEndTime}
               modalTitle="Pilih Jam Selesai"
               onCancel={() => setEndTimePickerVisible(false)}
               closeOnOverlayPress
-              initialHours={parseInt(displayEndTime.split(":")[0] || "0", 10)}
-              initialMinutes={parseInt(displayEndTime.split(":")[1] || "0", 10)}
-              initialSeconds={parseInt(displayEndTime.split(":")[2] || "0", 10)}
+              initialHours={initialEndHours}
+              initialMinutes={initialEndMinutes}
+              initialSeconds={initialEndSeconds}
             />
 
             <Text style={styles.label}>Kuantitas</Text>

@@ -13,7 +13,7 @@ import EditUserInformationScreen from "./EditUserInformationScreen";
 import { MenuProvider } from "../context/MenuContext";
 import { useOrders } from "../hooks";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
+import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View, BackHandler } from "react-native";
 
@@ -43,14 +43,13 @@ const MerchantTabNavigator = () => {
     return () => backHandler.remove();
   }, []);
 
-
   const handleAcceptOrder = async (orderId) => {
     await originalHandleAcceptOrder(orderId);
     Dialog.show({
       type: ALERT_TYPE.SUCCESS,
-      title: 'Sukses',
-      textBody: 'Pesanan berhasil diterima!',
-      button: 'Tutup',
+      title: "Sukses",
+      textBody: "Pesanan berhasil diterima!",
+      button: "Tutup",
     });
   };
 
@@ -58,9 +57,9 @@ const MerchantTabNavigator = () => {
     await originalHandleRejectOrder(orderId);
     Dialog.show({
       type: ALERT_TYPE.SUCCESS,
-      title: 'Sukses',
-      textBody: 'Pesanan berhasil ditolak!',
-      button: 'Tutup',
+      title: "Sukses",
+      textBody: "Pesanan berhasil ditolak!",
+      button: "Tutup",
     });
   };
 
@@ -68,9 +67,9 @@ const MerchantTabNavigator = () => {
     await originalHandleUpdateOrderStatus(orderId, newStatus);
     Dialog.show({
       type: ALERT_TYPE.SUCCESS,
-      title: 'Sukses',
-      textBody: `Status pesanan berhasil diperbarui menjadi ${newStatus}!`, 
-      button: 'Tutup',
+      title: "Sukses",
+      textBody: `Status pesanan berhasil diperbarui menjadi ${newStatus}!`,
+      button: "Tutup",
     });
   };
 
@@ -229,7 +228,6 @@ const MerchantTabNavigator = () => {
           )}
         </Tab.Screen>
       </Tab.Navigator>
-      
     </MenuProvider>
   );
 };

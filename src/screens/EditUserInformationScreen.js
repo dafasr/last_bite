@@ -8,9 +8,10 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import apiClient from "../api/apiClient";
-import { ALERT_TYPE, Toast } from "react-native-alert-notification";
+import { Alert } from "react-native";
 
 const EditUserInformationScreen = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
@@ -26,12 +27,11 @@ const EditUserInformationScreen = ({ navigation }) => {
       } catch (err) {
         console.error("Failed to fetch user data:", err);
         setError("Failed to load user data. Please try again.");
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "Error",
-          textBody: "Gagal memuat data pengguna. Silakan coba lagi.",
-          button: "Tutup",
-        });
+        Alert.alert(
+          "Error",
+          "Gagal memuat data pengguna. Silakan coba lagi.",
+          [{ text: "Tutup" }]
+        );
       } finally {
         setIsLoading(false);
       }
@@ -50,22 +50,19 @@ const EditUserInformationScreen = ({ navigation }) => {
         phoneNumber: userData.phoneNumber,
       };
       await apiClient.put("/users/me", payload);
-      Toast.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: "Sukses",
-        textBody: "Informasi pengguna berhasil diperbarui.",
-      });
+      Alert.alert(
+        "Sukses",
+        "Informasi pengguna berhasil diperbarui."
+      );
       navigation.navigate("ProfileScreen");
     } catch (err) {
       console.error("Failed to update user data:", err);
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody:
-          err.response?.data?.message ||
+      Alert.alert(
+        "Error",
+        err.response?.data?.message ||
           "Gagal memperbarui informasi pengguna. Silakan coba lagi.",
-        button: "Tutup",
-      });
+        [{ text: "Tutup" }]
+      );
     } finally {
       setIsSaving(false);
     }
