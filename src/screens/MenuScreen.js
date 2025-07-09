@@ -257,9 +257,9 @@ const MenuScreen = ({ navigation }) => {
     setRefreshing(false);
   }, [fetchMenuItems]);
 
-  const handleEdit = (bag) => navigation.navigate("EditBag", { bag });
+  const handleEdit = (bag) => navigation.navigate("DetailNavigator", { screen: "EditBag", params: { bag } });
 
-  const handleAddBag = () => navigation.navigate("AddBag");
+  const handleAddBag = () => navigation.navigate("DetailNavigator", { screen: "AddBag" });
 
   const handleDelete = (bagId, bagName) => {
     Alert.alert(

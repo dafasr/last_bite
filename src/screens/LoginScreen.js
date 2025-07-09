@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     width: 200, // Ukuran logo lebih kecil
     height: 200, // Ukuran logo lebih kecil
     resizeMode: "contain",
-    marginBottom: 0, // Margin bawah lebih besar
+    marginBottom: 20, // Margin bawah lebih besar
   },
   formContainer: {
     width: "100%",
@@ -231,6 +231,7 @@ const styles = StyleSheet.create({
     // elevation: 5,
     borderWidth: 1, // Tambahkan border tipis
     borderColor: "#E0E0E0", // Warna border abu-abu terang
+    marginBottom: 20,
   },
   inputContainer: {
     flexDirection: "row",
@@ -239,7 +240,7 @@ const styles = StyleSheet.create({
     height: 50,
     backgroundColor: "#F8F8F8", // Latar belakang input lebih terang
     borderRadius: 10,
-    marginBottom: 5,
+    marginBottom: 15,
     borderWidth: 1,
     borderColor: "#E0E0E0", // Border input lebih terang
     paddingHorizontal: 15,
@@ -271,6 +272,7 @@ const styles = StyleSheet.create({
   },
 
   loginButton: {
+    marginTop: 10,
     width: "100%",
     height: 55, // Tinggi tombol lebih besar
     backgroundColor: "#28a745", // Warna hijau
@@ -294,7 +296,7 @@ const styles = StyleSheet.create({
   },
   registerContainer: {
     flexDirection: "row",
-    marginTop: 30, // Margin atas lebih besar
+    marginTop: 20, // Margin atas lebih besar
     justifyContent: "center",
     alignItems: "center",
   },

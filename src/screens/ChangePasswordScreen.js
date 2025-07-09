@@ -7,113 +7,118 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
-import { ALERT_TYPE, Toast } from "react-native-alert-notification";
-import apiClient from "../api/apiClient"; // Assuming apiClient is accessible
+import { Ionicons } from "@expo/vector-icons"; // Import Ionicons
+import { useAuthContext } from "../context/AuthContext";
+import apiClient from "../api/apiClient"; // Assuming apiClient has a password update method
 
 const ChangePasswordScreen = ({ navigation }) => {
-  const [oldPassword, setOldPassword] = useState("");
+  const { userId } = useAuthContext(); // Assuming userId is available from AuthContext
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmitChangePassword = async () => {
-    if (!oldPassword || !newPassword || !confirmNewPassword) {
-      Toast.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "Semua kolom harus diisi.",
-      });
+  const handleSave = async () => {
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      Alert.alert("Error", "Semua kolom harus diisi.");
       return;
     }
 
     if (newPassword !== confirmNewPassword) {
-      Toast.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "Kata sandi baru dan konfirmasi kata sandi tidak cocok.",
-      });
-      return;
-    }
-
-    // Custom password validation
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    if (!passwordRegex.test(newPassword)) {
-      setPasswordError(
-        "Kata sandi harus minimal 8 karakter, mengandung setidaknya satu huruf besar, satu huruf kecil, dan satu angka."
+      Alert.alert(
+        "Error",
+        "Kata sandi baru dan konfirmasi kata sandi tidak cocok."
       );
       return;
     }
 
-    setPasswordError(""); // Clear any previous password errors
-
+    setIsSaving(true);
     try {
-      await apiClient.put("/users/me/password", {
-        oldPassword,
+      // Assuming your API has an endpoint for changing password
+      // and it expects currentPassword, newPassword, and userId
+      await apiClient.put(`/users/${userId}/change-password`, {
+        currentPassword,
         newPassword,
-        confirmNewPassword,
       });
-      Toast.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: "Sukses",
-        textBody: "Kata sandi berhasil diubah.",
-      });
-      navigation.goBack(); // Go back to the previous screen (ProfileScreen)
-    } catch (err) {
-      console.error("Gagal mengubah kata sandi:", err);
-      Toast.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody:
-          err.response?.data?.message ||
-          "Gagal mengubah kata sandi. Silakan coba lagi.",
-      });
+      Alert.alert("Sukses", "Kata sandi berhasil diubah!", [
+        {
+          text: "OK",
+          onPress: () => {
+            navigation.goBack();
+          },
+        },
+      ]);
+    } catch (error) {
+      console.error("Failed to change password:", error);
+      Alert.alert("Error", "Gagal mengubah kata sandi. Silakan coba lagi.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Ubah Kata Sandi</Text>
-        </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.form}
+        >
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Kata Sandi Saat Ini</Text>
+            <TextInput
+              style={styles.input}
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              placeholder="Masukkan kata sandi saat ini"
+              secureTextEntry
+            />
+          </View>
 
-        <View style={styles.formContainer}>
-          <Text style={styles.label}>Kata Sandi Lama</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Masukkan kata sandi lama"
-            secureTextEntry
-            value={oldPassword}
-            onChangeText={setOldPassword}
-          />
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Kata Sandi Baru</Text>
+            <TextInput
+              style={styles.input}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder="Masukkan kata sandi baru"
+              secureTextEntry
+            />
+          </View>
 
-          <Text style={styles.label}>Kata Sandi Baru</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Masukkan kata sandi baru"
-            secureTextEntry
-            value={newPassword}
-            onChangeText={setNewPassword}
-          />
-          {passwordError ? (
-            <Text style={styles.errorText}>{passwordError}</Text>
-          ) : null}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Konfirmasi Kata Sandi Baru</Text>
+            <TextInput
+              style={styles.input}
+              value={confirmNewPassword}
+              onChangeText={setConfirmNewPassword}
+              placeholder="Konfirmasi kata sandi baru"
+              secureTextEntry
+            />
+          </View>
+        </KeyboardAvoidingView>
 
-          <Text style={styles.label}>Konfirmasi Kata Sandi Baru</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Konfirmasi Kata Sandi Baru"
-            secureTextEntry
-            value={confirmNewPassword}
-            onChangeText={setConfirmNewPassword}
-          />
-
+        <View style={styles.actionsContainer}>
           <TouchableOpacity
-            style={styles.submitButton}
-            onPress={handleSubmitChangePassword}
+            style={[styles.actionButton, styles.saveButton]}
+            onPress={handleSave}
+            disabled={isSaving}
           >
-            <Text style={styles.submitButtonText}>Ubah Kata Sandi</Text>
+            {isSaving ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.actionButtonText}>Simpan Perubahan</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.cancelButton]}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.actionButtonText}>Batal</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -128,63 +133,59 @@ const styles = StyleSheet.create({
   },
   container: {
     flexGrow: 1,
-    paddingBottom: 20,
+    paddingBottom: 20, // Adjusted paddingBottom
   },
-  header: {
-    paddingVertical: 30,
-    paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
-    textAlign: "center",
-  },
-  formContainer: {
-    backgroundColor: "#FFFFFF",
+
+  form: {
     margin: 20,
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 3,
+  },
+  inputGroup: {
+    marginBottom: 20,
   },
   label: {
     fontSize: 16,
+    fontWeight: "bold",
     color: "#333",
     marginBottom: 8,
-    fontWeight: "bold",
   },
   input: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
     fontSize: 16,
+    color: "#333",
   },
-  submitButton: {
-    backgroundColor: "#2ECC71",
-    padding: 15,
+  actionsContainer: {
+    marginTop: 10,
+    paddingHorizontal: 20,
+  },
+  actionButton: {
+    paddingVertical: 15,
     borderRadius: 10,
     alignItems: "center",
-    marginTop: 10,
-  },
-  submitButtonText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  errorText: {
-    color: "red",
-    fontSize: 12,
     marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  saveButton: {
+    backgroundColor: "#2ECC71", // Green, removed marginTop
+  },
+  cancelButton: {
+    backgroundColor: "#E74C3C", // Red
+  },
+  actionButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

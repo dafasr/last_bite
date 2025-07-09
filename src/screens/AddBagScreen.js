@@ -163,9 +163,9 @@ const AddBagScreen = ({ navigation }) => {
         style={styles.container}
       >
         <ScrollView>
-          <View style={styles.header}>
+          {/* <View style={styles.header}>
             <Text style={styles.headerTitle}>Tambah Menu Baru</Text>
-          </View>
+          </View> */}
 
           <View style={styles.formContainer}>
             <Text style={styles.label}>Nama Bag</Text>
@@ -186,10 +186,7 @@ const AddBagScreen = ({ navigation }) => {
             />
 
             <Text style={styles.label}>Foto</Text>
-            <TouchableOpacity
-              style={styles.outlineButton}
-              onPress={pickImage}
-            >
+            <TouchableOpacity style={styles.outlineButton} onPress={pickImage}>
               <Text style={styles.outlineButtonText}>Pilih Foto</Text>
             </TouchableOpacity>
             {image && (
@@ -330,7 +327,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingBottom: 100,
   },
   header: {
     paddingVertical: 30,
@@ -348,6 +344,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     margin: 20,
+    marginBottom: 20,
     backgroundColor: "#fff",
     padding: 20,
     borderRadius: 10,

@@ -16,6 +16,7 @@ import {
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import apiClient from "../api/apiClient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // --- THEME CONSTANTS ---
 const COLORS = {
@@ -263,6 +264,7 @@ const CountUpAnimation = ({ value, duration = 1000, style, ...props }) => {
 };
 
 const MerchantHomeScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [balance, setBalance] = useState(0);
   const [soldBagsCount, setSoldBagsCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -338,7 +340,7 @@ const MerchantHomeScreen = ({ navigation }) => {
   }, [fetchData]);
 
   const handleWithdraw = () => {
-    navigation.navigate('Profile', { screen: 'Withdrawal' });
+    navigation.navigate("DetailNavigator", { screen: "Withdrawal" });
   };
 
   const handleReject = async (orderId) => {
@@ -420,13 +422,13 @@ const MerchantHomeScreen = ({ navigation }) => {
       <AnimatedCard delay={300} style={styles.actionContainer}>
         <AnimatedButton
           style={[styles.actionButton, styles.rejectButton]}
-          onPress={() => handleReject(item.id)}
+          onPress={() => handleReject(item.orderId)}
         >
           <Text style={styles.actionButtonText}>❌ Tolak</Text>
         </AnimatedButton>
         <AnimatedButton
           style={[styles.actionButton, styles.acceptButton]}
-          onPress={() => handleAccept(item.id)}
+          onPress={() => handleAccept(item.orderId)}
         >
           <Text style={styles.actionButtonText}>✅ Terima</Text>
         </AnimatedButton>
@@ -448,7 +450,10 @@ const MerchantHomeScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
-        contentContainerStyle={styles.scrollViewContent}
+        contentContainerStyle={[
+          styles.scrollViewContent,
+          { paddingBottom: insets.bottom + 50 },
+        ]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -731,9 +736,9 @@ const styles = StyleSheet.create({
   // --- Enhanced Order Item Card ---
   orderItem: {
     backgroundColor: COLORS.card,
-    padding: SIZES.padding + 5,
-    borderRadius: 20,
-    marginBottom: 20,
+    padding: SIZES.base, // Reduced from SIZES.base * 1.5 (12) to SIZES.base (8)
+    borderRadius: 16, // Slightly less rounded
+    marginBottom: 8, // Reduced from 10
     borderLeftWidth: 5,
     borderLeftColor: COLORS.warning,
     ...SHADOWS.medium,
@@ -776,10 +781,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   orderItemsContainer: {
-    marginBottom: 18,
+    marginBottom: 16, // Reduced from 18
     backgroundColor: COLORS.lightGray,
-    padding: 18,
-    borderRadius: 16,
+    padding: 12, // Reduced from 18
+    borderRadius: 12, // Slightly less rounded
     ...SHADOWS.light,
   },
   orderItemsTitle: {
@@ -810,9 +815,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 18,
+    marginBottom: 16, // Reduced from 18
     backgroundColor: COLORS.paymentBg,
-    padding: 16,
+    padding: 10, // Reduced from 16
     borderRadius: 12,
     ...SHADOWS.light,
   },
@@ -835,9 +840,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   noteContainer: {
-    marginBottom: 20,
+    marginBottom: 18, // Reduced from 20
     backgroundColor: COLORS.noteBg,
-    padding: 18,
+    padding: 12, // Reduced from 18
     borderRadius: 12,
     borderLeftWidth: 4,
     borderLeftColor: COLORS.warning,
@@ -860,15 +865,20 @@ const styles = StyleSheet.create({
   actionContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 15,
+    gap: 12, // Increased from 10
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 16,
-    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     alignItems: "center",
-    ...SHADOWS.medium,
-    elevation: 5,
+    // Enhanced 3D shadow effect
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 8,
   },
   rejectButton: {
     backgroundColor: COLORS.danger,
@@ -882,7 +892,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     ...FONTS.body3,
-    fontSize: 15,
+    fontSize: 16, // Increased from 15
     color: COLORS.white,
     fontWeight: "700",
   },

@@ -28,16 +28,23 @@ export const useAuth = () => {
       if (response.data && response.data.data && response.data.data.token) {
         const { token, status } = response.data.data;
 
-        if (status === 'INACTIVE') {
+        if (status === "INACTIVE") {
           setIsLoading(false);
-          return { success: false, message: 'Akun Anda tidak aktif. Silakan hubungi admin.' };
+          return {
+            success: false,
+            message: "Akun Anda tidak aktif. Silakan hubungi admin.",
+          };
         }
 
         await AsyncStorage.setItem("userToken", token);
 
         // Fetch user profile after successful login
         const userProfileResponse = await apiClient.get("/users/me");
-        if (userProfileResponse.data && userProfileResponse.data.data && userProfileResponse.data.data.id) {
+        if (
+          userProfileResponse.data &&
+          userProfileResponse.data.data &&
+          userProfileResponse.data.data.id
+        ) {
           await updateSellerProfileId(userProfileResponse.data.data.id);
         }
       }
@@ -67,6 +74,7 @@ export const useAuth = () => {
     address,
     latitude,
     longitude,
+    storeImageUrl,
   }) => {
     setIsLoading(true);
     // 1. Validasi input
@@ -80,7 +88,8 @@ export const useAuth = () => {
       !storeDescription ||
       !address ||
       !latitude ||
-      !longitude
+      !longitude ||
+      !storeImageUrl
     ) {
       const message = "Lengkapi semua kolom isian";
       setIsLoading(false);
@@ -100,6 +109,7 @@ export const useAuth = () => {
         address,
         latitude,
         longitude,
+        storeImageUrl,
       });
       setIsLoading(false);
       // Jika berhasil, kembalikan status sukses

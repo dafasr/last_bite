@@ -196,12 +196,11 @@ const EditStoreScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Edit Informasi Toko</Text>
-        </View>
-
-        <View style={styles.form}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.formContainer} // Changed to formContainer
+        >
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Nama Toko</Text>
             <TextInput
@@ -281,7 +280,7 @@ const EditStoreScreen = ({ navigation, route }) => {
               />
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
 
         <View style={styles.actionsContainer}>
           <TouchableOpacity
@@ -312,9 +311,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-  container: {
+  scrollViewContent: {
     flexGrow: 1,
-    paddingBottom: 50,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
   header: {
     paddingVertical: 30,
@@ -330,8 +330,17 @@ const styles = StyleSheet.create({
     color: "#333",
     textAlign: "center",
   },
-  form: {
-    margin: 20,
+  formContainer: {
+    backgroundColor: "#FFFFFF",
+    padding: 20,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+    width: "100%",
+    marginBottom: 20, // Added margin bottom
   },
   inputGroup: {
     marginBottom: 20,
@@ -363,8 +372,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   actionsContainer: {
-    marginTop: 10,
-    paddingHorizontal: 20,
+    marginTop: 20, // Adjusted marginTop
   },
   actionButton: {
     paddingVertical: 15,
@@ -381,8 +389,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   saveButton: {
-    marginTop: -50,
-    backgroundColor: "#2ECC71", // Green
+    backgroundColor: "#2ECC71", // Green, removed marginTop
   },
   cancelButton: {
     backgroundColor: "#E74C3C", // Red

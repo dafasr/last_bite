@@ -100,8 +100,6 @@ const EditBagScreen = ({ navigation, route }) => {
     bag,
   ]);
 
-  
-
   const handleSave = async () => {
     if (loading) return;
     setLoading(true);
@@ -149,18 +147,17 @@ const EditBagScreen = ({ navigation, route }) => {
       };
 
       const responseUpdate = await updateBag(bag.id, payload);
-      Alert.alert(
-        "Sukses",
-        "Menu berhasil diperbarui!",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              navigation.navigate("MenuList");
-            },
+      Alert.alert("Sukses", "Menu berhasil diperbarui!", [
+        {
+          text: "OK",
+          onPress: () => {
+            navigation.navigate("MainTabs", {
+              screen: "Menu",
+              params: { screen: "MenuList" },
+            });
           },
-        ]
-      );
+        },
+      ]);
     } catch (error) {
       console.error("Failed to update menu item:", error);
       Alert.alert(
@@ -200,10 +197,7 @@ const EditBagScreen = ({ navigation, route }) => {
           />
 
           <Text style={styles.label}>Foto</Text>
-          <TouchableOpacity
-            style={styles.outlineButton}
-            onPress={pickImage}
-          >
+          <TouchableOpacity style={styles.outlineButton} onPress={pickImage}>
             <Text style={styles.outlineButtonText}>Pilih Foto Baru</Text>
           </TouchableOpacity>
           <View style={styles.imagePreviewContainer}>
@@ -331,7 +325,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    marginBottom: 100,
   },
   header: {
     paddingVertical: 30,
@@ -349,6 +342,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     margin: 20,
+    marginBottom: 50,
     backgroundColor: "#fff",
     padding: 20,
     borderRadius: 10,

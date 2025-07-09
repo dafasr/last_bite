@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useImagePicker } from "../hooks";
+import { Toast } from "react-native-alert-notification";
 import {
   View,
   Text,
@@ -13,6 +14,8 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  findNodeHandle,
+  UIManager, // Import UIManager
 } from "react-native";
 
 import MapView, { Marker } from "react-native-maps";
@@ -21,6 +24,7 @@ import { uploadImage } from "../api/apiClient";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Location from "expo-location";
 import { Alert } from "react-native";
+import getDataLocation from "../components/getDataLocation";
 
 const RegisterScreen = ({ navigation }) => {
   const scrollViewRef = useRef(null);
@@ -54,12 +58,16 @@ const RegisterScreen = ({ navigation }) => {
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [locationDisplayName, setLocationDisplayName] = useState(
+    "Pilih lokasi di peta atau gunakan lokasi saat ini."
+  );
   const [mapRegion, setMapRegion] = useState({
     latitude: -6.2,
     longitude: 106.816666,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
+  const [imageUrl, setImageUrl] = useState("");
 
   const { isLoading, registerUser } = useAuth();
 
@@ -89,6 +97,18 @@ const RegisterScreen = ({ navigation }) => {
       latitudeDelta: 0.0922,
       longitudeDelta: 0.0421,
     });
+
+    const fetchLocation = async () => {
+      if (latitude && longitude) {
+        const locationData = await getDataLocation(latitude, longitude);
+        if (locationData && locationData.display_name) {
+          setAddress(locationData.display_name);
+          setLocationDisplayName(locationData.display_name);
+        }
+      }
+    };
+
+    fetchLocation();
   }, [latitude, longitude]);
 
   const requestLocationPermission = async () => {
@@ -96,11 +116,7 @@ const RegisterScreen = ({ navigation }) => {
     if (status === "granted") {
       return true;
     } else {
-      Alert.alert(
-        "Izin Ditolak",
-        "Izin lokasi ditolak.",
-        [{ text: "Tutup" }]
-      );
+      Alert.alert("Izin Ditolak", "Izin lokasi ditolak.", [{ text: "Tutup" }]);
       return false;
     }
   };
@@ -212,10 +228,14 @@ const RegisterScreen = ({ navigation }) => {
           break;
       }
 
-      if (refToFocus && refToFocus.current) {
+      if (refToFocus && refToFocus.current && scrollViewRef.current) {
         setTimeout(() => {
-          refToFocus.current.measureLayout(
-            scrollViewRef.current.getInnerViewNode(),
+          UIManager.measureLayout(
+            findNodeHandle(refToFocus.current),
+            findNodeHandle(scrollViewRef.current),
+            (error) => {
+              console.error("MeasureLayout error:", error);
+            },
             (x, y, width, height) => {
               scrollViewRef.current.scrollTo({ y: y, animated: true });
             }
@@ -240,6 +260,8 @@ const RegisterScreen = ({ navigation }) => {
           name: storeImage.fileName,
         });
         const imageResponse = await uploadImage(imageFormData);
+        console.log("imageResponse", imageResponse.data.url);
+
         imageUrl = imageResponse.data.url;
       } catch (error) {
         console.error("Error uploading image:", error); // Add this line for debugging
@@ -266,29 +288,23 @@ const RegisterScreen = ({ navigation }) => {
       status: "INACTIVE",
       storeImageUrl: imageUrl,
     });
+    console.log("result", result);
 
     if (!result.success) {
-      Alert.alert(
-        "Error",
-        result.message,
-        [{ text: "Tutup" }]
-      );
+      Alert.alert("Error", result.message, [{ text: "Tutup" }]);
     } else {
-      Alert.alert(
-        "Sukses",
-        "Registrasi berhasil! Silakan login.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              navigation.navigate("Login");
-            },
-          },
-        ]
-      );
+      Toast.show({
+        type: "success",
+        title: "Registrasi Berhasil!",
+        textBody: "Silakan login untuk melanjutkan.",
+        onPress: () => {
+          navigation.navigate("Login");
+        },
+      });
     }
   };
-
+  const location = getDataLocation(latitude, longitude);
+  console.log("location", location);
   const handleMapPress = (e) => {
     const { latitude: newLatitude, longitude: newLongitude } =
       e.nativeEvent.coordinate;
@@ -499,10 +515,8 @@ const RegisterScreen = ({ navigation }) => {
                 </Text>
               )}
             </TouchableOpacity>
-            {/* <Text style={styles.mapLabel}>
-              Pilih Lokasi di Peta (Latitude: {latitude.toFixed(4)}, Longitude:{" "}
-              {longitude.toFixed(4)})
-            </Text> */}
+            <Text style={styles.locationText}>{locationDisplayName}</Text>
+
             <MapView
               style={styles.map}
               region={mapRegion}
@@ -516,7 +530,7 @@ const RegisterScreen = ({ navigation }) => {
               style={styles.input}
               placeholder="Detail Alamat"
               placeholderTextColor="#888"
-              value={address}
+              // value={address}
               onChangeText={(text) => {
                 setAddress(text);
                 if (errors.address) setErrors({ ...errors, address: null });
@@ -532,9 +546,11 @@ const RegisterScreen = ({ navigation }) => {
               onPress={handleRegister}
               disabled={isLoading}
             >
-              <Text style={styles.buttonText}>
-                {isLoading ? "Mendaftar..." : "Daftar"}
-              </Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.buttonText}>Daftar</Text>
+              )}
             </TouchableOpacity>
           </Animated.View>
 
@@ -643,6 +659,13 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  locationText: {
+    textAlign: "center",
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 15,
+    fontStyle: "italic",
   },
 
   button: {

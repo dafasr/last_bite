@@ -200,7 +200,7 @@ const ProfileScreen = ({ navigation }) => {
         "hardwareBackPress",
         onBackPress
       );
-      return () => backHandler.remove();
+      return () => { if (backHandler) backHandler.remove(); };
     }, [isAuthLoading]));
 
   useEffect(() => {
@@ -225,14 +225,17 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleEditStore = () => {
-    navigation.navigate("EditStore", {
-      storeName: merchantProfile.storeName,
-      description: merchantProfile.storeDescription,
+    navigation.navigate("DetailNavigator", {
+      screen: "EditStore",
+      params: {
+        storeName: merchantProfile.storeName,
+        description: merchantProfile.storeDescription,
+      },
     });
   };
 
   const handleChangePassword = () => {
-    navigation.navigate("ChangePassword");
+    navigation.navigate("DetailNavigator", { screen: "ChangePassword" });
   };
 
   const handleHelpAndFeedback = () => {
@@ -484,7 +487,7 @@ const ProfileScreen = ({ navigation }) => {
               style={styles.menuItemTouchable}
               onPress={() =>
                 handleMenuItemPress(
-                  () => navigation.navigate("EditUserInformation"),
+                  () => navigation.navigate("DetailNavigator", { screen: "EditUserInformation" }),
                   1
                 )
               }

@@ -52,9 +52,16 @@ const EditUserInformationScreen = ({ navigation }) => {
       await apiClient.put("/users/me", payload);
       Alert.alert(
         "Sukses",
-        "Informasi pengguna berhasil diperbarui."
+        "Informasi pengguna berhasil diperbarui.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              navigation.goBack(); // Go back after successful save
+            },
+          },
+        ]
       );
-      navigation.navigate("ProfileScreen");
     } catch (err) {
       console.error("Failed to update user data:", err);
       Alert.alert(
@@ -95,9 +102,7 @@ const EditUserInformationScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Edit Informasi Pengguna</Text>
-
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.formContainer}>
           <Text style={styles.label}>Username</Text>
           <TextInput
@@ -133,17 +138,25 @@ const EditUserInformationScreen = ({ navigation }) => {
             keyboardType="phone-pad"
           />
 
-          <TouchableOpacity
-            style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
-            onPress={handleSave}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.saveButtonText}>Save Changes</Text>
-            )}
-          </TouchableOpacity>
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.saveButton]}
+              onPress={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.actionButtonText}>Simpan Perubahan</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.cancelButton]}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.actionButtonText}>Batal</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -155,16 +168,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  scrollViewContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
+    paddingVertical: 20,
   },
   loadingContainer: {
     flex: 1,
@@ -205,10 +212,10 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 }, // Increased shadow for depth
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
     width: "100%",
   },
   label: {
@@ -220,28 +227,44 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 10, // More rounded corners
+    paddingHorizontal: 15,
+    paddingVertical: 12, // Increased vertical padding
     marginBottom: 15,
     fontSize: 16,
+    color: "#333",
+    backgroundColor: "#FFFFFF",
   },
   disabledInput: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#e9e9e9", // Lighter background for disabled
     color: "#a0a0a0",
   },
-  saveButton: {
-    backgroundColor: "#2ECC71",
-    padding: 15,
+  actionsContainer: {
+    marginTop: 20,
+  },
+  actionButton: {
+    paddingVertical: 15,
     borderRadius: 10,
     alignItems: "center",
-    marginTop: 20,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  saveButton: {
+    backgroundColor: "#2ECC71", // Green
   },
   saveButtonDisabled: {
     backgroundColor: "#A5D6A7",
   },
-  saveButtonText: {
+  cancelButton: {
+    backgroundColor: "#E74C3C", // Red
+  },
+  actionButtonText: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
   },
 });

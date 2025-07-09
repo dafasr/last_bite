@@ -4,13 +4,8 @@ import { createStackNavigator } from "@react-navigation/stack";
 import MerchantHomeScreen from "./MerchantHomeScreen";
 import ListScreen from "./ListScreen";
 import MenuScreen from "./MenuScreen";
-import AddBagScreen from "./AddBagScreen";
-import EditBagScreen from "./EditBagScreen";
-import EditStoreScreen from "./EditStoreScreen";
 import ProfileScreen from "./ProfileScreen";
 import ChangePasswordScreen from "./ChangePasswordScreen";
-import EditUserInformationScreen from "./EditUserInformationScreen";
-import WithdrawalScreen from "./WithdrawalScreen";
 import { MenuProvider } from "../context/MenuContext";
 import { useOrders } from "../hooks";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -41,7 +36,7 @@ const MerchantTabNavigator = () => {
       backAction
     );
 
-    return () => backHandler.remove();
+    return () => { if (backHandler) backHandler.remove(); };
   }, []);
 
   const handleAcceptOrder = async (orderId) => {
@@ -155,9 +150,9 @@ const MerchantTabNavigator = () => {
             shadowOffset: { width: 0, height: -5 }, // Shadow pointing upwards
             shadowOpacity: 0.1,
             shadowRadius: 10,
-            height: 70 + insets.bottom, // Slightly taller tab bar
-            paddingBottom: 10 + insets.bottom, // More padding at the bottom
-            paddingTop: 10, // More padding at the top
+            height: 50 + insets.bottom, // Slightly taller tab bar
+            paddingBottom: 0 + insets.bottom, // More padding at the bottom
+            paddingTop: 0, // More padding at the top
             borderTopLeftRadius: 20, // Rounded top corners
             borderTopRightRadius: 20,
             position: "absolute", // Position absolutely to allow rounded corners
@@ -165,8 +160,8 @@ const MerchantTabNavigator = () => {
             left: 0,
             right: 0,
           },
-          tabBarLabelStyle: { fontSize: 13, fontWeight: "700", marginTop: 2 }, // Slightly larger and bolder labels
-          tabBarItemStyle: { marginVertical: 5 },
+          tabBarLabelStyle: { fontSize: 10, fontWeight: "700", marginTop: 2 }, // Slightly larger and bolder labels
+          tabBarItemStyle: { marginVertical: 0 },
           headerShown: false,
         })}
       >
@@ -201,33 +196,15 @@ const MerchantTabNavigator = () => {
           {() => (
             <MenuStack.Navigator screenOptions={{ headerShown: false }}>
               <MenuStack.Screen name="MenuList" component={MenuScreen} />
-              <MenuStack.Screen name="AddBag" component={AddBagScreen} />
-              <MenuStack.Screen name="EditBag" component={EditBagScreen} />
             </MenuStack.Navigator>
           )}
         </Tab.Screen>
         <Tab.Screen name="Profile">
           {() => (
-            <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
+            <ProfileStack.Navigator screenOptions={{ headerShown: false }} initialRouteName="ProfileScreen">
               <ProfileStack.Screen
                 name="ProfileScreen"
                 component={ProfileScreen}
-              />
-              <ProfileStack.Screen
-                name="EditStore"
-                component={EditStoreScreen}
-              />
-              <ProfileStack.Screen
-                name="ChangePassword"
-                component={ChangePasswordScreen}
-              />
-              <ProfileStack.Screen
-                name="EditUserInformation"
-                component={EditUserInformationScreen}
-              />
-              <ProfileStack.Screen
-                name="Withdrawal"
-                component={WithdrawalScreen}
               />
             </ProfileStack.Navigator>
           )}

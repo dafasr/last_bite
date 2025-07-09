@@ -534,8 +534,23 @@ const ListScreen = ({ onUpdateStatus }) => {
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get("/orders/seller/me");
-      setOrders(response.data.data);
+      const statuses = [
+        "PREPARING",
+        "READY_FOR_PICKUP",
+        "COMPLETED",
+        "CANCELLED",
+      ];
+      let allOrders = [];
+
+      for (const status of statuses) {
+        const response = await apiClient.get(
+          `/orders/seller/me?status=${status}`
+        );
+        if (response.data && Array.isArray(response.data.data)) {
+          allOrders = allOrders.concat(response.data.data);
+        }
+      }
+      setOrders(allOrders);
     } catch (error) {
       console.error("Failed to fetch orders:", error);
       Dialog.show({
@@ -577,14 +592,7 @@ const ListScreen = ({ onUpdateStatus }) => {
       return [];
     }
     if (selectedCategory === "Semua") {
-      const statusesToDisplay = [
-        "PREPARING",
-        "READY_FOR_PICKUP",
-        "COMPLETED",
-        "CANCELLED",
-        "ACCEPT",
-      ];
-      return orders.filter((order) => statusesToDisplay.includes(order.status));
+      return orders;
     }
     const internalStatuses = Object.keys(STATUS_CONFIG).filter(
       (key) => STATUS_CONFIG[key].displayName === selectedCategory
@@ -751,7 +759,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 100,
     paddingTop: 10,
   },
   orderItem: {
