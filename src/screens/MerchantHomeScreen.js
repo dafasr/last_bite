@@ -262,7 +262,7 @@ const CountUpAnimation = ({ value, duration = 1000, style, ...props }) => {
   );
 };
 
-const MerchantHomeScreen = () => {
+const MerchantHomeScreen = ({ navigation }) => {
   const [balance, setBalance] = useState(0);
   const [soldBagsCount, setSoldBagsCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -338,12 +338,7 @@ const MerchantHomeScreen = () => {
   }, [fetchData]);
 
   const handleWithdraw = () => {
-    Dialog.show({
-      type: ALERT_TYPE.INFO,
-      title: "Segera Hadir",
-      textBody: "Fitur penarikan sedang dalam pengembangan.",
-      button: "Tutup",
-    });
+    navigation.navigate('Profile', { screen: 'Withdrawal' });
   };
 
   const handleReject = async (orderId) => {

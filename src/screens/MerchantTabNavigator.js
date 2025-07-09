@@ -10,6 +10,7 @@ import EditStoreScreen from "./EditStoreScreen";
 import ProfileScreen from "./ProfileScreen";
 import ChangePasswordScreen from "./ChangePasswordScreen";
 import EditUserInformationScreen from "./EditUserInformationScreen";
+import WithdrawalScreen from "./WithdrawalScreen";
 import { MenuProvider } from "../context/MenuContext";
 import { useOrders } from "../hooks";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -223,6 +224,10 @@ const MerchantTabNavigator = () => {
               <ProfileStack.Screen
                 name="EditUserInformation"
                 component={EditUserInformationScreen}
+              />
+              <ProfileStack.Screen
+                name="Withdrawal"
+                component={WithdrawalScreen}
               />
             </ProfileStack.Navigator>
           )}
