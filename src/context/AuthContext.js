@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { setLogoutHandler } from "../api/apiClient";
 
 const AuthContext = createContext(null);
 
@@ -7,6 +8,18 @@ export const AuthProvider = ({ children }) => {
   const [sellerProfileId, setSellerProfileId] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  const logout = async () => {
+    try {
+      await AsyncStorage.removeItem("userToken");
+      await AsyncStorage.removeItem("sellerProfileId");
+
+      setSellerProfileId(null);
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.error("Failed to logout", error);
+    }
+  };
 
   useEffect(() => {
     const bootstrapAsync = async () => {
@@ -28,6 +41,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     bootstrapAsync();
+    setLogoutHandler(logout);
   }, []);
 
   const updateSellerProfileId = async (id) => {
@@ -43,18 +57,6 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Failed to save sellerProfileId to AsyncStorage", error);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await AsyncStorage.removeItem("userToken");
-      await AsyncStorage.removeItem("sellerProfileId");
-
-      setSellerProfileId(null);
-      setIsAuthenticated(false);
-    } catch (error) {
-      console.error("Failed to logout", error);
     }
   };
 
