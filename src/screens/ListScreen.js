@@ -386,7 +386,7 @@ const AnimatedOrderItem = ({ item, onUpdateStatus, onCompleteOrder }) => {
         <Text style={styles.orderItemsTitle}>📦 Items Pesanan:</Text>
         {item.orderItems &&
           item.orderItems.map((orderItem, index) => (
-            <View key={`${item.id}-${index}`} style={styles.orderItemRow}>
+            <View key={`${item.orderId}-${index}`} style={styles.orderItemRow}>
               <Text style={styles.orderItemText}>
                 {orderItem.quantity}x {orderItem.menuItemName}
               </Text>
@@ -491,12 +491,20 @@ const ListScreen = ({ onUpdateStatus }) => {
           );
           const newOrders = response.data?.data ?? [];
           allNewOrders = newOrders;
-          moreDataAvailable = newOrders.length === 10;
+          moreDataAvailable = false; // For specific status, fetch all at once, no more data after initial fetch
         }
 
-        setOrders((prevOrders) =>
-          pageNum === 1 ? allNewOrders : [...prevOrders, ...allNewOrders]
-        );
+        setOrders((prevOrders) => {
+          const newOrdersMap = new Map();
+          // Add existing orders to the map
+          prevOrders.forEach((order) => newOrdersMap.set(order.orderId, order));
+          // Add or update new orders in the map
+          allNewOrders.forEach((order) =>
+            newOrdersMap.set(order.orderId, order)
+          );
+          // Convert map values back to an array
+          return Array.from(newOrdersMap.values());
+        });
         setHasMore(moreDataAvailable);
         if (pageNum === 1) {
           setPage(2);
@@ -696,6 +704,7 @@ const ListScreen = ({ onUpdateStatus }) => {
           </View>
 
           <FlatList
+            key={selectedCategory}
             data={filteredOrders}
             renderItem={renderOrderItem}
             keyExtractor={(item) => String(item.orderId)}
