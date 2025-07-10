@@ -234,7 +234,7 @@ const RegisterScreen = ({ navigation }) => {
             findNodeHandle(refToFocus.current),
             findNodeHandle(scrollViewRef.current),
             (error) => {
-              console.error("MeasureLayout error:", error);
+              // console.error("MeasureLayout error:", error);
             },
             (x, y, width, height) => {
               scrollViewRef.current.scrollTo({ y: y, animated: true });
@@ -260,11 +260,11 @@ const RegisterScreen = ({ navigation }) => {
           name: storeImage.fileName,
         });
         const imageResponse = await uploadImage(imageFormData);
-        console.log("imageResponse", imageResponse.data.url);
+        // console.log("imageResponse", imageResponse.data.url);
 
         imageUrl = imageResponse.data.url;
       } catch (error) {
-        console.error("Error uploading image:", error); // Add this line for debugging
+        // console.error("Error uploading image:", error); // Add this line for debugging
         Alert.alert(
           "Error",
           "Gagal mengunggah gambar toko. Detail: " + error.message,
@@ -288,7 +288,7 @@ const RegisterScreen = ({ navigation }) => {
       status: "INACTIVE",
       storeImageUrl: imageUrl,
     });
-    console.log("result", result);
+    // console.log("result", result);
 
     if (!result.success) {
       Alert.alert("Error", result.message, [{ text: "Tutup" }]);
@@ -304,7 +304,7 @@ const RegisterScreen = ({ navigation }) => {
     }
   };
   const location = getDataLocation(latitude, longitude);
-  console.log("location", location);
+  // console.log("location", location);
   const handleMapPress = (e) => {
     const { latitude: newLatitude, longitude: newLongitude } =
       e.nativeEvent.coordinate;
