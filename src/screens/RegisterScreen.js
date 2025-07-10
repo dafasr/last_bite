@@ -297,7 +297,7 @@ const RegisterScreen = ({ navigation }) => {
         type: "success",
         title: "Registrasi Berhasil!",
         textBody: "Silakan login untuk melanjutkan.",
-        onPress: () => {
+        onClose: () => {
           navigation.navigate("Login");
         },
       });
@@ -528,9 +528,9 @@ const RegisterScreen = ({ navigation }) => {
             </MapView>
             <TextInput
               style={styles.input}
-              placeholder="Detail Alamat"
+              placeholder="Alamat"
               placeholderTextColor="#888"
-              // value={address}
+              value={address}
               onChangeText={(text) => {
                 setAddress(text);
                 if (errors.address) setErrors({ ...errors, address: null });
@@ -689,7 +689,8 @@ const styles = StyleSheet.create({
   },
   loginContainer: {
     flexDirection: "row",
-    marginTop: 20, // Margin atas disesuaikan
+    marginTop: -15, // Margin atas disesuaikan
+    marginBottom: 30,
     justifyContent: "center",
     alignItems: "center",
   },
