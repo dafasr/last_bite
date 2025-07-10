@@ -1,10 +1,37 @@
-import React, { createContext, useState, useContext } from "react";
-import { deleteMenuItem, updateMenuItem } from "../api/apiClient";
+import React, { createContext, useState, useContext, useCallback } from "react";
+import { Alert } from "react-native";
+import {
+  getMenuItems,
+  deleteMenuItem,
+  updateMenuItem,
+} from "../api/apiClient";
 
 const MenuContext = createContext();
 
 export const MenuProvider = ({ children }) => {
   const [surpriseBags, setSurpriseBags] = useState([]);
+  const [averageRating, setAverageRating] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchMenuItems = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getMenuItems();
+      // The entire array from response.data.data, which includes averageRating on each item, is stored.
+      setSurpriseBags(response.data.data || []); 
+      // We can still store the overall average if the API provides it separately
+      if (response.data.averageRating) {
+        setAverageRating(response.data.averageRating);
+      } else {
+        setAverageRating(0); // Default to 0 if not provided
+      }
+    } catch (error) {
+      console.error("Failed to fetch menu items in context:", error);
+      Alert.alert("Error", "Gagal mengambil data menu.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const addBag = (newBag) => {
     const bagWithId = {
@@ -57,6 +84,9 @@ export const MenuProvider = ({ children }) => {
 
   const value = {
     surpriseBags,
+    averageRating,
+    loading,
+    fetchMenuItems,
     setSurpriseBags, // Expose setSurpriseBags
     addBag,
     updateBag,

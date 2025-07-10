@@ -1,6 +1,12 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+let logoutHandler = () => {};
+
+export const setLogoutHandler = (handler) => {
+  logoutHandler = handler;
+};
+
 const apiClient = axios.create({
   baseURL: "http://10.10.102.131:8080/api",
 });
@@ -9,12 +15,21 @@ apiClient.interceptors.request.use(
   async (config) => {
     const token = await AsyncStorage.getItem("userToken");
     if (token) {
-      // Menambahkan token ke header Authorization
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      logoutHandler();
+    }
     return Promise.reject(error);
   }
 );

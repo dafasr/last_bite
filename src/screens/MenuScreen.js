@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-  useEffect,
-} from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   View,
@@ -15,13 +9,13 @@ import {
   SafeAreaView,
   Image,
   RefreshControl,
-  ScrollView,
   Animated,
   Easing,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 
 import { useMenu } from "../context/MenuContext"; // Pastikan path ini benar
-import { getMenuItems } from "../api/apiClient"; // Pastikan path ini benar
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 // --- THEME CONSTANTS ---
@@ -204,9 +198,8 @@ const AnimatedMenuItem = ({ children, style }) => {
 };
 
 const MenuScreen = ({ navigation }) => {
-  const { surpriseBags, setSurpriseBags, toggleAvailability, deleteBag } =
+  const { surpriseBags, averageRating, loading, fetchMenuItems, deleteBag } =
     useMenu();
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
   const lastScrollY = useRef(0);
@@ -228,23 +221,6 @@ const MenuScreen = ({ navigation }) => {
     outputRange: [0, 200], // Move button out of view
   });
 
-  const fetchMenuItems = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await getMenuItems();
-      setSurpriseBags(response.data.data);
-    } catch (error) {
-      console.error("Failed to fetch menu items:", error);
-      Alert.alert(
-        "Error",
-        "Gagal mengambil item menu.",
-        [{ text: "Tutup" }]
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [setSurpriseBags]);
-
   useFocusEffect(
     React.useCallback(() => {
       fetchMenuItems();
@@ -257,9 +233,14 @@ const MenuScreen = ({ navigation }) => {
     setRefreshing(false);
   }, [fetchMenuItems]);
 
-  const handleEdit = (bag) => navigation.navigate("DetailNavigator", { screen: "EditBag", params: { bag } });
+  const handleEdit = (bag) =>
+    navigation.navigate("DetailNavigator", {
+      screen: "EditBag",
+      params: { bag },
+    });
 
-  const handleAddBag = () => navigation.navigate("DetailNavigator", { screen: "AddBag" });
+  const handleAddBag = () =>
+    navigation.navigate("DetailNavigator", { screen: "AddBag" });
 
   const handleDelete = (bagId, bagName) => {
     Alert.alert(
@@ -313,7 +294,17 @@ const MenuScreen = ({ navigation }) => {
         </View>
       </View>
       <View style={styles.bagContent}>
-        <Text style={styles.bagName}>{item.name}</Text>
+        <View style={styles.bagHeader}>
+          <Text style={styles.bagName}>{item.name}</Text>
+          {typeof item.averageRating === "number" && (
+            <View style={styles.itemRatingContainer}>
+              <Ionicons name="star" size={14} color="#FFD700" />
+              <Text style={styles.itemRatingText}>
+                {item.averageRating.toFixed(1)}
+              </Text>
+            </View>
+          )}
+        </View>
 
         <View style={styles.orderItemsContainer}>
           <Text style={styles.orderItemsTitle}>📦 Kemungkinan isi:</Text>
@@ -354,11 +345,30 @@ const MenuScreen = ({ navigation }) => {
     </AnimatedMenuItem>
   );
 
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Memuat Menu...</Text>
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <AnimatedCard style={styles.header}>
-          <Text style={styles.headerTitle}>Daftar Menu</Text>
+          <View style={styles.headerTop}>
+            <Text style={styles.headerTitle}>Daftar Menu</Text>
+            {/* {averageRating !== null && (
+              <View style={styles.ratingContainer}>
+                <Ionicons name="star" size={20} color="#FFD700" />
+                <Text style={styles.ratingText}>
+                  {averageRating.toFixed(1)}
+                </Text>
+              </View>
+            )} */}
+          </View>
           <View style={styles.headerUnderline} />
         </AnimatedCard>
         <FlatList
@@ -381,7 +391,11 @@ const MenuScreen = ({ navigation }) => {
             </AnimatedCard>
           }
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[COLORS.primary]}
+            />
           }
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -448,11 +462,30 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGray2,
   },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
   headerTitle: {
     fontSize: 28,
     fontWeight: "900",
     color: COLORS.title,
-    marginBottom: 8,
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.priceBg,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: SIZES.radius,
+  },
+  ratingText: {
+    marginLeft: 5,
+    fontSize: 16,
+    fontWeight: "bold",
+    color: COLORS.primary,
   },
   headerUnderline: {
     width: 60,
@@ -523,11 +556,32 @@ const styles = StyleSheet.create({
   bagContent: {
     padding: 12,
   },
+  bagHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 8,
+  },
   bagName: {
     fontSize: 15,
     fontWeight: "600",
     color: "#333",
-    marginBottom: 8,
+    flex: 1, // Allow name to wrap
+    marginRight: 8,
+  },
+  itemRatingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.noteBg,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 5,
+  },
+  itemRatingText: {
+    marginLeft: 4,
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#E67E22",
   },
   orderItemsContainer: {
     marginBottom: 8,
