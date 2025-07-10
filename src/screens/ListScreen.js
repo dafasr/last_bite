@@ -456,6 +456,95 @@ const ListScreen = ({ onUpdateStatus }) => {
   const [currentOrderId, setCurrentOrderId] = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-50)).current;
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const fetchOrders = useCallback(
+    async (pageNum = 1, isRefresh = false) => {
+      if (pageNum === 1) {
+        if (!isRefresh) setLoading(true);
+        else setRefreshing(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      try {
+        const statuses =
+          selectedCategory === "Semua"
+            ? ["PREPARING", "READY_FOR_PICKUP", "COMPLETED", "CANCELLED"]
+            : Object.keys(STATUS_CONFIG).filter(
+                (key) => STATUS_CONFIG[key].displayName === selectedCategory
+              );
+
+        let allNewOrders = [];
+        let moreDataAvailable = false;
+
+        // Jika kategori adalah "Semua", kita fetch per status dengan pagination
+        if (selectedCategory === "Semua") {
+          const response = await apiClient.get(
+            `/orders/seller/me?page=${pageNum}&size=10`
+          );
+          const newOrders = response.data?.data ?? [];
+          allNewOrders = newOrders;
+          moreDataAvailable = newOrders.length === 10;
+        } else {
+          // Fetch data untuk status yang dipilih
+          for (const status of statuses) {
+            const response = await apiClient.get(
+              `/orders/seller/me?status=${status}&page=${pageNum}&size=10`
+            );
+            const newOrders = response.data?.data ?? [];
+            allNewOrders = allNewOrders.concat(newOrders);
+            if (newOrders.length === 10) {
+              moreDataAvailable = true;
+            }
+          }
+        }
+
+        setOrders((prevOrders) =>
+          pageNum === 1 ? allNewOrders : [...prevOrders, ...allNewOrders]
+        );
+        setHasMore(moreDataAvailable);
+        if (pageNum === 1) {
+          setPage(2);
+        } else {
+          setPage((prevPage) => prevPage + 1);
+        }
+      } catch (error) {
+        console.error("Failed to fetch orders:", error);
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Error",
+          textBody: "Gagal mengambil daftar pesanan.",
+          button: "Tutup",
+        });
+        setHasMore(false);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+        setLoadingMore(false);
+      }
+    },
+    [selectedCategory]
+  );
+
+  useEffect(() => {
+    fetchOrders(1);
+  }, [selectedCategory]); // Re-fetch when category changes
+
+  const onRefresh = () => {
+    setPage(1);
+    setOrders([]);
+    setHasMore(true);
+    fetchOrders(1, true);
+  };
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchOrders(page);
+    }
+  };
 
   React.useEffect(() => {
     if (!loading) {
@@ -474,10 +563,13 @@ const ListScreen = ({ onUpdateStatus }) => {
     }
   }, [loading]);
 
-  const handleCompleteOrder = useCallback((orderId) => {
-    setCurrentOrderId(orderId);
-    setModalVisible(true);
-  }, []);
+  const handleCompleteOrder = useCallback(
+    (orderId) => {
+      setCurrentOrderId(orderId);
+      setModalVisible(true);
+    },
+    [onRefresh]
+  );
 
   const handleModalSubmit = useCallback(async () => {
     setModalVisible(false);
@@ -487,7 +579,7 @@ const ListScreen = ({ onUpdateStatus }) => {
       await apiClient.put(`/orders/${currentOrderId}/complete`, {
         verificationCode,
       });
-      fetchOrders();
+      onRefresh(); // Refresh data
       Dialog.show({
         type: ALERT_TYPE.SUCCESS,
         title: "Berhasil",
@@ -506,7 +598,7 @@ const ListScreen = ({ onUpdateStatus }) => {
     }
     setCurrentOrderId(null);
     setVerificationCode("");
-  }, [currentOrderId, verificationCode]);
+  }, [currentOrderId, verificationCode, onRefresh]);
 
   const handleModalCancel = useCallback(() => {
     setModalVisible(false);
@@ -514,67 +606,25 @@ const ListScreen = ({ onUpdateStatus }) => {
     setVerificationCode("");
   }, []);
 
-  const handleUpdateStatus = useCallback(async (orderId, newStatus) => {
-    try {
-      if (newStatus === "READY_FOR_PICKUP") {
-        await apiClient.put(`/orders/${orderId}/ready`);
-        fetchOrders();
-      }
-    } catch (error) {
-      console.error("Failed to update order status:", error);
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "Gagal memperbarui status pesanan.",
-        button: "Tutup",
-      });
-    }
-  }, []);
-
-  const fetchOrders = useCallback(async () => {
-    setLoading(true);
-    try {
-      const statuses = [
-        "PREPARING",
-        "READY_FOR_PICKUP",
-        "COMPLETED",
-        "CANCELLED",
-      ];
-      let allOrders = [];
-
-      for (const status of statuses) {
-        const response = await apiClient.get(
-          `/orders/seller/me?status=${status}`
-        );
-        if (response.data && Array.isArray(response.data.data)) {
-          allOrders = allOrders.concat(response.data.data);
+  const handleUpdateStatus = useCallback(
+    async (orderId, newStatus) => {
+      try {
+        if (newStatus === "READY_FOR_PICKUP") {
+          await apiClient.put(`/orders/${orderId}/ready`);
+          onRefresh(); // Refresh data
         }
+      } catch (error) {
+        console.error("Failed to update order status:", error);
+        Dialog.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Error",
+          textBody: "Gagal memperbarui status pesanan.",
+          button: "Tutup",
+        });
       }
-      setOrders(allOrders);
-    } catch (error) {
-      console.error("Failed to fetch orders:", error);
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "Gagal mengambil daftar pesanan.",
-        button: "Tutup",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchOrders();
-    }, [fetchOrders])
+    },
+    [onRefresh]
   );
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchOrders();
-    setRefreshing(false);
-  }, [fetchOrders]);
 
   const renderOrderItem = ({ item, index }) => {
     return (
@@ -588,7 +638,6 @@ const ListScreen = ({ onUpdateStatus }) => {
 
   const filteredOrders = useMemo(() => {
     if (!Array.isArray(orders)) {
-      console.log("filteredOrders: orders is not an array", orders);
       return [];
     }
     if (selectedCategory === "Semua") {
@@ -676,6 +725,17 @@ const ListScreen = ({ onUpdateStatus }) => {
                 colors={["#007AFF"]}
                 tintColor="#007AFF"
               />
+            }
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={
+              loadingMore && (
+                <ActivityIndicator
+                  style={{ marginVertical: 20 }}
+                  size="large"
+                  color="#007AFF"
+                />
+              )
             }
           />
         </Animated.View>
