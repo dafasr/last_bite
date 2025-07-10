@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   registerContainer: {
     flexDirection: "row",
-    marginTop: 20, // Margin atas lebih besar
+    marginTop: -15, // Margin atas lebih besar
     justifyContent: "center",
     alignItems: "center",
   },
