@@ -484,17 +484,14 @@ const ListScreen = ({ onUpdateStatus }) => {
           allNewOrders = newOrders;
           moreDataAvailable = newOrders.length === 10;
         } else {
-          // Fetch data untuk status yang dipilih
-          for (const status of statuses) {
-            const response = await apiClient.get(
-              `/orders/seller/me?status=${status}&page=${pageNum}&size=10`
-            );
-            const newOrders = response.data?.data ?? [];
-            allNewOrders = allNewOrders.concat(newOrders);
-            if (newOrders.length === 10) {
-              moreDataAvailable = true;
-            }
-          }
+          // Fetch data for the selected status
+          const statusToFetch = statuses[0]; // There will only be one status
+          const response = await apiClient.get(
+            `/orders/seller/me?status=${statusToFetch}`
+          );
+          const newOrders = response.data?.data ?? [];
+          allNewOrders = newOrders;
+          moreDataAvailable = newOrders.length === 10;
         }
 
         setOrders((prevOrders) =>
