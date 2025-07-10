@@ -271,11 +271,6 @@ const CountUpAnimation = ({ value, duration = 1000, style, ...props }) => {
 
 // Konfigurasi terpusat untuk semua status pesanan
 const STATUS_CONFIG = {
-  ACCEPT: {
-    displayName: "Disiapkan",
-    color: "#FF9500",
-    gradient: ["#FF9500", "#FF7A00"],
-  },
   PREPARING: {
     displayName: "Disiapkan",
     color: "#FF9500",
