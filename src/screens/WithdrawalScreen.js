@@ -12,6 +12,7 @@ import {
   Animated,
   Easing,
 } from "react-native";
+import { Picker } from '@react-native-picker/picker';
 
 import { ALERT_TYPE, Toast } from "react-native-alert-notification";
 import apiClient from "../api/apiClient";
@@ -378,11 +379,6 @@ const WithdrawalScreen = ({ navigation }) => {
               },
             ]}
           >
-            <AnimatedCard style={styles.header}>
-              <Text style={styles.headerTitle}>Penarikan Dana</Text>
-              <View style={styles.headerUnderline} />
-            </AnimatedCard>
-
             <AnimatedCard style={styles.formContainer}>
               {loadingBalance ? (
                 <Text style={styles.balanceText}>Loading balance...</Text>
@@ -404,15 +400,23 @@ const WithdrawalScreen = ({ navigation }) => {
               ) : null}
 
               <Text style={styles.label}>Nama Bank</Text>
-              <TextInput
-                style={[styles.input, bankNameError ? styles.inputError : null]}
-                placeholder="Masukkan nama bank"
-                value={bankName}
-                onChangeText={(text) => {
-                  setBankName(text);
-                  setBankNameError("");
-                }}
-              />
+              <View style={[styles.pickerContainer, bankNameError ? styles.inputError : null]}>
+                <Picker
+                  selectedValue={bankName}
+                  onValueChange={(itemValue) => {
+                    setBankName(itemValue);
+                    setBankNameError("");
+                  }}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="Pilih Bank" value="" />
+                  <Picker.Item label="Mandiri" value="Mandiri" />
+                  <Picker.Item label="BCA" value="BCA" />
+                  <Picker.Item label="BRI" value="BRI" />
+                  <Picker.Item label="OCBC" value="OCBC" />
+                  <Picker.Item label="Maybank" value="Maybank" />
+                </Picker>
+              </View>
               {bankNameError ? (
                 <Text style={styles.errorText}>{bankNameError}</Text>
               ) : null}
@@ -461,29 +465,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingBottom: SIZES.padding,
-  },
-
-  // --- Enhanced Header ---
-  header: {
-    paddingTop: 30,
-    paddingBottom: 25,
-    paddingHorizontal: SIZES.padding,
-    backgroundColor: COLORS.background,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray2,
-  },
-  headerTitle: {
-    ...FONTS.h2,
-    color: COLORS.title,
-    marginBottom: SIZES.base,
-    textAlign: "center",
-  },
-  headerUnderline: {
-    width: 60,
-    height: 4,
-    backgroundColor: COLORS.primary,
-    borderRadius: 2,
-    alignSelf: "center",
   },
 
   // --- Form Container ---
@@ -544,6 +525,6 @@ const styles = StyleSheet.create({
   inputError: {
     borderColor: COLORS.danger,
   },
-});
+  });
 
 export default WithdrawalScreen;
