@@ -576,6 +576,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "flex-start",
     flex: 1,
+    minHeight: 35, // Menjaga konsistensi tinggi dengan atau tanpa tombol 'more'
   },
   bagName: {
     fontSize: 15,
