@@ -204,6 +204,7 @@ const MenuScreen = ({ navigation }) => {
   const scrollY = useRef(new Animated.Value(0)).current;
   const lastScrollY = useRef(0);
   const [fabVisible, setFabVisible] = useState(true);
+  const [showFullNames, setShowFullNames] = useState({});
 
   const fabAnimation = useRef(new Animated.Value(0)).current;
 
@@ -297,11 +298,11 @@ const MenuScreen = ({ navigation }) => {
         <View style={styles.bagHeader}>
           <View style={styles.nameAndMoreContainer}>
             <Text style={styles.bagName}>
-              {item.name.length > 7 ? `${item.name.substring(0, 7)}...` : item.name}
+              {showFullNames[item.id] ? item.name : (item.name.length > 7 ? `${item.name.substring(0, 7)}...` : item.name)}
             </Text>
             {item.name.length > 7 && (
-              <TouchableOpacity onPress={() => Alert.alert("Nama Menu", item.name)}>
-                <Text style={styles.moreText}>more</Text>
+              <TouchableOpacity onPress={() => setShowFullNames(prev => ({...prev, [item.id]: !prev[item.id]}))}>
+                <Text style={styles.moreText}>{showFullNames[item.id] ? 'less' : 'more'}</Text>
               </TouchableOpacity>
             )}
           </View>
