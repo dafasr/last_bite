@@ -200,7 +200,11 @@ const ProfileScreen = ({ navigation }) => {
         "hardwareBackPress",
         onBackPress
       );
-      return () => { if (backHandler) backHandler.remove(); };
+      return () => {
+        if (backHandler && typeof backHandler.remove === 'function') {
+          backHandler.remove();
+        }
+      };
     }, [isAuthLoading]));
 
   useEffect(() => {
