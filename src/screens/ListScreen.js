@@ -539,7 +539,10 @@ const ListScreen = () => {
       return [];
     }
     if (selectedCategory === "Semua") {
-      return orders;
+      // Exclude PENDING_PAYMENT and PAID from "Semua" category
+      return orders.filter(
+        (o) => o.status !== "PENDING_PAYMENT" && o.status !== "PAID"
+      );
     }
     const internalStatuses = Object.keys(STATUS_CONFIG).filter(
       (key) => STATUS_CONFIG[key].displayName === selectedCategory
