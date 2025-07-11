@@ -9,7 +9,7 @@ const getDataLocation = async (latitude, longitude) => {
       }
     );
     const data = await response.json();
-    console.log(data);
+    // console.log(data);
 
     if (!data || !data.address) {
       console.error("Alamat tidak ditemukan dari koordinat");

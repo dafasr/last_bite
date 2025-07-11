@@ -339,10 +339,26 @@ const RegisterScreen = ({ navigation }) => {
               { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
             ]}
           >
+            <Text style={styles.label}>Nama Lengkap</Text>
             <TextInput
               style={styles.input}
-              placeholder="Username"
-              placeholderTextColor="#888"
+              // placeholder="Masukkan Nama Lengkap Anda"
+              // placeholderTextColor="#888"
+              value={fullName}
+              onChangeText={(text) => {
+                setFullName(text);
+                if (errors.fullName) setErrors({ ...errors, fullName: null });
+              }}
+              ref={fullNameRef}
+            />
+            {errors.fullName && (
+              <Text style={styles.errorText}>{errors.fullName}</Text>
+            )}
+            <Text style={styles.label}>Username</Text>
+            <TextInput
+              style={styles.input}
+              // placeholder="Masukkan Username Anda"
+              // placeholderTextColor="#888"
               value={username}
               onChangeText={(text) => {
                 setUsername(text);
@@ -353,10 +369,11 @@ const RegisterScreen = ({ navigation }) => {
             {errors.username && (
               <Text style={styles.errorText}>{errors.username}</Text>
             )}
+            <Text style={styles.label}>Email</Text>
             <TextInput
               style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#888"
+              // placeholder="Masukkan Email Anda"
+              // placeholderTextColor="#888"
               value={email}
               onChangeText={(text) => {
                 setEmail(text);
@@ -369,11 +386,12 @@ const RegisterScreen = ({ navigation }) => {
             {errors.email && (
               <Text style={styles.errorText}>{errors.email}</Text>
             )}
+            <Text style={styles.label}>Kata Sandi</Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.inputWithEye}
-                placeholder="Kata Sandi"
-                placeholderTextColor="#888"
+                // placeholder="Masukkan Kata Sandi Anda"
+                // placeholderTextColor="#888"
                 value={password}
                 onChangeText={(text) => {
                   setPassword(text);
@@ -396,11 +414,12 @@ const RegisterScreen = ({ navigation }) => {
             {errors.password && (
               <Text style={styles.errorText}>{errors.password}</Text>
             )}
+            <Text style={styles.label}>Konfirmasi Kata Sandi</Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.inputWithEye}
-                placeholder="Konfirmasi Kata Sandi"
-                placeholderTextColor="#888"
+                // placeholder="Konfirmasi Kata Sandi Anda"
+                // placeholderTextColor="#888"
                 value={confirmPassword}
                 onChangeText={(text) => {
                   setConfirmPassword(text);
@@ -426,24 +445,11 @@ const RegisterScreen = ({ navigation }) => {
             {errors.confirmPassword && (
               <Text style={styles.errorText}>{errors.confirmPassword}</Text>
             )}
+            <Text style={styles.label}>Nomor Telepon</Text>
             <TextInput
               style={styles.input}
-              placeholder="Nama Lengkap"
-              placeholderTextColor="#888"
-              value={fullName}
-              onChangeText={(text) => {
-                setFullName(text);
-                if (errors.fullName) setErrors({ ...errors, fullName: null });
-              }}
-              ref={fullNameRef}
-            />
-            {errors.fullName && (
-              <Text style={styles.errorText}>{errors.fullName}</Text>
-            )}
-            <TextInput
-              style={styles.input}
-              placeholder="Nomor Telepon"
-              placeholderTextColor="#888"
+              // placeholder="Masukkan Nomor Telepon Anda"
+              // placeholderTextColor="#888"
               value={phoneNumber}
               onChangeText={(text) => {
                 setPhoneNumber(text);
@@ -456,10 +462,11 @@ const RegisterScreen = ({ navigation }) => {
             {errors.phoneNumber && (
               <Text style={styles.errorText}>{errors.phoneNumber}</Text>
             )}
+            <Text style={styles.label}>Nama Toko</Text>
             <TextInput
               style={styles.input}
-              placeholder="Nama Toko"
-              placeholderTextColor="#888"
+              // placeholder="Masukkan Nama Toko Anda"
+              // placeholderTextColor="#888"
               value={storeName}
               onChangeText={(text) => {
                 setStoreName(text);
@@ -470,10 +477,11 @@ const RegisterScreen = ({ navigation }) => {
             {errors.storeName && (
               <Text style={styles.errorText}>{errors.storeName}</Text>
             )}
+            <Text style={styles.label}>Deskripsi Toko</Text>
             <TextInput
               style={styles.input}
-              placeholder="Deskripsi Toko"
-              placeholderTextColor="#888"
+              // placeholder="Masukkan Deskripsi Toko Anda"
+              // placeholderTextColor="#888"
               value={storeDescription}
               onChangeText={(text) => {
                 setStoreDescription(text);
@@ -515,7 +523,7 @@ const RegisterScreen = ({ navigation }) => {
                 </Text>
               )}
             </TouchableOpacity>
-            <Text style={styles.locationText}>{locationDisplayName}</Text>
+            {/* <Text style={styles.locationText}>{locationDisplayName}</Text> */}
 
             <MapView
               style={styles.map}
@@ -526,16 +534,19 @@ const RegisterScreen = ({ navigation }) => {
                 coordinate={{ latitude: latitude, longitude: longitude }}
               />
             </MapView>
+            <Text style={styles.label}>Alamat</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Alamat"
-              placeholderTextColor="#888"
+              style={[styles.input, styles.textArea]}
+              // placeholder="Masukkan Alamat Lengkap Anda"
+              // placeholderTextColor="#888"
               value={address}
               onChangeText={(text) => {
                 setAddress(text);
                 if (errors.address) setErrors({ ...errors, address: null });
               }}
               ref={addressRef}
+              multiline={true}
+              numberOfLines={4}
             />
             {errors.address && (
               <Text style={styles.errorText}>{errors.address}</Text>
@@ -619,6 +630,11 @@ const styles = StyleSheet.create({
     borderColor: "#E0E0E0", // Border input lebih terang
     color: "#333",
     fontSize: 16,
+  },
+  textArea: {
+    height: 120, // Tinggi yang lebih besar untuk textarea
+    textAlignVertical: "top", // Agar teks dimulai dari atas
+    paddingVertical: 15, // Padding vertikal untuk textarea
   },
   label: {
     fontSize: 16,
