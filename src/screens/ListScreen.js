@@ -20,7 +20,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { ALERT_TYPE, Dialog, prompt } from "react-native-alert-notification";
-import apiClient from "../api/apiClient";
+import { useOrders } from "../context/OrderContext";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -441,112 +441,41 @@ const AnimatedOrderItem = ({ item, onUpdateStatus, onCompleteOrder }) => {
   );
 };
 
-const ListScreen = ({ onUpdateStatus }) => {
+const ListScreen = () => {
+  const {
+    orders,
+    loading,
+    refreshing,
+    loadingMore,
+    page,
+    hasMore,
+    fetchOrders,
+    updateOrderStatus,
+    completeOrder,
+    resetPagination,
+  } = useOrders();
+
   const [selectedCategory, setSelectedCategory] = useState("Semua");
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [currentOrderId, setCurrentOrderId] = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-50)).current;
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-
-  const fetchOrders = useCallback(
-    async (pageNum = 1, isRefresh = false) => {
-      if (pageNum === 1) {
-        if (!isRefresh) setLoading(true);
-        else setRefreshing(true);
-      } else {
-        setLoadingMore(true);
-      }
-
-      try {
-        const statuses =
-          selectedCategory === "Semua"
-            ? ["PREPARING", "READY_FOR_PICKUP", "COMPLETED", "CANCELLED"]
-            : Object.keys(STATUS_CONFIG).filter(
-                (key) => STATUS_CONFIG[key].displayName === selectedCategory
-              );
-
-        let allNewOrders = [];
-        let moreDataAvailable = false;
-
-        // Jika kategori adalah "Semua", kita fetch per status dengan pagination
-        if (selectedCategory === "Semua") {
-          const response = await apiClient.get(
-            `/orders/seller/me?page=${pageNum}&size=10`
-          );
-          const newOrders = response.data?.data ?? [];
-          allNewOrders = newOrders;
-          moreDataAvailable = newOrders.length === 10;
-        } else {
-          // Fetch data for the selected status
-          const statusToFetch = statuses[0]; // There will only be one status
-          const response = await apiClient.get(
-            `/orders/seller/me?status=${statusToFetch}&page=${
-              pageNum - 1
-            }&size=10`
-          );
-          const newOrders = response.data?.data ?? [];
-          allNewOrders = newOrders;
-          moreDataAvailable = false; // For specific status, fetch all at once, no more data after initial fetch
-        }
-
-        setOrders((prevOrders) => {
-          const newOrdersMap = new Map();
-          // Add existing orders to the map
-          prevOrders.forEach((order) => newOrdersMap.set(order.orderId, order));
-          // Add or update new orders in the map
-          allNewOrders.forEach((order) =>
-            newOrdersMap.set(order.orderId, order)
-          );
-          // Convert map values back to an array
-          return Array.from(newOrdersMap.values());
-        });
-        setHasMore(moreDataAvailable);
-        if (pageNum === 1) {
-          setPage(2);
-        } else {
-          setPage((prevPage) => prevPage + 1);
-        }
-      } catch (error) {
-        console.error("Failed to fetch orders:", error);
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "Error",
-          textBody: "Gagal mengambil daftar pesanan.",
-          button: "Tutup",
-        });
-        setHasMore(false);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-        setLoadingMore(false);
-      }
-    },
-    [selectedCategory]
-  );
 
   useEffect(() => {
-    fetchOrders(1);
-  }, [selectedCategory]); // Re-fetch when category changes
+    fetchOrders(1); // Fetch orders only once when component mounts
+  }, []); // Empty dependency array means it runs once on mount
 
-  const onRefresh = () => {
-    setPage(1);
-    setOrders([]);
-    setHasMore(true);
+  const onRefresh = useCallback(() => {
+    resetPagination();
     fetchOrders(1, true);
-  };
+  }, [fetchOrders, resetPagination]);
 
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
     if (!loadingMore && hasMore) {
       fetchOrders(page);
     }
-  };
+  }, [loadingMore, hasMore, fetchOrders, page]);
 
   React.useEffect(() => {
     if (!loading) {
@@ -566,41 +495,21 @@ const ListScreen = ({ onUpdateStatus }) => {
   }, [loading]);
 
   const handleCompleteOrder = useCallback(
-    (orderId) => {
+    async (orderId) => {
       setCurrentOrderId(orderId);
       setModalVisible(true);
     },
-    [onRefresh]
+    []
   );
 
   const handleModalSubmit = useCallback(async () => {
     setModalVisible(false);
     if (!currentOrderId) return;
 
-    try {
-      await apiClient.put(`/orders/${currentOrderId}/complete`, {
-        verificationCode,
-      });
-      onRefresh(); // Refresh data
-      Dialog.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: "Berhasil",
-        textBody: "Pesanan berhasil diselesaikan.",
-        button: "Tutup",
-      });
-    } catch (error) {
-      console.error("Failed to complete order:", error);
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody:
-          "Gagal menyelesaikan pesanan. Pastikan kode verifikasi benar.",
-        button: "Tutup",
-      });
-    }
+    await completeOrder(currentOrderId, verificationCode);
     setCurrentOrderId(null);
     setVerificationCode("");
-  }, [currentOrderId, verificationCode, onRefresh]);
+  }, [currentOrderId, verificationCode, completeOrder]);
 
   const handleModalCancel = useCallback(() => {
     setModalVisible(false);
@@ -610,22 +519,9 @@ const ListScreen = ({ onUpdateStatus }) => {
 
   const handleUpdateStatus = useCallback(
     async (orderId, newStatus) => {
-      try {
-        if (newStatus === "READY_FOR_PICKUP") {
-          await apiClient.put(`/orders/${orderId}/ready`);
-          onRefresh(); // Refresh data
-        }
-      } catch (error) {
-        console.error("Failed to update order status:", error);
-        Dialog.show({
-          type: ALERT_TYPE.DANGER,
-          title: "Error",
-          textBody: "Gagal memperbarui status pesanan.",
-          button: "Tutup",
-        });
-      }
+      await updateOrderStatus(orderId, newStatus);
     },
-    [onRefresh]
+    [updateOrderStatus]
   );
 
   const renderOrderItem = ({ item, index }) => {

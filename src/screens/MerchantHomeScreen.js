@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { ALERT_TYPE, Dialog } from "react-native-alert-notification";
 import apiClient from "../api/apiClient";
+import { useOrders } from "../context/OrderContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -269,7 +270,10 @@ const MerchantHomeScreen = ({ navigation }) => {
   const [soldBagsCount, setSoldBagsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [incomingOrders, setIncomingOrders] = useState([]);
+
+  const { orders, fetchOrders, updateOrderStatus } = useOrders();
+
+  const incomingOrders = orders.filter((order) => order.status === "PAID");
 
   // Animation refs
   const [headerAnim] = useAnimation(0);
@@ -310,12 +314,7 @@ const MerchantHomeScreen = ({ navigation }) => {
           button: "Close",
         });
       }
-
-      const ordersResponse = await apiClient.get("/orders/seller/me");
-      const paidOrders = ordersResponse.data.data.filter(
-        (order) => order.status === "PAID"
-      );
-      setIncomingOrders(paidOrders);
+      await fetchOrders(1, true); // Fetch all orders from context
     } catch (error) {
       console.error("Error fetching data:", error);
       Dialog.show({
@@ -327,7 +326,7 @@ const MerchantHomeScreen = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchOrders]);
 
   useEffect(() => {
     fetchData();
@@ -344,33 +343,11 @@ const MerchantHomeScreen = ({ navigation }) => {
   };
 
   const handleReject = async (orderId) => {
-    try {
-      await apiClient.put(`/orders/${orderId}/cancel`);
-      fetchData(); // Refresh data
-    } catch (error) {
-      console.error("Failed to reject order:", error);
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "Gagal menolak pesanan.",
-        button: "Tutup",
-      });
-    }
+    await updateOrderStatus(orderId, "CANCELLED");
   };
 
   const handleAccept = async (orderId) => {
-    try {
-      await apiClient.put(`/orders/${orderId}/accept`);
-      fetchData(); // Refresh data
-    } catch (error) {
-      console.error("Failed to accept order:", error);
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Error",
-        textBody: "Gagal menerima pesanan.",
-        button: "Tutup",
-      });
-    }
+    await updateOrderStatus(orderId, "ACCEPTED");
   };
 
   const renderOrderItem = ({ item, index }) => (
@@ -526,9 +503,7 @@ const MerchantHomeScreen = ({ navigation }) => {
           <FlatList
             data={incomingOrders}
             renderItem={renderOrderItem}
-            keyExtractor={(item, index) =>
-              item.id ? item.id.toString() : index.toString()
-            }
+            keyExtractor={(item) => String(item.orderId)}
             contentContainerStyle={styles.listContainer}
             scrollEnabled={false} // Disable FlatList scrolling
             ListEmptyComponent={
