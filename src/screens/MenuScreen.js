@@ -295,7 +295,16 @@ const MenuScreen = ({ navigation }) => {
       </View>
       <View style={styles.bagContent}>
         <View style={styles.bagHeader}>
-          <Text style={styles.bagName}>{item.name}</Text>
+          <View style={styles.nameAndMoreContainer}>
+            <Text style={styles.bagName}>
+              {item.name.length > 7 ? `${item.name.substring(0, 7)}...` : item.name}
+            </Text>
+            {item.name.length > 7 && (
+              <TouchableOpacity onPress={() => Alert.alert("Nama Menu", item.name)}>
+                <Text style={styles.moreText}>more</Text>
+              </TouchableOpacity>
+            )}
+          </View>
           {typeof item.averageRating === "number" && (
             <View style={styles.itemRatingContainer}>
               <Ionicons name="star" size={14} color="#FFD700" />
@@ -562,12 +571,23 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 8,
   },
+  nameAndMoreContainer: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    flex: 1,
+  },
   bagName: {
     fontSize: 15,
     fontWeight: "600",
     color: "#333",
     flex: 1, // Allow name to wrap
     marginRight: 8,
+  },
+  moreText: {
+    fontSize: 12,
+    color: COLORS.secondary,
+    fontWeight: "bold",
+    marginLeft: 4,
   },
   itemRatingContainer: {
     flexDirection: "row",
