@@ -487,7 +487,9 @@ const ListScreen = ({ onUpdateStatus }) => {
           // Fetch data for the selected status
           const statusToFetch = statuses[0]; // There will only be one status
           const response = await apiClient.get(
-            `/orders/seller/me?status=${statusToFetch}`
+            `/orders/seller/me?status=${statusToFetch}&page=${
+              pageNum - 1
+            }&size=10`
           );
           const newOrders = response.data?.data ?? [];
           allNewOrders = newOrders;
