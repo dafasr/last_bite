@@ -289,18 +289,7 @@ const AddBagScreen = ({ navigation }) => {
               keyboardType="numeric"
             />
 
-            <Text style={styles.label}>Status</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={status}
-                onValueChange={(itemValue) => setStatus(itemValue)}
-                style={styles.picker}
-              >
-                <Picker.Item label="Available" value="AVAILABLE" />
-                <Picker.Item label="Sold Out" value="SOLD_OUT" />
-                <Picker.Item label="Not Available" value="NOT_AVAILABLE" />
-              </Picker>
-            </View>
+            
 
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}

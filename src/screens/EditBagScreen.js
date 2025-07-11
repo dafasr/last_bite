@@ -174,10 +174,6 @@ const EditBagScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Edit Menu</Text>
-        </View>
-
         <View style={styles.formContainer}>
           <Text style={styles.label}>Nama Menu</Text>
           <TextInput
@@ -196,7 +192,7 @@ const EditBagScreen = ({ navigation, route }) => {
             multiline
           />
 
-          <Text style={styles.label}>Foto</Text>
+          <Text style={styles.label}>Foto Menu</Text>
           <TouchableOpacity style={styles.outlineButton} onPress={pickImage}>
             <Text style={styles.outlineButtonText}>Pilih Foto Baru</Text>
           </TouchableOpacity>

@@ -298,11 +298,24 @@ const MenuScreen = ({ navigation }) => {
         <View style={styles.bagHeader}>
           <View style={styles.nameAndMoreContainer}>
             <Text style={styles.bagName}>
-              {showFullNames[item.id] ? item.name : (item.name.length > 7 ? `${item.name.substring(0, 7)}...` : item.name)}
+              {showFullNames[item.id]
+                ? item.name
+                : item.name.length > 7
+                ? `${item.name.substring(0, 7)}...`
+                : item.name}
             </Text>
             {item.name.length > 7 && (
-              <TouchableOpacity onPress={() => setShowFullNames(prev => ({...prev, [item.id]: !prev[item.id]}))}>
-                <Text style={styles.moreText}>{showFullNames[item.id] ? 'less' : 'more'}</Text>
+              <TouchableOpacity
+                onPress={() =>
+                  setShowFullNames((prev) => ({
+                    ...prev,
+                    [item.id]: !prev[item.id],
+                  }))
+                }
+              >
+                <Text style={styles.moreText}>
+                  {showFullNames[item.id] ? "less" : "more"}
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -714,8 +727,8 @@ const styles = StyleSheet.create({
   addButton: {
     backgroundColor: "#2ECC71",
     position: "absolute",
-    bottom: 120,
-    right: 25,
+    bottom: 100,
+    right: 10,
     width: 56,
     height: 56,
     borderRadius: 28,
