@@ -374,6 +374,15 @@ const AnimatedOrderItem = ({ item, onUpdateStatus, onCompleteOrder }) => {
             </View>
           </View>
           <Text style={styles.orderIdText}>Order ID: {item.orderId}</Text>
+          <Text style={styles.orderDateText}>
+            {new Date(item.createdAt).toLocaleDateString("id-ID", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </Text>
         </View>
         <View style={styles.priceContainer}>
           <Text style={styles.orderPrice}>
@@ -768,6 +777,12 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 6,
     alignSelf: "flex-start",
+  },
+  orderDateText: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    fontWeight: "500",
+    marginTop: 4,
   },
   priceContainer: {
     paddingHorizontal: 0,

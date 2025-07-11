@@ -356,6 +356,15 @@ const MerchantHomeScreen = ({ navigation }) => {
         <View style={styles.customerInfoContainer}>
           <Text style={styles.customerName}>{item.customerName}</Text>
           <Text style={styles.orderIdText}>Order ID: {item.orderId}</Text>
+          <Text style={styles.orderDateText}>
+            {new Date(item.createdAt).toLocaleDateString("id-ID", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </Text>
         </View>
         <PulseAnimation style={styles.priceContainer}>
           <Text style={styles.orderPrice}>
@@ -741,6 +750,12 @@ const styles = StyleSheet.create({
     ...FONTS.body2,
     color: COLORS.darkGray,
     fontSize: 13,
+  },
+  orderDateText: {
+    fontSize: 12,
+    color: COLORS.gray,
+    fontWeight: "500",
+    marginTop: 4,
   },
   priceContainer: {
     backgroundColor: COLORS.priceBg,
