@@ -7,6 +7,7 @@ import EditBagScreen from '../screens/EditBagScreen';
 import EditStoreScreen from '../screens/EditStoreScreen';
 import EditUserInformationScreen from '../screens/EditUserInformationScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
+import WithdrawalHistoryScreen from '../screens/WithdrawalHistoryScreen';
 
 const DetailStack = createStackNavigator();
 
@@ -14,6 +15,7 @@ const DetailNavigator = () => {
   return (
     <DetailStack.Navigator screenOptions={{ headerShown: true }}>
       <DetailStack.Screen name="Withdrawal" component={WithdrawalScreen} options={{ title: 'Penarikan Dana' }} />
+      <DetailStack.Screen name="WithdrawalHistory" component={WithdrawalHistoryScreen} options={{ title: 'Riwayat Penarikan' }} />
       <DetailStack.Screen name="AddBag" component={AddBagScreen} options={{ title: 'Tambah Menu' }} />
       <DetailStack.Screen name="EditBag" component={EditBagScreen} options={{ title: 'Edit Menu' }} />
       <DetailStack.Screen name="EditStore" component={EditStoreScreen} options={{ title: 'Edit Toko' }} />

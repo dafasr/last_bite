@@ -445,6 +445,13 @@ const WithdrawalScreen = ({ navigation }) => {
               >
                 <Text style={styles.submitButtonText}>Ajukan Penarikan</Text>
               </AnimatedButton>
+
+              <TouchableOpacity
+                style={styles.historyButton}
+                onPress={() => navigation.navigate('WithdrawalHistory')}
+              >
+                <Text style={styles.historyButtonText}>Riwayat Penarikan</Text>
+              </TouchableOpacity>
             </AnimatedCard>
           </Animated.View>
         </ScrollView>
@@ -524,6 +531,17 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: COLORS.danger,
+  },
+  historyButton: {
+    marginTop: SIZES.padding,
+    paddingVertical: SIZES.padding,
+    alignItems: "center",
+  },
+  historyButtonText: {
+    ...FONTS.body2,
+    color: COLORS.secondary,
+    fontWeight: "700",
+    textDecorationLine: "underline",
   },
   });
 

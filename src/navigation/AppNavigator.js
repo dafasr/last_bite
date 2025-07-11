@@ -7,6 +7,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 import SuccessScreen from '../screens/SuccessScreen';
 import { useAuthContext } from '../context/AuthContext';
 import { ActivityIndicator, View } from 'react-native';
+import WithdrawalHistoryScreen from '../screens/WithdrawalHistoryScreen';
 
 const RootStack = createStackNavigator();
 
@@ -33,6 +34,7 @@ const AppNavigator = () => {
       )}
       <RootStack.Screen name="Success" component={SuccessScreen} />
       <RootStack.Screen name="DetailNavigator" component={DetailNavigator} />
+      
     </RootStack.Navigator>
   );
 };
