@@ -206,7 +206,7 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
   // Animation values
@@ -259,6 +259,7 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
       }
       const response = await apiClient.get("/withdrawals/mine", {
         params: { page: pageNumber, limit: 10 }, // Assuming a limit of 10 items per page
+        data: { filter: {} },
       });
 
       if (response.data && response.data.data) {
@@ -299,14 +300,14 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
-    fetchWithdrawalHistory(1);
+    fetchWithdrawalHistory(0);
   }, [fetchWithdrawalHistory]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setPage(1);
+    setPage(0);
     setHasMore(true);
-    fetchWithdrawalHistory(1);
+    fetchWithdrawalHistory(0);
   }, [fetchWithdrawalHistory]);
 
   const handleLoadMore = () => {
@@ -315,8 +316,6 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
       fetchWithdrawalHistory(page + 1);
     }
   };
-
-  
 
   const getStatusConfig = (status) => {
     switch (status) {
@@ -498,7 +497,9 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
             <View style={styles.detailContent}>
               <Text style={styles.detailLabel}>Bank Account</Text>
               <Text style={styles.detailValue}>
-                {item.bankName} • {item.accountNumber}
+                {item.bankName && item.accountNumber
+                  ? `(${item.bankName}) ${item.accountNumber}`
+                  : "Bank details not available"}
               </Text>
             </View>
           </View>
