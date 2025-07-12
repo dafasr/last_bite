@@ -64,62 +64,64 @@ const ChangePasswordScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.form}
-        >
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Kata Sandi Saat Ini</Text>
-            <TextInput
-              style={styles.input}
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              placeholder="Masukkan kata sandi saat ini"
-              secureTextEntry
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Kata Sandi Baru</Text>
-            <TextInput
-              style={styles.input}
-              value={newPassword}
-              onChangeText={setNewPassword}
-              placeholder="Masukkan kata sandi baru"
-              secureTextEntry
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Konfirmasi Kata Sandi Baru</Text>
-            <TextInput
-              style={styles.input}
-              value={confirmNewPassword}
-              onChangeText={setConfirmNewPassword}
-              placeholder="Konfirmasi kata sandi baru"
-              secureTextEntry
-            />
-          </View>
-        </KeyboardAvoidingView>
-
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.saveButton]}
-            onPress={handleSave}
-            disabled={isSaving}
+        <View style={styles.boxContainer}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.form}
           >
-            {isSaving ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.actionButtonText}>Simpan Perubahan</Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.cancelButton]}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.actionButtonText}>Batal</Text>
-          </TouchableOpacity>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Kata Sandi Saat Ini</Text>
+              <TextInput
+                style={styles.input}
+                value={currentPassword}
+                onChangeText={setCurrentPassword}
+                placeholder="Masukkan kata sandi saat ini"
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Kata Sandi Baru</Text>
+              <TextInput
+                style={styles.input}
+                value={newPassword}
+                onChangeText={setNewPassword}
+                placeholder="Masukkan kata sandi baru"
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Konfirmasi Kata Sandi Baru</Text>
+              <TextInput
+                style={styles.input}
+                value={confirmNewPassword}
+                onChangeText={setConfirmNewPassword}
+                placeholder="Konfirmasi kata sandi baru"
+                secureTextEntry
+              />
+            </View>
+          </KeyboardAvoidingView>
+
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.saveButton]}
+              onPress={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.actionButtonText}>Simpan Perubahan</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.cancelButton]}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.actionButtonText}>Batal</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -135,9 +137,22 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 20, // Adjusted paddingBottom
   },
-
-  form: {
+  boxContainer: {
     margin: 20,
+    padding: 20,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 15,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  form: {
+    marginBottom: 20,
   },
   inputGroup: {
     marginBottom: 20,
@@ -159,8 +174,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   actionsContainer: {
-    marginTop: 10,
-    paddingHorizontal: 20,
+    paddingTop: 10,
   },
   actionButton: {
     paddingVertical: 15,
