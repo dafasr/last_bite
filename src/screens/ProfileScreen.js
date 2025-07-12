@@ -19,10 +19,7 @@ import apiClient from "../api/apiClient";
 import { useFocusEffect } from "@react-navigation/native";
 
 const ProfileScreen = ({ navigation }) => {
-  const {
-    isLoading: isAuthLoading,
-    logout,
-  } = useAuthContext();
+  const { isLoading: isAuthLoading, logout } = useAuthContext();
   const [merchantProfile, setMerchantProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -62,11 +59,9 @@ const ProfileScreen = ({ navigation }) => {
     } catch (err) {
       console.error("Failed to fetch seller profile:", err);
       setError("Failed to load profile. Please try again.");
-      Alert.alert(
-        "Error",
-        "Gagal memuat profil. Silakan coba lagi.",
-        [{ text: "Tutup" }]
-      );
+      Alert.alert("Error", "Gagal memuat profil. Silakan coba lagi.", [
+        { text: "Tutup" },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -201,11 +196,12 @@ const ProfileScreen = ({ navigation }) => {
         onBackPress
       );
       return () => {
-        if (backHandler && typeof backHandler.remove === 'function') {
+        if (backHandler && typeof backHandler.remove === "function") {
           backHandler.remove();
         }
       };
-    }, [isAuthLoading]));
+    }, [isAuthLoading])
+  );
 
   useEffect(() => {
     if (merchantProfile && !isLoading) {
@@ -491,7 +487,10 @@ const ProfileScreen = ({ navigation }) => {
               style={styles.menuItemTouchable}
               onPress={() =>
                 handleMenuItemPress(
-                  () => navigation.navigate("DetailNavigator", { screen: "EditUserInformation" }),
+                  () =>
+                    navigation.navigate("DetailNavigator", {
+                      screen: "EditUserInformation",
+                    }),
                   1
                 )
               }
@@ -529,33 +528,6 @@ const ProfileScreen = ({ navigation }) => {
                   <Text style={styles.menuIconText}>🔐</Text>
                 </View>
                 <Text style={styles.menuItemText}>Ubah Kata Sandi</Text>
-              </View>
-              <Text style={styles.menuItemArrow}>›</Text>
-            </TouchableOpacity>
-          </Animated.View>
-
-          <Animated.View
-            style={[
-              styles.menuItem,
-              {
-                opacity: menuAnimations[3].opacity,
-                transform: [
-                  { scale: menuAnimations[3].scale },
-                  { translateX: menuAnimations[3].translateX },
-                ],
-              },
-            ]}
-          >
-            <TouchableOpacity
-              style={styles.menuItemTouchable}
-              onPress={() => handleMenuItemPress(handleHelpAndFeedback, 3)}
-              activeOpacity={0.8}
-            >
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.menuIcon, { backgroundColor: "#F39C12" }]}>
-                  <Text style={styles.menuIconText}>💬</Text>
-                </View>
-                <Text style={styles.menuItemText}>Help & Feedback</Text>
               </View>
               <Text style={styles.menuItemArrow}>›</Text>
             </TouchableOpacity>

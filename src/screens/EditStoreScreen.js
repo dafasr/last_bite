@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Animated } from "react-native";
 import { useImagePicker } from "../hooks";
 import {
   Image,
@@ -20,6 +21,15 @@ import apiClient, { updateSellerProfile, uploadImage } from "../api/apiClient";
 import { useAuthContext } from "../context/AuthContext";
 
 const EditStoreScreen = ({ navigation, route }) => {
+  const scaleAnim = useRef(new Animated.Value(0)).current; // Initial value for scale: 0
+
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 7,
+      useNativeDriver: true,
+    }).start();
+  }, [scaleAnim]);
   const { sellerProfileId } = useAuthContext();
   const [storeName, setStoreName] = useState("");
   const [description, setDescription] = useState("");
@@ -196,7 +206,10 @@ const EditStoreScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <Animated.ScrollView
+        contentContainerStyle={styles.scrollViewContent}
+        style={{ transform: [{ scale: scaleAnim }] }}
+      >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.formContainer} // Changed to formContainer
@@ -271,37 +284,39 @@ const EditStoreScreen = ({ navigation, route }) => {
             )}
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Detail Alamat</Text>
+              <Text style={styles.label}>Alamat</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, styles.textArea]}
+                placeholder="Alamat"
                 value={address}
                 onChangeText={setAddress}
-                placeholder="Masukkan detail alamat toko Anda"
+                multiline={true}
+                numberOfLines={4}
+                textAlignVertical="top"
               />
             </View>
           </View>
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.saveButton]}
+              onPress={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.actionButtonText}>Simpan Perubahan</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.cancelButton]}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.actionButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
         </KeyboardAvoidingView>
-
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.saveButton]}
-            onPress={handleSave}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.actionButtonText}>Simpan Perubahan</Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.cancelButton]}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.actionButtonText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 };
@@ -372,7 +387,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   actionsContainer: {
-    marginTop: 20, // Adjusted marginTop
+    marginTop: -20, // Adjusted marginTop
   },
   actionButton: {
     paddingVertical: 15,
