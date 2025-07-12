@@ -18,13 +18,18 @@ import {
 import { useAuth } from "../hooks";
 
 import Ionicons from "@expo/vector-icons/Ionicons";
+import {
+  ALERT_TYPE,
+  Dialog,
+  AlertNotificationRoot,
+  Toast,
+} from "react-native-alert-notification";
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const [loginError, setLoginError] = useState(null);
 
   const { isLoading, loginUser } = useAuth();
 
@@ -61,7 +66,12 @@ export default function LoginScreen({ navigation }) {
     setErrors({}); // Clear errors if validation passes
     const result = await loginUser({ username, password });
     if (!result.success) {
-      setLoginError("Username atau password salah.");
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Login Gagal",
+        textBody: result.message,
+        button: "Tutup",
+      });
     }
   };
 
@@ -70,128 +80,127 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardAvoidingContainer}
-      >
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+    <AlertNotificationRoot>
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardAvoidingContainer}
         >
-          {/* Logo Aplikasi */}
-          <Animated.View
-            style={{
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            }}
+          <ScrollView
+            contentContainerStyle={styles.container}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            <Image
-              source={require("../../assets/logo.png")}
-              style={styles.logo}
-            />
-          </Animated.View>
-
-          {/* Box untuk Form */}
-          <Animated.View
-            style={[
-              styles.formContainer,
-              {
+            {/* Logo Aplikasi */}
+            <Animated.View
+              style={{
                 opacity: fadeAnim,
                 transform: [{ translateY: slideAnim }],
-              },
-            ]}
-          >
-            <View style={styles.inputContainer}>
-              <Ionicons
-                name="person-outline"
-                size={20} // Ukuran ikon lebih kecil
-                color="#888" // Warna ikon lebih lembut
-                style={styles.icon}
+              }}
+            >
+              <Image
+                source={require("../../assets/logo.png")}
+                style={styles.logo}
               />
-              <TextInput
-                style={styles.inputField}
-                placeholder="Username"
-                value={username}
-                onChangeText={(text) => {
-                  setUsername(text);
-                  if (errors.username) setErrors({ ...errors, username: null });
-                  setLoginError(null); // Clear general error on input change
-                }}
-                autoCapitalize="none"
-                placeholderTextColor="#888" // Warna placeholder
-              />
-            </View>
-            {errors.username && (
-              <Text style={styles.errorText}>{errors.username}</Text>
-            )}
-            <View style={styles.inputContainer}>
-              <Ionicons
-                name="lock-closed-outline"
-                size={20} // Ukuran ikon lebih kecil
-                color="#888" // Warna ikon lebih lembut
-                style={styles.icon}
-              />
-              <TextInput
-                style={styles.inputField}
-                placeholder="Kata sandi"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (errors.password) setErrors({ ...errors, password: null });
-                  setLoginError(null); // Clear general error on input change
-                }}
-                secureTextEntry={!showPassword}
-                placeholderTextColor="#888" // Warna placeholder
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeIcon}
-              >
+            </Animated.View>
+
+            {/* Box untuk Form */}
+            <Animated.View
+              style={[
+                styles.formContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }],
+                },
+              ]}
+            >
+              <View style={styles.inputContainer}>
                 <Ionicons
-                  name={showPassword ? "eye-outline" : "eye-off-outline"}
+                  name="person-outline"
                   size={20} // Ukuran ikon lebih kecil
                   color="#888" // Warna ikon lebih lembut
+                  style={styles.icon}
                 />
+                <TextInput
+                  style={styles.inputField}
+                  placeholder="Username"
+                  value={username}
+                  onChangeText={(text) => {
+                    setUsername(text);
+                    if (errors.username)
+                      setErrors({ ...errors, username: null });
+                  }}
+                  autoCapitalize="none"
+                  placeholderTextColor="#888" // Warna placeholder
+                />
+              </View>
+              {errors.username && (
+                <Text style={styles.errorText}>{errors.username}</Text>
+              )}
+              <View style={styles.inputContainer}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20} // Ukuran ikon lebih kecil
+                  color="#888" // Warna ikon lebih lembut
+                  style={styles.icon}
+                />
+                <TextInput
+                  style={styles.inputField}
+                  placeholder="Kata sandi"
+                  value={password}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    if (errors.password)
+                      setErrors({ ...errors, password: null });
+                  }}
+                  secureTextEntry={!showPassword}
+                  placeholderTextColor="#888" // Warna placeholder
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-outline" : "eye-off-outline"}
+                    size={20} // Ukuran ikon lebih kecil
+                    color="#888" // Warna ikon lebih lembut
+                  />
+                </TouchableOpacity>
+              </View>
+              {errors.password && (
+                <Text style={styles.errorText}>{errors.password}</Text>
+              )}
+
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={handleLogin}
+                disabled={isLoading}
+              >
+                <Text style={styles.loginButtonText}>
+                  {isLoading ? "Sedang masuk..." : "Masuk"}
+                </Text>
               </TouchableOpacity>
-            </View>
-            {errors.password && (
-              <Text style={styles.errorText}>{errors.password}</Text>
-            )}
+            </Animated.View>
 
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={handleLogin}
-              disabled={isLoading}
+            {/* Link untuk Registrasi */}
+            <Animated.View
+              style={[
+                styles.registerContainer,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }],
+                },
+              ]}
             >
-              <Text style={styles.loginButtonText}>
-                {isLoading ? "Sedang masuk..." : "Masuk"}
-              </Text>
-            </TouchableOpacity>
-            {loginError && (
-              <Text style={styles.loginErrorText}>{loginError}</Text>
-            )}
-          </Animated.View>
-
-          {/* Link untuk Registrasi */}
-          <Animated.View
-            style={[
-              styles.registerContainer,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-              },
-            ]}
-          >
-            <Text style={styles.registerText}>Belum punya akun? </Text>
-            <TouchableOpacity onPress={handleRegister}>
-              <Text style={styles.registerLink}>Daftar sekarang</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+              <Text style={styles.registerText}>Belum punya akun? </Text>
+              <TouchableOpacity onPress={handleRegister}>
+                <Text style={styles.registerLink}>Daftar sekarang</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </AlertNotificationRoot>
   );
 }
 
