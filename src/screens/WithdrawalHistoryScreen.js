@@ -206,6 +206,8 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -250,18 +252,35 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
     ]).start();
   }, []);
 
-  const fetchWithdrawalHistory = useCallback(async () => {
+  const fetchWithdrawalHistory = useCallback(async (pageNumber = 1) => {
     try {
-      setLoading(true);
-      const response = await apiClient.get("/withdrawals/mine", {});
+      if (pageNumber === 1) {
+        setLoading(true);
+      }
+      const response = await apiClient.get("/withdrawals/mine", {
+        params: { page: pageNumber, limit: 10 }, // Assuming a limit of 10 items per page
+      });
+
       if (response.data && response.data.data) {
-        setWithdrawals(response.data.data);
+        if (pageNumber === 1) {
+          setWithdrawals(response.data.data);
+        } else {
+          setWithdrawals((prevWithdrawals) => [
+            ...prevWithdrawals,
+            ...response.data.data,
+          ]);
+        }
+        setHasMore(response.data.data.length > 0); // Assuming if data is empty, no more pages
       } else {
-        Toast.show({
-          type: ALERT_TYPE.WARNING,
-          title: "Warning",
-          textBody: "No withdrawal history found.",
-        });
+        if (pageNumber === 1) {
+          setWithdrawals([]);
+          Toast.show({
+            type: ALERT_TYPE.WARNING,
+            title: "Warning",
+            textBody: "No withdrawal history found.",
+          });
+        }
+        setHasMore(false);
       }
     } catch (error) {
       console.error("Error fetching withdrawal history:", error);
@@ -272,6 +291,7 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
           error.response?.data?.message ||
           "Failed to fetch withdrawal history. Please try again later.",
       });
+      setHasMore(false);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -279,13 +299,24 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
-    fetchWithdrawalHistory();
+    fetchWithdrawalHistory(1);
   }, [fetchWithdrawalHistory]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchWithdrawalHistory();
+    setPage(1);
+    setHasMore(true);
+    fetchWithdrawalHistory(1);
   }, [fetchWithdrawalHistory]);
+
+  const handleLoadMore = () => {
+    if (!loading && hasMore) {
+      setPage((prevPage) => prevPage + 1);
+      fetchWithdrawalHistory(page + 1);
+    }
+  };
+
+  
 
   const getStatusConfig = (status) => {
     switch (status) {
@@ -572,7 +603,7 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
         ) : (
           <Animated.FlatList
             data={withdrawals}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item, index) => item.id.toString() + index}
             renderItem={({ item, index }) => (
               <WithdrawalItem
                 item={item}
@@ -590,6 +621,15 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
               [{ nativeEvent: { contentOffset: { y: scrollY } } }],
               { useNativeDriver: false }
             )}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={() =>
+              loading && withdrawals.length > 0 ? (
+                <View style={styles.loadingMoreContainer}>
+                  <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+              ) : null
+            }
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -794,6 +834,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.shimmer,
     borderRadius: SIZES.radius,
     marginBottom: SIZES.sm,
+  },
+  loadingMoreContainer: {
+    paddingVertical: SIZES.md,
+    alignItems: "center",
   },
 });
 
