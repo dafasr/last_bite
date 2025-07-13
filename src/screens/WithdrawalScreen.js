@@ -350,7 +350,6 @@ const WithdrawalScreen = ({ navigation }) => {
         title: "Sukses",
         textBody: "Permintaan penarikan berhasil diajukan.",
       });
-      navigation.goBack(); // Go back after successful withdrawal
     } catch (err) {
       console.error("Gagal mengajukan penarikan:", err);
       Toast.show({
