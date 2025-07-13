@@ -57,8 +57,8 @@ const ProfileScreen = ({ navigation }) => {
         storeImageUrl: data.storeImageUrl,
       });
     } catch (err) {
-      console.error("Failed to fetch seller profile:", err);
-      setError("Failed to load profile. Please try again.");
+      console.error("Gagal mengambil profil penjual:", err);
+      setError("Gagal memuat profil. Silakan coba lagi.");
       Alert.alert("Error", "Gagal memuat profil. Silakan coba lagi.", [
         { text: "Tutup" },
       ]);
