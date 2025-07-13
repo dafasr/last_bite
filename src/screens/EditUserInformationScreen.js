@@ -11,27 +11,30 @@ import {
   Image,
 } from "react-native";
 import apiClient from "../api/apiClient";
-import { Alert } from "react-native";
+import { ALERT_TYPE, Toast } from "react-native-alert-notification";
 
 const EditUserInformationScreen = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [initialData, setInitialData] = useState(null);
+  const [isChanged, setIsChanged] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const response = await apiClient.get("/users/me");
         setUserData(response.data.data);
+        setInitialData(response.data.data);
       } catch (err) {
         console.error("Failed to fetch user data:", err);
         setError("Failed to load user data. Please try again.");
-        Alert.alert(
-          "Error",
-          "Gagal memuat data pengguna. Silakan coba lagi.",
-          [{ text: "Tutup" }]
-        );
+        Toast.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Error",
+          textBody: "Gagal memuat data pengguna. Silakan coba lagi.",
+        });
       } finally {
         setIsLoading(false);
       }
@@ -39,6 +42,16 @@ const EditUserInformationScreen = ({ navigation }) => {
 
     fetchUserData();
   }, []);
+
+  useEffect(() => {
+    if (initialData) {
+      const hasChanged =
+        userData.fullName !== initialData.fullName ||
+        userData.email !== initialData.email ||
+        userData.phoneNumber !== initialData.phoneNumber;
+      setIsChanged(hasChanged);
+    }
+  }, [userData, initialData]);
 
   const handleSave = async () => {
     if (isSaving) return;
@@ -50,26 +63,23 @@ const EditUserInformationScreen = ({ navigation }) => {
         phoneNumber: userData.phoneNumber,
       };
       await apiClient.put("/users/me", payload);
-      Alert.alert(
-        "Sukses",
-        "Informasi pengguna berhasil diperbarui.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              navigation.goBack(); // Go back after successful save
-            },
-          },
-        ]
-      );
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: "Sukses",
+        textBody: "Informasi pengguna berhasil diperbarui.",
+        onShow: () => {
+          navigation.goBack();
+        },
+      });
     } catch (err) {
       console.error("Failed to update user data:", err);
-      Alert.alert(
-        "Error",
-        err.response?.data?.message ||
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody:
+          err.response?.data?.message ||
           "Gagal memperbarui informasi pengguna. Silakan coba lagi.",
-        [{ text: "Tutup" }]
-      );
+      });
     } finally {
       setIsSaving(false);
     }
@@ -111,7 +121,7 @@ const EditUserInformationScreen = ({ navigation }) => {
             editable={false} // Username usually not editable
           />
 
-          <Text style={styles.label}>Full Name</Text>
+          <Text style={styles.label}>Nama Lengkap</Text>
           <TextInput
             style={styles.input}
             value={userData.fullName}
@@ -128,7 +138,7 @@ const EditUserInformationScreen = ({ navigation }) => {
             keyboardType="email-address"
           />
 
-          <Text style={styles.label}>Phone Number</Text>
+          <Text style={styles.label}>Nomor telepon</Text>
           <TextInput
             style={styles.input}
             value={userData.phoneNumber}
@@ -140,9 +150,13 @@ const EditUserInformationScreen = ({ navigation }) => {
 
           <View style={styles.actionsContainer}>
             <TouchableOpacity
-              style={[styles.actionButton, styles.saveButton]}
+              style={[
+                styles.actionButton,
+                styles.saveButton,
+                (!isChanged || isSaving) && styles.disabledButton,
+              ]}
               onPress={handleSave}
-              disabled={isSaving}
+              disabled={!isChanged || isSaving}
             >
               {isSaving ? (
                 <ActivityIndicator color="#FFFFFF" />
@@ -255,6 +269,9 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: "#2ECC71", // Green
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
   saveButtonDisabled: {
     backgroundColor: "#A5D6A7",

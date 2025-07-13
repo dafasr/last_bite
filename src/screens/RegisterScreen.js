@@ -310,8 +310,15 @@ const RegisterScreen = ({ navigation }) => {
     setLongitude(newLongitude);
   };
 
+  const handleBack = () => {
+    navigation.navigate("Login");
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
+      <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <Ionicons name="arrow-back" size={24} color="#333" />
+      </TouchableOpacity>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingContainer}
@@ -778,6 +785,12 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 8,
     resizeMode: "cover",
+  },
+  backButton: {
+    position: "absolute",
+    top: 40,
+    left: 20,
+    zIndex: 1,
   },
 });
 

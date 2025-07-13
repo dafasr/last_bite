@@ -9,9 +9,14 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
 } from "react-native";
+import {
+  ALERT_TYPE,
+  Dialog,
+  AlertNotificationRoot,
+  Toast,
+} from "react-native-alert-notification";
 import { Ionicons } from "@expo/vector-icons"; // Import Ionicons
 import { useAuthContext } from "../context/AuthContext";
 import apiClient from "../api/apiClient"; // Assuming apiClient has a password update method
@@ -22,18 +27,39 @@ const ChangePasswordScreen = ({ navigation }) => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
 
   const handleSave = async () => {
     if (!currentPassword || !newPassword || !confirmNewPassword) {
-      Alert.alert("Error", "Semua kolom harus diisi.");
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Semua kolom harus diisi.",
+        button: "close",
+      });
+      return;
+    }
+
+    if (newPassword === currentPassword) {
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody:
+          "Kata sandi baru tidak boleh sama dengan kata sandi saat ini.",
+        button: "close",
+      });
       return;
     }
 
     if (newPassword !== confirmNewPassword) {
-      Alert.alert(
-        "Error",
-        "Kata sandi baru dan konfirmasi kata sandi tidak cocok."
-      );
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Kata sandi baru dan konfirmasi kata sandi tidak cocok.",
+        button: "close",
+      });
       return;
     }
 
@@ -45,86 +71,128 @@ const ChangePasswordScreen = ({ navigation }) => {
         currentPassword,
         newPassword,
       });
-      Alert.alert("Sukses", "Kata sandi berhasil diubah!", [
-        {
-          text: "OK",
-          onPress: () => {
-            navigation.goBack();
-          },
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: "Success",
+        textBody: "Kata sandi berhasil diubah!",
+        onHide: () => {
+          navigation.goBack();
         },
-      ]);
+      });
     } catch (error) {
       console.error("Failed to change password:", error);
-      Alert.alert("Error", "Gagal mengubah kata sandi. Silakan coba lagi.");
+      Dialog.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Gagal mengubah kata sandi. Silakan coba lagi.",
+        button: "close",
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.boxContainer}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.form}
-          >
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Kata Sandi Saat Ini</Text>
-              <TextInput
-                style={styles.input}
-                value={currentPassword}
-                onChangeText={setCurrentPassword}
-                placeholder="Masukkan kata sandi saat ini"
-                secureTextEntry
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Kata Sandi Baru</Text>
-              <TextInput
-                style={styles.input}
-                value={newPassword}
-                onChangeText={setNewPassword}
-                placeholder="Masukkan kata sandi baru"
-                secureTextEntry
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Konfirmasi Kata Sandi Baru</Text>
-              <TextInput
-                style={styles.input}
-                value={confirmNewPassword}
-                onChangeText={setConfirmNewPassword}
-                placeholder="Konfirmasi kata sandi baru"
-                secureTextEntry
-              />
-            </View>
-          </KeyboardAvoidingView>
-
-          <View style={styles.actionsContainer}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.saveButton]}
-              onPress={handleSave}
-              disabled={isSaving}
+    <AlertNotificationRoot>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.boxContainer}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              style={styles.form}
             >
-              {isSaving ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.actionButtonText}>Simpan Perubahan</Text>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.cancelButton]}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.actionButtonText}>Batal</Text>
-            </TouchableOpacity>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Kata Sandi Saat Ini</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.input}
+                    value={currentPassword}
+                    onChangeText={setCurrentPassword}
+                    placeholder="Masukkan kata sandi saat ini"
+                    secureTextEntry={!showCurrentPassword}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowCurrentPassword(!showCurrentPassword)}
+                  >
+                    <Ionicons
+                      name={showCurrentPassword ? "eye" : "eye-off"}
+                      size={24}
+                      color="grey"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Kata Sandi Baru</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.input}
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    placeholder="Masukkan kata sandi baru"
+                    secureTextEntry={!showNewPassword}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    <Ionicons
+                      name={showNewPassword ? "eye" : "eye-off"}
+                      size={24}
+                      color="grey"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Konfirmasi Kata Sandi Baru</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={styles.input}
+                    value={confirmNewPassword}
+                    onChangeText={setConfirmNewPassword}
+                    placeholder="Konfirmasi kata sandi baru"
+                    secureTextEntry={!showConfirmNewPassword}
+                  />
+                  <TouchableOpacity
+                    onPress={() =>
+                      setShowConfirmNewPassword(!showConfirmNewPassword)
+                    }
+                  >
+                    <Ionicons
+                      name={showConfirmNewPassword ? "eye" : "eye-off"}
+                      size={24}
+                      color="grey"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+
+            <View style={styles.actionsContainer}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.saveButton]}
+                onPress={handleSave}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.actionButtonText}>Simpan Perubahan</Text>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.cancelButton]}
+                onPress={() => navigation.goBack()}
+              >
+                <Text style={styles.actionButtonText}>Batal</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </AlertNotificationRoot>
   );
 };
 
@@ -164,20 +232,24 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
+    flex: 1,
     fontSize: 16,
     color: "#333",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 0,
   },
   actionsContainer: {
     paddingTop: 10,
   },
   actionButton: {
-    paddingVertical: 15,
+    paddingVertical: 10,
     borderRadius: 10,
     alignItems: "center",
     marginBottom: 10,

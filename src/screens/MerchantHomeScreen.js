@@ -320,7 +320,7 @@ const MerchantHomeScreen = ({ navigation }) => {
       Dialog.show({
         type: ALERT_TYPE.DANGER,
         title: "Error",
-        textBody: "Failed to fetch data. Please try again later.",
+        textBody: "Gagal mengambil data. Silakan coba lagi nanti.",
         button: "Close",
       });
     } finally {

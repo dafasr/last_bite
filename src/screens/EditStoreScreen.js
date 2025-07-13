@@ -14,11 +14,11 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
-import { Alert } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import apiClient, { updateSellerProfile, uploadImage } from "../api/apiClient";
 import { useAuthContext } from "../context/AuthContext";
+import { ALERT_TYPE, Toast } from "react-native-alert-notification";
 
 const EditStoreScreen = ({ navigation, route }) => {
   const scaleAnim = useRef(new Animated.Value(0)).current; // Initial value for scale: 0
@@ -46,6 +46,8 @@ const EditStoreScreen = ({ navigation, route }) => {
   const [mapRegion, setMapRegion] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [initialData, setInitialData] = useState(null);
+  const [isChanged, setIsChanged] = useState(false);
 
   const handleMapPress = (event) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -63,11 +65,12 @@ const EditStoreScreen = ({ navigation, route }) => {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(
-          "Izin Ditolak",
-          "Akses lokasi diperlukan untuk mendapatkan lokasi saat ini.",
-          [{ text: "Tutup" }]
-        );
+        Toast.show({
+          type: ALERT_TYPE.WARNING,
+          title: "Izin Ditolak",
+          textBody:
+            "Akses lokasi diperlukan untuk mendapatkan lokasi saat ini.",
+        });
         return;
       }
 
@@ -82,9 +85,11 @@ const EditStoreScreen = ({ navigation, route }) => {
       });
     } catch (error) {
       console.error("Failed to get current location:", error);
-      Alert.alert("Error", "Gagal mendapatkan lokasi saat ini.", [
-        { text: "Tutup" },
-      ]);
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Gagal mendapatkan lokasi saat ini.",
+      });
     } finally {
       setIsLocating(false);
     }
@@ -110,6 +115,14 @@ const EditStoreScreen = ({ navigation, route }) => {
         setLongitude(longitude);
         setStoreImage({ uri: storeImageUrl });
         setStatus(status);
+        setInitialData({
+          storeName,
+          description,
+          address,
+          latitude,
+          longitude,
+          storeImageUrl,
+        });
 
         if (latitude && longitude) {
           setMapRegion({
@@ -122,11 +135,11 @@ const EditStoreScreen = ({ navigation, route }) => {
           let { status: locationStatus } =
             await Location.requestForegroundPermissionsAsync();
           if (locationStatus !== "granted") {
-            Alert.alert(
-              "Izin Ditolak",
-              "Akses lokasi diperlukan untuk mengatur lokasi toko.",
-              [{ text: "Tutup" }]
-            );
+            Toast.show({
+              type: ALERT_TYPE.WARNING,
+              title: "Izin Ditolak",
+              textBody: "Akses lokasi diperlukan untuk mengatur lokasi toko.",
+            });
             setLoading(false);
             return;
           }
@@ -139,11 +152,12 @@ const EditStoreScreen = ({ navigation, route }) => {
           });
         }
       } catch (error) {
-        Alert.alert(
-          "Error",
-          "Gagal mengambil profil penjual. Silakan periksa koneksi jaringan Anda atau coba lagi nanti.",
-          [{ text: "Tutup" }]
-        );
+        Toast.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Error",
+          textBody:
+            "Gagal mengambil profil penjual. Silakan periksa koneksi jaringan Anda atau coba lagi nanti.",
+        });
       } finally {
         setLoading(false);
       }
@@ -151,6 +165,27 @@ const EditStoreScreen = ({ navigation, route }) => {
 
     fetchSellerProfile();
   }, []);
+
+  useEffect(() => {
+    if (initialData) {
+      const hasChanged =
+        storeName !== initialData.storeName ||
+        description !== initialData.description ||
+        address !== initialData.address ||
+        latitude !== initialData.latitude ||
+        longitude !== initialData.longitude ||
+        (storeImage && storeImage.uri !== initialData.storeImageUrl);
+      setIsChanged(hasChanged);
+    }
+  }, [
+    storeName,
+    description,
+    address,
+    latitude,
+    longitude,
+    storeImage,
+    initialData,
+  ]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -178,19 +213,21 @@ const EditStoreScreen = ({ navigation, route }) => {
         status: "ACTIVE", // Set status to ACTIVE, no UI needed
       };
       await updateSellerProfile(sellerProfileId, updatedData);
-      Alert.alert("Sukses", "Informasi toko berhasil diperbarui!", [
-        {
-          text: "OK",
-          onPress: () => {
-            navigation.goBack();
-          },
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: "Sukses",
+        textBody: "Informasi toko berhasil diperbarui!",
+        onShow: () => {
+          navigation.goBack();
         },
-      ]);
+      });
     } catch (error) {
       console.error("Failed to update seller profile:", error);
-      Alert.alert("Error", "Gagal memperbarui informasi toko.", [
-        { text: "Tutup" },
-      ]);
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "Gagal memperbarui informasi toko.",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -298,9 +335,13 @@ const EditStoreScreen = ({ navigation, route }) => {
           </View>
           <View style={styles.actionsContainer}>
             <TouchableOpacity
-              style={[styles.actionButton, styles.saveButton]}
+              style={[
+                styles.actionButton,
+                styles.saveButton,
+                (!isChanged || isSaving) && styles.disabledButton,
+              ]}
               onPress={handleSave}
-              disabled={isSaving}
+              disabled={!isChanged || isSaving}
             >
               {isSaving ? (
                 <ActivityIndicator color="#FFFFFF" />
@@ -408,6 +449,9 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     backgroundColor: "#E74C3C", // Red
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
   actionButtonText: {
     color: "#FFFFFF",
