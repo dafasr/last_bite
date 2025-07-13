@@ -11,25 +11,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
-  Alert,
   Animated, // Import Animated
 } from "react-native";
 
 import { useAuth } from "../hooks";
 
 import Ionicons from "@expo/vector-icons/Ionicons";
-import {
-  ALERT_TYPE,
-  Dialog,
-  AlertNotificationRoot,
-  Toast,
-} from "react-native-alert-notification";
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [loginError, setLoginError] = useState("");
 
   const { isLoading, loginUser } = useAuth();
 
@@ -66,12 +60,13 @@ export default function LoginScreen({ navigation }) {
     setErrors({}); // Clear errors if validation passes
     const result = await loginUser({ username, password });
     if (!result.success) {
-      Dialog.show({
-        type: ALERT_TYPE.DANGER,
-        title: "Login Gagal",
-        textBody: result.message,
-        button: "Tutup",
-      });
+      if (result.message) {
+        setLoginError(result.message);
+      } else {
+        setLoginError("Username atau Kata Sandi Salah");
+      }
+    } else {
+      setLoginError(""); // Clear error on successful login
     }
   };
 
@@ -80,8 +75,7 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <AlertNotificationRoot>
-      <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardAvoidingContainer}
@@ -180,6 +174,9 @@ export default function LoginScreen({ navigation }) {
                   {isLoading ? "Sedang masuk..." : "Masuk"}
                 </Text>
               </TouchableOpacity>
+              {loginError ? (
+                <Text style={styles.loginErrorText}>{loginError}</Text>
+              ) : null}
             </Animated.View>
 
             {/* Link untuk Registrasi */}
@@ -200,7 +197,6 @@ export default function LoginScreen({ navigation }) {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </AlertNotificationRoot>
   );
 }
 

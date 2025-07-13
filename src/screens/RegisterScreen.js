@@ -297,10 +297,8 @@ const RegisterScreen = ({ navigation }) => {
         type: "success",
         title: "Registrasi Berhasil!",
         textBody: "Silakan login untuk melanjutkan.",
-        onClose: () => {
-          navigation.navigate("Login");
-        },
       });
+      navigation.navigate("Login");
     }
   };
   const location = getDataLocation(latitude, longitude);
