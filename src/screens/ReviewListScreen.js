@@ -120,7 +120,9 @@ const ReviewListScreen = ({ route }) => {
         {/* <Text style={styles.title}>Customer Reviews</Text> */}
         {reviews.length === 0 ? (
           <View style={styles.centered}>
-            <Text style={styles.emptyText}>No reviews yet for this item.</Text>
+            <Text style={styles.emptyText}>
+              Belum ada ulasan untuk menu ini.
+            </Text>
           </View>
         ) : (
           <FlatList
@@ -147,8 +149,8 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     marginTop: SIZES.base,
@@ -158,13 +160,13 @@ const styles = StyleSheet.create({
   errorText: {
     color: COLORS.danger,
     ...FONTS.h4,
-    textAlign: 'center',
+    textAlign: "center",
   },
   title: {
     ...FONTS.h2,
     color: COLORS.title,
     marginBottom: SIZES.padding,
-    textAlign: 'center',
+    textAlign: "center",
   },
   listContent: {
     paddingBottom: SIZES.padding,
