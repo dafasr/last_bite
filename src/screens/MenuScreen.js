@@ -17,6 +17,7 @@ import {
 
 import { useMenu } from "../context/MenuContext"; // Pastikan path ini benar
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { Toast } from "react-native-alert-notification";
 
 // --- THEME CONSTANTS ---
 const COLORS = {
@@ -254,8 +255,21 @@ const MenuScreen = ({ navigation }) => {
         },
         {
           text: "Hapus",
-          onPress: () => {
-            deleteBag(bagId);
+          onPress: async () => {
+            const success = await deleteBag(bagId);
+            if (success) {
+              Toast.show({
+                type: ALERT_TYPE.SUCCESS,
+                title: "Berhasil!",
+                textBody: `Menu "${bagName}" berhasil dihapus.`,
+              });
+            } else {
+              Toast.show({
+                type: ALERT_TYPE.DANGER,
+                title: "Gagal!",
+                textBody: `Gagal menghapus menu "${bagName}".`,
+              });
+            }
           },
         },
       ],
@@ -320,12 +334,15 @@ const MenuScreen = ({ navigation }) => {
             )}
           </View>
           {typeof item.averageRating === "number" && (
-            <View style={styles.itemRatingContainer}>
+            <TouchableOpacity
+              style={styles.itemRatingContainer}
+              onPress={() => navigation.navigate("DetailNavigator", { screen: "ReviewList", params: { menuItemId: item.id } })}
+            >
               <Ionicons name="star" size={14} color="#FFD700" />
               <Text style={styles.itemRatingText}>
                 {item.averageRating.toFixed(1)}
               </Text>
-            </View>
+            </TouchableOpacity>
           )}
         </View>
 

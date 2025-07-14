@@ -58,14 +58,16 @@ export const MenuProvider = ({ children }) => {
 
   const deleteBag = async (id) => {
     try {
-      await deleteMenuItem(id);
+      await updateMenuItem(id, { isDeleted: true });
       setSurpriseBags((prevBags) => prevBags.filter((bag) => bag.id !== id));
+      return true; // Indicate success
     } catch (error) {
       console.error("Failed to delete menu item:", error);
       Alert.alert(
         "Error",
         "Failed to delete menu item. Please try again later."
       );
+      return false; // Indicate failure
     }
   };
 

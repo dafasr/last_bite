@@ -66,4 +66,8 @@ export const updateSellerProfile = (id, data) => {
   return apiClient.put(`/sellers/${id}`, data);
 };
 
+export const getMenuItemReviews = (menuItemId) => {
+  return apiClient.get(`/menu-item-reviews/menu/${menuItemId}`);
+};
+
 export default apiClient;

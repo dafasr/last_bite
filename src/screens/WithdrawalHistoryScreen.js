@@ -287,10 +287,10 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
       console.error("Error fetching withdrawal history:", error);
       Toast.show({
         type: ALERT_TYPE.DANGER,
-        title: "Error",
+        title: "Kesalahan",
         textBody:
           error.response?.data?.message ||
-          "Failed to fetch withdrawal history. Please try again later.",
+          "Gagal mengambil riwayat penarikan. Silakan coba lagi nanti.",
       });
       setHasMore(false);
     } finally {
@@ -325,6 +325,7 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
           color: COLORS.success,
           backgroundColor: COLORS.completedBg,
           borderColor: COLORS.completedBorder,
+          text: "Disetujui",
         };
       case "PENDING":
         return {
@@ -332,6 +333,7 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
           color: COLORS.secondary,
           backgroundColor: COLORS.pendingBg,
           borderColor: COLORS.pendingBorder,
+          text: "Tertunda",
         };
       case "REJECTED":
         return {
@@ -339,6 +341,7 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
           color: COLORS.danger,
           backgroundColor: COLORS.failedBg,
           borderColor: COLORS.failedBorder,
+          text: "Ditolak",
         };
       default:
         return {
@@ -461,7 +464,7 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
         <View style={styles.cardHeader}>
           <View style={styles.cardHeaderLeft}>
             <Text style={styles.cardTitle}>#{item.id}</Text>
-            <Text style={styles.cardSubtitle}>Withdrawal Request</Text>
+            <Text style={styles.cardSubtitle}>Permintaan Penarikan</Text>
           </View>
           <View
             style={[
@@ -475,13 +478,13 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
               color={statusConfig.color}
             />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
-              {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+              {statusConfig.text}
             </Text>
           </View>
         </View>
 
         <View style={styles.amountContainer}>
-          <Text style={styles.amountLabel}>Amount</Text>
+          <Text style={styles.amountLabel}>Jumlah</Text>
           <Text style={styles.amountValue}>{formatCurrency(item.amount)}</Text>
         </View>
 
@@ -495,11 +498,11 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
               />
             </View>
             <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>Bank Account</Text>
+              <Text style={styles.detailLabel}>Rekening Bank</Text>
               <Text style={styles.detailValue}>
                 {item.bankName && item.accountNumber
                   ? `(${item.bankName}) ${item.accountNumber}`
-                  : "Bank details not available"}
+                  : "Rincian bank tidak tersedia"}
               </Text>
             </View>
           </View>
@@ -513,7 +516,7 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
               />
             </View>
             <View style={styles.detailContent}>
-              <Text style={styles.detailLabel}>Request Date</Text>
+              <Text style={styles.detailLabel}>Tanggal Permintaan</Text>
               <Text style={styles.detailValue}>
                 {formatDate(item.requestDate)}
               </Text>
@@ -547,7 +550,7 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
       >
         <Ionicons name="arrow-back" size={SIZES.iconLg} color={COLORS.text} />
       </TouchableOpacity>
-      <Text style={styles.headerTitle}>Withdrawal History</Text>
+      <Text style={styles.headerTitle}>Riwayat Penarikan</Text>
       <TouchableOpacity
         onPress={onRefresh}
         style={styles.refreshButton}
@@ -563,17 +566,17 @@ const WithdrawalHistoryScreen = ({ navigation }) => {
       <View style={styles.emptyIconContainer}>
         <Ionicons name="receipt-outline" size={64} color={COLORS.textMuted} />
       </View>
-      <Text style={styles.emptyTitle}>No Withdrawals Yet</Text>
+      <Text style={styles.emptyTitle}>Belum Ada Penarikan</Text>
       <Text style={styles.emptySubtitle}>
-        Your withdrawal history will appear here once you make your first
-        withdrawal request.
+        Riwayat penarikan Anda akan muncul di sini setelah Anda membuat
+        permintaan penarikan pertama.
       </Text>
       <TouchableOpacity
         style={styles.emptyButton}
         onPress={() => navigation.navigate("Withdraw")}
         activeOpacity={0.8}
       >
-        <Text style={styles.emptyButtonText}>Make a Withdrawal</Text>
+        <Text style={styles.emptyButtonText}>Lakukan Penarikan</Text>
       </TouchableOpacity>
     </Animated.View>
   );

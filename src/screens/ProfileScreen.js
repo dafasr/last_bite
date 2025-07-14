@@ -13,6 +13,7 @@ import {
   Animated,
   Easing,
   BackHandler,
+  Linking,
 } from "react-native";
 import { useAuthContext } from "../context/AuthContext";
 import apiClient from "../api/apiClient";
@@ -188,16 +189,29 @@ const ProfileScreen = ({ navigation }) => {
       if (!isAuthLoading) {
         fetchSellerProfile();
       }
-      const onBackPress = () => {
-        return false;
-      };
-      const backHandler = BackHandler.addEventListener(
-        "hardwareBackPress",
-        onBackPress
-      );
+
+      let backHandlerSubscription;
+
+      // Only add listener if BackHandler is available and has addEventListener
+      if (BackHandler && typeof BackHandler.addEventListener === 'function') {
+        const onBackPress = () => {
+          // Return true to prevent default back action, as this screen should not allow going back via hardware button
+          return true;
+        };
+        backHandlerSubscription = BackHandler.addEventListener(
+          "hardwareBackPress",
+          onBackPress
+        );
+      } else {
+        console.warn("BackHandler or addEventListener is not available.");
+      }
+
       return () => {
-        if (backHandler && typeof backHandler.remove === "function") {
-          backHandler.remove();
+        // Only remove listener if subscription exists and has a remove method
+        if (backHandlerSubscription && typeof backHandlerSubscription.remove === "function") {
+          backHandlerSubscription.remove();
+        } else {
+          console.warn("BackHandler subscription or remove method is not available for cleanup.");
         }
       };
     }, [isAuthLoading])
@@ -247,10 +261,8 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleOfficialWebsite = () => {
-    Alert.alert(
-      "Tentang Kami",
-      "Tautan ke situs web resmi kami akan segera tersedia.",
-      [{ text: "Tutup" }]
+    Linking.openURL("http://fe-web-last-bite.vercel.app").catch((err) =>
+      Alert.alert("Error", "Tidak dapat membuka tautan: " + err.message)
     );
   };
 
