@@ -36,11 +36,13 @@ const Toast = ({ message, type, onHide }) => {
   const backgroundColor = type === "error" ? "#E74C3C" : "#2ECC71";
 
   return (
-    <Animated.View
-      style={[styles.container, { opacity: fadeAnim, backgroundColor }]}
-    >
-      <Text style={styles.message}>{message}</Text>
-    </Animated.View>
+    <View testID="toast-container" style={[styles.container, { backgroundColor }]}>
+      <Animated.View
+        style={[{ opacity: fadeAnim, ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' }]}
+      >
+        <Text style={styles.message}>{message}</Text>
+      </Animated.View>
+    </View>
   );
 };
 
