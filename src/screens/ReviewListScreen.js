@@ -6,6 +6,7 @@ import {
   FlatList,
   ActivityIndicator,
   SafeAreaView,
+  Image,
 } from "react-native";
 import { getMenuItemReviews } from "../api/apiClient";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -73,12 +74,20 @@ const ReviewListScreen = ({ route }) => {
   const renderReview = ({ item }) => (
     <View style={styles.reviewCard}>
       <View style={styles.reviewHeader}>
-        <Text style={styles.reviewerName}>
-          {item.customerName || "Anonymous"}
-        </Text>
-        <View style={styles.ratingContainer}>
-          <Ionicons name="star" size={16} color="#FFD700" />
-          <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+        <Image
+          source={{
+            uri: item.profileImageUrl || "https://via.placeholder.com/50",
+          }} // Placeholder if no image
+          style={styles.profileImage}
+        />
+        <View style={styles.reviewerInfo}>
+          <Text style={styles.reviewerName}>
+            {item.customerName || "Anonymous"}
+          </Text>
+          <View style={styles.ratingContainer}>
+            <Ionicons name="star" size={16} color="#FFD700" />
+            <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+          </View>
         </View>
       </View>
       <Text style={styles.reviewComment}>{item.comment}</Text>
@@ -108,7 +117,7 @@ const ReviewListScreen = ({ route }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>Customer Reviews</Text>
+        {/* <Text style={styles.title}>Customer Reviews</Text> */}
         {reviews.length === 0 ? (
           <View style={styles.centered}>
             <Text style={styles.emptyText}>No reviews yet for this item.</Text>
@@ -119,6 +128,7 @@ const ReviewListScreen = ({ route }) => {
             keyExtractor={(item) => item.id.toString()}
             renderItem={renderReview}
             contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
           />
         )}
       </View>
@@ -133,12 +143,12 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: SIZES.padding,
+    paddingTop: SIZES.padding,
   },
   centered: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
     marginTop: SIZES.base,
@@ -148,22 +158,23 @@ const styles = StyleSheet.create({
   errorText: {
     color: COLORS.danger,
     ...FONTS.h4,
-    textAlign: "center",
+    textAlign: 'center',
   },
   title: {
     ...FONTS.h2,
     color: COLORS.title,
     marginBottom: SIZES.padding,
-    textAlign: "center",
+    textAlign: 'center',
   },
   listContent: {
     paddingBottom: SIZES.padding,
+    paddingHorizontal: SIZES.padding,
   },
   reviewCard: {
     backgroundColor: COLORS.card,
     borderRadius: SIZES.radius,
     padding: SIZES.padding,
-    marginBottom: SIZES.base,
+    marginBottom: SIZES.base * 2, // Increased margin for better separation
     shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -172,13 +183,28 @@ const styles = StyleSheet.create({
   },
   reviewHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     marginBottom: SIZES.base,
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: SIZES.base,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+  },
+  reviewerInfo: {
+    flex: 1, // Take up remaining space
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   reviewerName: {
     ...FONTS.h4,
     color: COLORS.title,
+    flexShrink: 1, // Allow text to shrink if too long
+    marginRight: SIZES.base,
   },
   ratingContainer: {
     flexDirection: "row",
@@ -197,11 +223,13 @@ const styles = StyleSheet.create({
     ...FONTS.body2,
     color: COLORS.text,
     marginBottom: SIZES.base,
+    lineHeight: SIZES.body2 * 1.5, // Improved readability
   },
   reviewDate: {
     ...FONTS.body4,
     color: COLORS.gray,
     textAlign: "right",
+    marginTop: SIZES.base, // Added margin for separation
   },
   emptyText: {
     ...FONTS.h4,
