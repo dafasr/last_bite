@@ -173,8 +173,12 @@ const EditBagScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-        <View style={styles.formContainer}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoidingContainer}
+      >
+        <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
+          <View style={styles.formContainer}>
           <Text style={styles.label}>Nama Menu</Text>
           <TextInput
             style={styles.input}
@@ -309,7 +313,8 @@ const EditBagScreen = ({ navigation, route }) => {
             )}
           </TouchableOpacity>
         </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -320,6 +325,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
   },
   container: {
+    flex: 1,
+  },
+  keyboardAvoidingContainer: {
     flex: 1,
   },
   header: {
