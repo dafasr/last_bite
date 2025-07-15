@@ -350,6 +350,10 @@ const WithdrawalScreen = ({ navigation }) => {
         title: "Sukses",
         textBody: "Permintaan penarikan berhasil diajukan.",
       });
+      setAmount("");
+      setDisplayAmount("");
+      setBankName("");
+      setAccountNumber("");
     } catch (err) {
       console.error("Gagal mengajukan penarikan:", err);
       Toast.show({
