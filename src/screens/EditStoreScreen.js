@@ -243,121 +243,123 @@ const EditStoreScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Animated.ScrollView
-        contentContainerStyle={styles.scrollViewContent}
-        style={{ transform: [{ scale: scaleAnim }] }}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoidingView}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.formContainer} // Changed to formContainer
+        <Animated.ScrollView
+          contentContainerStyle={styles.scrollViewContent}
+          style={{ transform: [{ scale: scaleAnim }] }}
         >
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nama Toko</Text>
-            <TextInput
-              style={styles.input}
-              value={storeName}
-              onChangeText={setStoreName}
-              placeholder="Masukkan nama toko Anda"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Keterangan</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Ceritakan kepada kami tentang toko Anda"
-              multiline
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Foto Toko</Text>
-            <TouchableOpacity
-              style={styles.imagePickerButton}
-              onPress={pickStoreImage}
-            >
-              <Text style={styles.imagePickerButtonText}>Pilih Foto Toko</Text>
-            </TouchableOpacity>
-            {storeImage && storeImage.uri && storeImage.uri !== "" && (
-              <View style={styles.imagePreviewContainer}>
-                <Image
-                  source={{ uri: storeImage.uri }}
-                  style={styles.imagePreview}
-                />
-              </View>
-            )}
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Lokasi Toko (Ketuk pada peta untuk memilih)
-            </Text>
-
-            <TouchableOpacity
-              style={styles.locationButton}
-              onPress={handleChooseCurrentLocation}
-              disabled={isLocating}
-            >
-              {isLocating ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.locationButtonText}>
-                  Pilih Lokasi Saat Ini
-                </Text>
-              )}
-            </TouchableOpacity>
-            {mapRegion && (
-              <MapView
-                style={styles.map}
-                region={mapRegion}
-                onPress={handleMapPress}
-              >
-                {latitude && longitude && (
-                  <Marker coordinate={{ latitude, longitude }} />
-                )}
-              </MapView>
-            )}
-
+          <View style={styles.formContainer}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Alamat</Text>
+              <Text style={styles.label}>Nama Toko</Text>
               <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Alamat"
-                value={address}
-                onChangeText={setAddress}
-                multiline={true}
-                numberOfLines={4}
-                textAlignVertical="top"
+                style={styles.input}
+                value={storeName}
+                onChangeText={setStoreName}
+                placeholder="Masukkan nama toko Anda"
               />
             </View>
-          </View>
-          <View style={styles.actionsContainer}>
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                styles.saveButton,
-                (!isChanged || isSaving) && styles.disabledButton,
-              ]}
-              onPress={handleSave}
-              disabled={!isChanged || isSaving}
-            >
-              {isSaving ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.actionButtonText}>Simpan Perubahan</Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Keterangan</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Ceritakan kepada kami tentang toko Anda"
+                multiline
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Foto Toko</Text>
+              <TouchableOpacity
+                style={styles.imagePickerButton}
+                onPress={pickStoreImage}
+              >
+                <Text style={styles.imagePickerButtonText}>Pilih Foto Toko</Text>
+              </TouchableOpacity>
+              {storeImage && storeImage.uri && storeImage.uri !== "" && (
+                <View style={styles.imagePreviewContainer}>
+                  <Image
+                    source={{ uri: storeImage.uri }}
+                    style={styles.imagePreview}
+                  />
+                </View>
               )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.cancelButton]}
-              onPress={() => navigation.goBack()}
-            >
-              <Text style={styles.actionButtonText}>Cancel</Text>
-            </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
+                Lokasi Toko (Ketuk pada peta untuk memilih)
+              </Text>
+
+              <TouchableOpacity
+                style={styles.locationButton}
+                onPress={handleChooseCurrentLocation}
+                disabled={isLocating}
+              >
+                {isLocating ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.locationButtonText}>
+                    Pilih Lokasi Saat Ini
+                  </Text>
+                )}
+              </TouchableOpacity>
+              {mapRegion && (
+                <MapView
+                  style={styles.map}
+                  region={mapRegion}
+                  onPress={handleMapPress}
+                >
+                  {latitude && longitude && (
+                    <Marker coordinate={{ latitude, longitude }} />
+                  )}
+                </MapView>
+              )}
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Alamat</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder="Alamat"
+                  value={address}
+                  onChangeText={setAddress}
+                  multiline={true}
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </View>
+            </View>
+            <View style={styles.actionsContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.actionButton,
+                  styles.saveButton,
+                  (!isChanged || isSaving) && styles.disabledButton,
+                ]}
+                onPress={handleSave}
+                disabled={!isChanged || isSaving}
+              >
+                {isSaving ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.actionButtonText}>Simpan Perubahan</Text>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.cancelButton]}
+                onPress={() => navigation.goBack()}
+              >
+                <Text style={styles.actionButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </KeyboardAvoidingView>
-      </Animated.ScrollView>
+        </Animated.ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -386,6 +388,9 @@ const styles = StyleSheet.create({
     color: "#333",
     textAlign: "center",
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   formContainer: {
     backgroundColor: "#FFFFFF",
     padding: 20,
@@ -396,7 +401,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
     width: "100%",
-    marginBottom: 20, // Added margin bottom
+    marginBottom: 20,
   },
   inputGroup: {
     marginBottom: 20,
