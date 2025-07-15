@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Alert } from "react-native";
+import { Toast, ALERT_TYPE } from "react-native-alert-notification";
 import { useMenu } from "../context/MenuContext";
 import { useAuthContext } from "../context/AuthContext";
 import apiClient, { uploadImage } from "../api/apiClient";
@@ -147,25 +148,24 @@ const EditBagScreen = ({ navigation, route }) => {
       };
 
       const responseUpdate = await updateBag(bag.id, payload);
-      Alert.alert("Sukses", "Menu berhasil diperbarui!", [
-        {
-          text: "OK",
-          onPress: () => {
-            navigation.navigate("MainTabs", {
-              screen: "Menu",
-              params: { screen: "MenuList" },
-            });
-          },
-        },
-      ]);
+      navigation.navigate("MainTabs", {
+        screen: "Menu",
+        params: { screen: "MenuList" },
+      });
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: "Sukses",
+        textBody: "Menu berhasil diperbarui!",
+      });
     } catch (error) {
       console.error("Failed to update menu item:", error);
-      Alert.alert(
-        "Error",
-        error.response?.data?.message ||
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody:
+          error.response?.data?.message ||
           "Terjadi kesalahan saat memperbarui Menu.",
-        [{ text: "Tutup" }]
-      );
+      });
     } finally {
       setLoading(false);
     }
